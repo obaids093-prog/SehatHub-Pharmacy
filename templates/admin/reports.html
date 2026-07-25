@@ -1,0 +1,147 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Sales Reports | SehatHub{% endblock %}
+
+{% block admin_content %}
+
+<h1 class="text-headline-lg font-headline-lg text-on-surface mb-1">Sales & Revenue Reports</h1>
+<p class="text-body-sm text-on-surface-variant mb-6">Comprehensive analysis of pharmacy performance and medication distribution.</p>
+
+<!-- ============================================================
+     STAT CARDS
+     ============================================================ -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <div class="bg-white rounded-2xl border border-outline-variant/10 p-5">
+        <div class="flex justify-between items-start mb-2">
+            <span class="material-symbols-outlined text-primary">payments</span>
+        </div>
+        <p class="text-xs text-on-surface-variant uppercase font-bold">Total Revenue</p>
+        <p class="text-2xl font-bold text-primary">Rs. {{ "{:,.0f}".format(stats.total_revenue or 0) }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-outline-variant/10 p-5">
+        <div class="flex justify-between items-start mb-2">
+            <span class="material-symbols-outlined text-primary">shopping_bag</span>
+        </div>
+        <p class="text-xs text-on-surface-variant uppercase font-bold">Total Orders</p>
+        <p class="text-2xl font-bold">{{ stats.total_orders or 0 }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-outline-variant/10 p-5">
+        <div class="flex justify-between items-start mb-2">
+            <span class="material-symbols-outlined text-primary">receipt_long</span>
+        </div>
+        <p class="text-xs text-on-surface-variant uppercase font-bold">Avg. Order Value</p>
+        <p class="text-2xl font-bold">Rs. {{ "{:,.0f}".format(stats.avg_order_value or 0) }}</p>
+    </div>
+</div>
+
+<!-- ============================================================
+     REVENUE TREND + CATEGORY SPLIT
+     ============================================================ -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter mb-6">
+    <div class="lg:col-span-2 bg-white rounded-2xl border border-outline-variant/10 p-6">
+        <h3 class="font-headline-md text-lg mb-1">Revenue Trend</h3>
+        <p class="text-xs text-on-surface-variant mb-4">Daily gross revenue for the last 30 days</p>
+        <canvas id="revenueTrendChart" height="220"></canvas>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-outline-variant/10 p-6">
+        <h3 class="font-headline-md text-lg mb-1">Sales by Category</h3>
+        <p class="text-xs text-on-surface-variant mb-4">Revenue distribution across categories</p>
+        <canvas id="categoryChart" height="220"></canvas>
+        <div class="space-y-2 mt-4">
+            {% for cat in category_split %}
+            <div class="flex justify-between text-xs">
+                <span class="text-on-surface-variant">{{ cat.name }}</span>
+                <span class="font-bold">Rs. {{ "{:,.0f}".format(cat.revenue) }}</span>
+            </div>
+            {% else %}
+            <p class="text-xs text-on-surface-variant">No sales data yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     DETAILED TRANSACTION LOG
+     ============================================================ -->
+<div class="bg-white rounded-2xl border border-outline-variant/10 overflow-hidden">
+    <div class="p-6 pb-0 flex justify-between items-center">
+        <h3 class="font-headline-md text-lg">Detailed Transaction Log</h3>
+        <div class="flex items-center gap-3">
+            <span class="text-xs text-on-surface-variant">Showing last {{ transactions|length }} orders</span>
+            <a href="{{ url_for('admin.export_sales_csv') }}" class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-xs font-bold rounded-lg hover:bg-primary-container transition-all">
+                <span class="material-symbols-outlined text-sm">download</span> Download CSV
+            </a>
+        </div>
+    </div>
+    <div class="overflow-x-auto mt-4">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-xs text-on-surface-variant uppercase border-b border-outline-variant/10">
+                    <th class="px-6 py-3 font-medium">Date / Time</th>
+                    <th class="px-6 py-3 font-medium">Order ID</th>
+                    <th class="px-6 py-3 font-medium">Customer</th>
+                    <th class="px-6 py-3 font-medium">Amount</th>
+                    <th class="px-6 py-3 font-medium">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr class="border-b border-outline-variant/10 last:border-0">
+                    <td class="px-6 py-3 whitespace-nowrap">
+                        {{ t.created_at.strftime('%b %d, %Y') }}<br>
+                        <span class="text-xs text-on-surface-variant">{{ t.created_at.strftime('%I:%M %p') }}</span>
+                    </td>
+                    <td class="px-6 py-3 text-primary font-medium">#SH-{{ 8000 + t.order_id }}</td>
+                    <td class="px-6 py-3 font-medium">{{ t.customer_name }}</td>
+                    <td class="px-6 py-3 font-bold">Rs. {{ "{:,.0f}".format(t.total_amount) }}</td>
+                    <td class="px-6 py-3">
+                        <span class="text-[10px] px-2 py-1 rounded-full font-bold uppercase
+                            {% if t.status == 'delivered' %} bg-secondary-container text-on-secondary-container
+                            {% elif t.status == 'cancelled' %} bg-error-container text-on-error-container
+                            {% else %} bg-tertiary-fixed text-on-tertiary-fixed {% endif %}">
+                            {{ t.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="px-6 py-8 text-center text-on-surface-variant">No transactions yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+    new Chart(document.getElementById('revenueTrendChart'), {
+        type: 'line',
+        data: {
+            labels: {{ revenue_chart|map(attribute='label')|list|tojson }},
+            datasets: [{
+                label: 'Revenue (Rs.)',
+                data: {{ revenue_chart|map(attribute='value')|list|tojson }},
+                borderColor: '#003d9b',
+                backgroundColor: 'rgba(0, 61, 155, 0.08)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    new Chart(document.getElementById('categoryChart'), {
+        type: 'doughnut',
+        data: {
+            labels: {{ category_split|map(attribute='name')|list|tojson }},
+            datasets: [{
+                data: {{ category_split|map(attribute='revenue')|list|tojson }},
+                backgroundColor: ['#003d9b', '#ef6c00', '#ffb950', '#5e3c00', '#0b4fc4', '#a9c6f0', '#cfe0fb', '#0a2f6f', '#ffd8a8']
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+</script>
+
+{% endblock %}

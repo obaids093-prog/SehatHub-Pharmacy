@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Prescription to Proceed | SehatHub{% endblock %}
+
+{% block header %}
+<header class="sticky top-0 z-50 flex justify-between items-center px-margin-mobile md:px-margin-desktop w-full h-20 bg-surface/80 backdrop-blur-md">
+    <a href="{{ url_for('home') }}" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">health_and_safety</span>
+        <span class="font-headline-md text-headline-md font-bold text-primary">SehatHub</span>
+    </a>
+    <span class="flex items-center gap-2 text-secondary text-label-md font-bold uppercase tracking-wide">
+        <span class="material-symbols-outlined text-lg">verified_user</span> Secure Checkout
+    </span>
+</header>
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8">
+
+    <!-- ============================================================
+         CHECKOUT PROGRESS STEPPER (4 Steps)
+         ============================================================ -->
+    <div class="flex items-center justify-between w-full max-w-3xl mx-auto mb-10 relative px-4">
+        <!-- Connecting Line Background -->
+        <div class="absolute left-10 right-10 top-5 -translate-y-1/2 h-1 bg-surface-container-high z-0 rounded-full"></div>
+        <!-- Connecting Line Active -->
+        <div class="absolute left-10 right-2/3 top-5 -translate-y-1/2 h-1 bg-primary z-0 rounded-full"></div>
+
+        <!-- Step 1: Cart -->
+        <div class="relative z-10 flex flex-col items-center gap-2">
+            <a href="{{ url_for('customer.view_cart') }}" class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined text-[20px] font-bold">check</span>
+            </a>
+            <span class="text-xs font-bold text-on-surface">Cart</span>
+        </div>
+
+        <!-- Step 2: Prescription (Current) -->
+        <div class="relative z-10 flex flex-col items-center gap-2">
+            <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-md ring-4 ring-primary/20">
+                <span class="material-symbols-outlined text-[20px]">prescriptions</span>
+            </div>
+            <span class="text-xs font-bold text-primary">Prescription</span>
+        </div>
+
+        <!-- Step 3: Checkout -->
+        <div class="relative z-10 flex flex-col items-center gap-2">
+            <div class="w-10 h-10 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center border-2 border-surface">
+                <span class="material-symbols-outlined text-[20px]">local_shipping</span>
+            </div>
+            <span class="text-xs font-bold text-on-surface-variant">Checkout</span>
+        </div>
+
+        <!-- Step 4: Done -->
+        <div class="relative z-10 flex flex-col items-center gap-2">
+            <div class="w-10 h-10 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center border-2 border-surface">
+                <span class="material-symbols-outlined text-[20px]">task_alt</span>
+            </div>
+            <span class="text-xs font-bold text-on-surface-variant">Done</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+
+        <!-- LEFT: Prescription notice -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl border-2 border-tertiary-fixed p-6">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="material-symbols-outlined text-3xl text-tertiary-container">description</span>
+                    <h1 class="text-headline-md font-headline-md text-on-surface">Upload Prescription to Proceed</h1>
+                </div>
+                <p class="text-body-sm text-on-surface-variant mb-6">Some items in your order require a valid prescription. Kindly upload it to move forward with checkout.</p>
+
+                <div class="space-y-2 mb-6">
+                    {% for item in items_needing_prescription %}
+                    <div class="flex items-center gap-3 bg-surface-container-low rounded-xl p-3">
+                        <span class="text-on-surface-variant text-sm font-bold w-6">{{ loop.index }}.</span>
+                        <span class="text-sm font-medium">{{ item.medicine_name }} <span class="text-on-surface-variant">(Qty: {{ item.quantity }})</span></span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <a href="{{ url_for('customer.upload_prescription', next='checkout') }}" class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-full font-bold hover:bg-primary-container transition-all active:scale-[0.98]">
+                    <span class="material-symbols-outlined">upload_file</span>
+                    Upload Prescription
+                </a>
+                <p class="text-xs text-on-surface-variant mt-4">After uploading, come back and click Checkout again from your <a href="{{ url_for('customer.view_cart') }}" class="text-primary font-medium hover:underline">cart</a> to continue.</p>
+            </div>
+        </div>
+
+        <!-- RIGHT: Order Summary (read-only preview) -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 sticky top-24">
+                <h3 class="flex items-center gap-2 font-headline-md text-lg mb-4">
+                    <span class="material-symbols-outlined text-secondary">check_circle</span> Order Summary
+                </h3>
+
+                <div class="space-y-3 mb-4 pb-4 border-b border-outline-variant/20 max-h-80 overflow-y-auto">
+                    {% for item in cart_items %}
+                    <div class="flex justify-between items-start text-body-sm gap-2">
+                        <div class="w-10 h-10 rounded-lg bg-surface-bright flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            {% if item.image_url %}
+                                <img src="{{ url_for('static', filename=item.image_url) }}?v=2" alt="{{ item.medicine_name }}" class="w-full h-full object-contain p-0.5">
+                            {% else %}
+                                <span class="material-symbols-outlined text-lg text-primary/30">medication</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1">
+                            <span class="text-on-surface-variant block">{{ item.medicine_name }}</span>
+                            <span class="text-xs text-on-surface-variant opacity-70">{{ item.pack_size }}</span>
+                            {% if item.type == 'Prescription' %}
+                                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed uppercase inline-block mt-1 mb-1">Prescription</span>
+                            {% endif %}
+                            <div class="flex items-center gap-2 mt-1.5">
+                                <div class="flex items-center border border-outline-variant rounded-lg w-fit">
+                                    <button type="button" onclick="updateGateQuantity({{ item.cart_item_id }}, -1, this)" class="px-2.5 py-0.5 text-on-surface-variant hover:text-primary text-sm">−</button>
+                                    <span class="px-2 text-sm font-bold gate-qty">{{ item.quantity }}</span>
+                                    <button type="button" onclick="updateGateQuantity({{ item.cart_item_id }}, 1, this)" class="px-2.5 py-0.5 text-on-surface-variant hover:text-primary text-sm">+</button>
+                                </div>
+                                <button type="button" onclick="removeGateItem({{ item.cart_item_id }})" class="material-symbols-outlined text-base text-on-surface-variant hover:text-error">delete</button>
+                            </div>
+                        </div>
+                        <span class="font-medium whitespace-nowrap ml-2">Rs. {{ "%.2f"|format(item.price * item.quantity) }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="space-y-2 mb-4 pb-4 border-b border-outline-variant/20">
+                    <div class="flex justify-between text-body-sm">
+                        <span class="text-on-surface-variant">Subtotal ({{ cart_items|length }} items)</span>
+                        <span class="font-medium">Rs. {{ "%.2f"|format(subtotal) }}</span>
+                    </div>
+                    <div class="flex justify-between text-body-sm">
+                        <span class="text-on-surface-variant">Shipping &amp; Handling</span>
+                        {% if delivery_charge == 0 %}
+                            <span class="font-medium text-secondary">FREE</span>
+                        {% else %}
+                            <span class="font-medium">Rs. {{ "%.2f"|format(delivery_charge) }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="flex justify-between mb-2">
+                    <span class="font-bold">Total</span>
+                    <span class="font-bold text-primary text-lg">Rs. {{ "%.2f"|format(total) }}</span>
+                </div>
+
+                <p class="text-center text-xs text-on-surface-variant mt-4 bg-tertiary-fixed/20 rounded-lg p-3">
+                    <span class="material-symbols-outlined text-sm align-middle mr-1">lock</span>
+                    Checkout will unlock once your prescription is uploaded.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Quantity/remove on this gate page use the same endpoints as the
+    // cart page, then reload so the server recalculates subtotal,
+    // shipping, total, AND re-checks whether a prescription is still
+    // required (e.g. if the only Rx item gets removed, checkout should
+    // unlock immediately rather than staying stuck on this gate).
+    function updateGateQuantity(cartItemId, delta, buttonEl) {
+        const qtySpan = buttonEl.parentElement.querySelector('.gate-qty');
+        const newQuantity = parseInt(qtySpan.textContent) + delta;
+        if (newQuantity < 1) return;
+
+        fetch("{{ url_for('customer.update_cart_item') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `cart_item_id=${cartItemId}&quantity=${newQuantity}&csrf_token=${encodeURIComponent(getCsrfToken())}`
+        })
+        .then(r => r.json())
+        .then(data => data.success ? location.reload() : alert(data.message || 'Something went wrong.'))
+        .catch(() => alert('Network error. Please try again.'));
+    }
+
+    function removeGateItem(cartItemId) {
+        if (!confirm('Remove this item from your cart?')) return;
+        fetch("{{ url_for('customer.remove_cart_item') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `cart_item_id=${cartItemId}&csrf_token=${encodeURIComponent(getCsrfToken())}`
+        })
+        .then(r => r.json())
+        .then(data => data.success ? location.reload() : alert(data.message || 'Something went wrong.'))
+        .catch(() => alert('Network error. Please try again.'));
+    }
+</script>
+
+{% endblock %}

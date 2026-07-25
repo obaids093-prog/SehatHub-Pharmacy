@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}Medicines & Healthcare | SehatHub{% endblock %}
+
+{% block content %}
+
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8">
+
+    <!-- Breadcrumb -->
+    <div class="text-body-sm text-on-surface-variant mb-6">
+        <a href="/" class="hover:text-primary">Home</a>
+        <span class="mx-2">›</span>
+        <span class="text-primary font-medium">Medicines</span>
+    </div>
+
+    <!-- Mobile Filter Toggle Button -->
+    <div class="lg:hidden flex justify-end mb-4">
+        <button onclick="toggleMobileFilters()" class="flex items-center gap-2 bg-white border border-outline-variant/30 px-4 py-2 rounded-lg text-sm font-semibold shadow-sm hover:bg-surface-container transition-all">
+            <span class="material-symbols-outlined text-[18px]">filter_list</span>
+            Filters
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-gutter">
+
+        <!-- ============================================================
+             FILTERS SIDEBAR (Desktop & Mobile Drawer)
+             ============================================================ -->
+        <!-- Mobile backdrop -->
+        <div id="mobileFiltersBackdrop" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[150] opacity-0 pointer-events-none transition-opacity duration-300 lg:hidden" onclick="toggleMobileFilters()"></div>
+
+        <aside id="filtersSidebar" class="fixed lg:static top-0 right-0 h-full w-4/5 max-w-sm lg:w-auto lg:max-w-none lg:h-auto z-[200] lg:z-auto bg-surface-container-lowest lg:bg-transparent shadow-2xl lg:shadow-none transition-transform duration-300 translate-x-full lg:translate-x-0 lg:col-span-1 overflow-y-auto lg:overflow-visible">
+            <div class="bg-white lg:rounded-2xl p-6 lg:shadow-sm border-l lg:border border-outline-variant/10 min-h-full lg:min-h-0 lg:sticky lg:top-24">
+                
+                <!-- Drawer Header (Mobile Only) -->
+                <div class="flex lg:hidden justify-between items-center mb-6 pb-4 border-b border-outline-variant/20">
+                    <h3 class="font-headline-md text-xl">Filters</h3>
+                    <button onclick="toggleMobileFilters()" class="p-2 text-on-surface-variant hover:text-error bg-surface-container rounded-full transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">close</span>
+                    </button>
+                </div>
+
+                <div class="flex justify-between items-center mb-4 hidden lg:flex">
+                    <h3 class="font-headline-md text-lg">Filters</h3>
+                    <a href="{{ url_for('customer.medicine_catalog') }}" class="text-xs text-primary font-medium hover:underline">Clear All</a>
+                </div>
+                
+                <!-- Mobile clear all -->
+                <div class="lg:hidden mb-4 flex justify-end">
+                    <a href="{{ url_for('customer.medicine_catalog') }}" class="text-sm text-primary font-bold hover:underline bg-primary-container/20 px-3 py-1.5 rounded-lg">Clear All Filters</a>
+                </div>
+
+                <!-- In Stock Only Toggle -->
+                <div class="border-t border-outline-variant/20 pt-4 mb-4">
+                    <label class="flex items-center justify-between cursor-pointer group">
+                        <span class="text-label-md font-bold text-on-surface-variant uppercase tracking-wide">In Stock Only</span>
+                        <a href="{{ url_for('customer.medicine_catalog', category=selected_category, brand=selected_brand, sort=sort_option, search=search_query, price_range=price_range, in_stock='1' if in_stock_only != '1' else '') }}"
+                           class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200
+                               {{ 'bg-primary' if in_stock_only == '1' else 'bg-outline-variant/40' }}">
+                            <span class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform duration-200
+                                {{ 'translate-x-6' if in_stock_only == '1' else 'translate-x-1' }}"></span>
+                        </a>
+                    </label>
+                </div>
+
+                <!-- Price Range Filter -->
+                <div class="border-t border-outline-variant/20 pt-4">
+                    <h4 class="text-label-md font-bold text-on-surface-variant uppercase tracking-wide mb-3">Price Range</h4>
+                    <div class="space-y-2">
+                        <a href="{{ url_for('customer.medicine_catalog', category=selected_category, brand=selected_brand, sort=sort_option, search=search_query, in_stock=in_stock_only, price_range='under_100' if price_range != 'under_100' else '') }}"
+                           class="flex items-center justify-between px-3 py-2 rounded-lg text-body-sm transition-colors
+                               {% if price_range == 'under_100' %} bg-primary-container/10 text-primary font-bold {% else %} text-on-surface hover:bg-surface-container {% endif %}">
+                            Under Rs. 100
+                        </a>
+                        <a href="{{ url_for('customer.medicine_catalog', category=selected_category, brand=selected_brand, sort=sort_option, search=search_query, in_stock=in_stock_only, price_range='100_500' if price_range != '100_500' else '') }}"
+                           class="flex items-center justify-between px-3 py-2 rounded-lg text-body-sm transition-colors
+                               {% if price_range == '100_500' %} bg-primary-container/10 text-primary font-bold {% else %} text-on-surface hover:bg-surface-container {% endif %}">
+                            Rs. 100 – 500
+                        </a>
+                        <a href="{{ url_for('customer.medicine_catalog', category=selected_category, brand=selected_brand, sort=sort_option, search=search_query, in_stock=in_stock_only, price_range='500_plus' if price_range != '500_plus' else '') }}"
+                           class="flex items-center justify-between px-3 py-2 rounded-lg text-body-sm transition-colors
+                               {% if price_range == '500_plus' %} bg-primary-container/10 text-primary font-bold {% else %} text-on-surface hover:bg-surface-container {% endif %}">
+                            Rs. 500+
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div class="border-t border-outline-variant/20 pt-4 mt-4">
+                    <h4 class="text-label-md font-bold text-on-surface-variant uppercase tracking-wide mb-3">Categories</h4>
+                    <div class="space-y-2">
+                        {% for category in categories %}
+                        <a href="{{ url_for('customer.medicine_catalog', category=category.category_id, brand=selected_brand, sort=sort_option, search=search_query, price_range=price_range, in_stock=in_stock_only) }}"
+                           class="flex items-center justify-between px-3 py-2 rounded-lg text-body-sm transition-colors
+                               {% if selected_category == category.category_id %} bg-primary-container/10 text-primary font-bold {% else %} text-on-surface hover:bg-surface-container {% endif %}">
+                            {{ category.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Brands -->
+                <div class="border-t border-outline-variant/20 pt-4 mt-4">
+                    <h4 class="text-label-md font-bold text-on-surface-variant uppercase tracking-wide mb-3">Brands</h4>
+                    <div class="space-y-2 max-h-64 overflow-y-auto">
+                        {% for brand in brands %}
+                        <a href="{{ url_for('customer.medicine_catalog', category=selected_category, brand=brand.brand_id, sort=sort_option, search=search_query, price_range=price_range, in_stock=in_stock_only) }}"
+                           class="flex items-center justify-between px-3 py-2 rounded-lg text-body-sm transition-colors
+                               {% if selected_brand == brand.brand_id %} bg-primary-container/10 text-primary font-bold {% else %} text-on-surface hover:bg-surface-container {% endif %}">
+                            {{ brand.name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============================================================
+             MEDICINE GRID
+             ============================================================ -->
+        <div class="lg:col-span-3">
+
+            <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
+                <div>
+                    <h1 class="text-headline-lg font-headline-lg text-on-surface">
+                        {% if search_query %}Results for "{{ search_query }}"{% else %}Medicines &amp; Healthcare{% endif %}
+                    </h1>
+                    <p class="text-body-sm text-on-surface-variant">({{ total_count }} results{% if total_pages > 1 %}, page {{ page }} of {{ total_pages }}{% endif %})</p>
+                </div>
+
+                <!-- Sort dropdown - submits the form automatically when changed -->
+                <form method="GET" action="{{ url_for('customer.medicine_catalog') }}" class="flex items-center gap-2">
+                    {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
+                    {% if selected_brand %}<input type="hidden" name="brand" value="{{ selected_brand }}">{% endif %}
+                    {% if search_query %}<input type="hidden" name="search" value="{{ search_query }}">{% endif %}
+                    {% if price_range %}<input type="hidden" name="price_range" value="{{ price_range }}">{% endif %}
+                    {% if in_stock_only %}<input type="hidden" name="in_stock" value="{{ in_stock_only }}">{% endif %}
+                    <label class="text-body-sm text-on-surface-variant whitespace-nowrap">Sort by:</label>
+                    <select name="sort" onchange="this.form.submit()" class="bg-surface-container-low border-none rounded-lg px-3 py-2 text-body-sm font-medium text-primary focus:ring-2 focus:ring-primary/20 outline-none">
+                        <option value="name" {% if sort_option == 'name' %}selected{% endif %}>Name (A-Z)</option>
+                        <option value="price_low" {% if sort_option == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                        <option value="price_high" {% if sort_option == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                    </select>
+                </form>
+            </div>
+
+            {% if error %}
+                <div class="bg-error-container text-on-error-container px-4 py-3 rounded-lg mb-6">{{ error }}</div>
+            {% endif %}
+
+            {% if medicines|length == 0 and not error %}
+                <div class="text-center py-20 text-on-surface-variant">
+                    <span class="material-symbols-outlined text-6xl mb-4 block opacity-30">search_off</span>
+                    No medicines found. Try a different filter.
+                    {% if did_you_mean %}
+                        <p class="mt-2">
+                            Did you mean
+                            <a href="{{ url_for('customer.medicine_catalog', search=did_you_mean, sort=sort_option) }}" class="text-primary font-bold hover:underline">{{ did_you_mean }}</a>?
+                        </p>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+                {% for med in medicines %}
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-outline-variant/10 hover:shadow-md transition-all group flex flex-col h-full">
+
+                    <a href="{{ url_for('customer.product_detail', medicine_id=med.medicine_id) }}" class="block">
+                        <!-- Image placeholder with type badge -->
+                        <div class="relative aspect-square rounded-xl overflow-hidden bg-surface-bright mb-4 flex items-center justify-center">
+                            <span class="absolute top-2 left-2 text-[10px] font-bold px-2 py-1 rounded uppercase
+                                {% if med.type == 'Prescription' %} bg-tertiary-fixed text-on-tertiary-fixed {% else %} bg-secondary-container text-on-secondary-container {% endif %}">
+                                {{ med.type }}
+                            </span>
+                            {% if med.image_url %}
+                                <img src="{{ url_for('static', filename=med.image_url) }}?v=2" alt="{{ med.name }}" class="w-full h-full object-contain p-2 mix-blend-multiply">
+                            {% else %}
+                                <span class="material-symbols-outlined text-6xl text-primary/30">medication</span>
+                            {% endif %}
+                        </div>
+                    </a>
+
+                    <div class="flex-grow">
+                        {% if med.brand_id %}
+                            <a href="{{ url_for('customer.medicine_catalog', brand=med.brand_id, sort=sort_option, search=search_query) }}" class="text-xs text-on-surface-variant uppercase tracking-wide mb-1 hover:text-primary hover:underline block w-fit">{{ med.brand_name }}</a>
+                        {% else %}
+                            <p class="text-xs text-on-surface-variant uppercase tracking-wide mb-1">Generic</p>
+                        {% endif %}
+                        <a href="{{ url_for('customer.product_detail', medicine_id=med.medicine_id) }}" class="block">
+                            <h4 class="font-bold mb-2 leading-snug">{{ med.name }}</h4>
+                        </a>
+                    </div>
+
+                    <div class="mt-auto">
+                        {% if med.total_stock and med.total_stock > 0 %}
+                            <p class="text-xs text-secondary flex items-center gap-1 mb-3">
+                                <span class="w-1.5 h-1.5 rounded-full bg-secondary inline-block"></span> In Stock
+                            </p>
+                        {% else %}
+                            <p class="text-xs text-error flex items-center gap-1 mb-3">
+                                <span class="w-1.5 h-1.5 rounded-full bg-error inline-block"></span> Out of Stock
+                            </p>
+                        {% endif %}
+
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-primary text-lg">Rs. {{ "%.2f"|format(med.min_price) if med.min_price else "N/A" }}</span>
+                            
+                            {% if med.total_stock and med.total_stock > 0 %}
+                            <a href="{{ url_for('customer.product_detail', medicine_id=med.medicine_id) }}" class="bg-secondary-container text-on-secondary-container p-2 rounded-full hover:bg-secondary hover:text-white transition-all cursor-pointer">
+                                <span class="material-symbols-outlined">add_shopping_cart</span>
+                            </a>
+                            {% else %}
+                            <span class="bg-surface-container text-on-surface-variant p-2 rounded-full cursor-not-allowed opacity-50" title="Out of Stock">
+                                <span class="material-symbols-outlined">remove_shopping_cart</span>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- ============================================================
+                 PAGINATION
+                 ============================================================ -->
+            {% if total_pages > 1 %}
+            <nav class="mt-12 flex justify-center items-center gap-2" aria-label="Pagination">
+                <!-- Previous -->
+                {% if page > 1 %}
+                <a href="{{ url_for('customer.medicine_catalog', category=selected_category, brand=selected_brand, sort=sort_option, search=search_query, price_range=price_range, in_stock=in_stock_only, page=page-1) }}"
+                   class="flex items-center gap-1 px-4 py-2 rounded-lg border border-outline-variant/30 text-sm font-medium text-on-surface hover:bg-surface-container transition-all">
+                    <span class="material-symbols-outlined text-[18px]">chevron_left</span> Previous
+                </a>
+                {% else %}
+                <span class="flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium text-on-surface-variant/40 cursor-not-allowed">
+                    <span class="material-symbols-outlined text-[18px]">chevron_left</span> Previous
+                </span>
+                {% endif %}
+
+                <!-- Page Numbers -->
+                {% for p in range(1, total_pages + 1) %}
+                    {% if p == page %}
+                    <span class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary text-white font-bold text-sm">{{ p }}</span>
+                    {% elif p == 1 or p == total_pages or (p >= page - 1 and p <= page + 1) %}
+                    <a href="{{ url_for('customer.medicine_catalog', category=selected_category, brand=selected_brand, sort=sort_option, search=search_query, price_range=price_range, in_stock=in_stock_only, page=p) }}"
+                       class="w-10 h-10 flex items-center justify-center rounded-lg border border-outline-variant/30 text-sm font-medium text-on-surface hover:bg-surface-container transition-all">
+                        {{ p }}
+                    </a>
+                    {% elif p == page - 2 or p == page + 2 %}
+                    <span class="text-on-surface-variant">…</span>
+                    {% endif %}
+                {% endfor %}
+
+                <!-- Next -->
+                {% if page < total_pages %}
+                <a href="{{ url_for('customer.medicine_catalog', category=selected_category, brand=selected_brand, sort=sort_option, search=search_query, price_range=price_range, in_stock=in_stock_only, page=page+1) }}"
+                   class="flex items-center gap-1 px-4 py-2 rounded-lg border border-outline-variant/30 text-sm font-medium text-on-surface hover:bg-surface-container transition-all">
+                    Next <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                </a>
+                {% else %}
+                <span class="flex items-center gap-1 px-4 py-2 rounded-lg text-sm font-medium text-on-surface-variant/40 cursor-not-allowed">
+                    Next <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                </span>
+                {% endif %}
+            </nav>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleMobileFilters() {
+    const sidebar = document.getElementById('filtersSidebar');
+    const backdrop = document.getElementById('mobileFiltersBackdrop');
+    
+    // Toggle sidebar translation
+    if (sidebar.classList.contains('translate-x-full')) {
+        // Open
+        sidebar.classList.remove('translate-x-full');
+        backdrop.classList.remove('opacity-0', 'pointer-events-none');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    } else {
+        // Close
+        sidebar.classList.add('translate-x-full');
+        backdrop.classList.add('opacity-0', 'pointer-events-none');
+        document.body.style.overflow = '';
+    }
+}
+</script>
+
+{% endblock %}

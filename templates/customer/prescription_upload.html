@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Prescription | SehatHub{% endblock %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop py-8">
+
+    <h1 class="text-headline-lg font-headline-lg text-on-surface mb-1">Upload Prescription</h1>
+    <p class="text-body-sm text-on-surface-variant mb-8">Our licensed pharmacists will review your prescription and help you order the right medicines.</p>
+
+    <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 md:p-8 mb-10">
+        <form method="POST" action="{{ url_for('customer.upload_prescription', next=request.args.get('next')) if request.args.get('next') else url_for('customer.upload_prescription') }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <label for="prescriptionFile" class="block cursor-pointer">
+                <div id="dropZone" class="border-2 border-dashed border-outline-variant rounded-xl p-10 text-center hover:border-primary transition-colors">
+                    <span class="material-symbols-outlined text-5xl text-primary/40 mb-3 block">upload_file</span>
+                    <p class="font-bold text-on-surface mb-1" id="dropZoneText">Click to choose a file, or drag it here</p>
+                    <p class="text-xs text-on-surface-variant">JPG, PNG, or PDF · Max recommended size 5MB</p>
+                </div>
+            </label>
+            <input type="file" id="prescriptionFile" name="prescription_file" accept=".jpg,.jpeg,.png,.pdf" class="hidden" required>
+
+            <button type="submit" class="w-full mt-6 py-4 bg-primary text-white font-headline-md text-base rounded-lg hover:bg-primary-container active:scale-[0.98] transition-all shadow-sm flex justify-center items-center gap-2">
+                <span class="material-symbols-outlined">cloud_upload</span>
+                Upload Prescription
+            </button>
+        </form>
+    </div>
+
+    <h2 class="text-headline-md font-headline-md mb-4">Your Uploaded Prescriptions</h2>
+
+    {% if prescriptions|length == 0 %}
+        <p class="text-on-surface-variant text-body-sm">You haven't uploaded any prescriptions yet.</p>
+    {% else %}
+        <div class="space-y-3">
+            {% for p in prescriptions %}
+            <div class="bg-white rounded-xl border border-outline-variant/10 p-4 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-lg bg-surface-bright flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined text-primary/40">description</span>
+                </div>
+                <div class="flex-1">
+                    <p class="font-medium text-sm">Prescription #{{ p.prescription_id }}</p>
+                    <p class="text-xs text-on-surface-variant">Uploaded {{ p.uploaded_at.strftime('%d %b %Y, %I:%M %p') }}</p>
+                    {% if p.status == 'rejected' and p.rejection_reason %}
+                        <p class="text-xs text-error mt-1">Reason: {{ p.rejection_reason }}</p>
+                    {% endif %}
+                </div>
+                <span class="text-xs px-3 py-1.5 rounded-full font-bold uppercase
+                    {% if p.status == 'approved' %} bg-secondary-container text-on-secondary-container
+                    {% elif p.status == 'rejected' %} bg-error-container text-on-error-container
+                    {% else %} bg-tertiary-fixed text-on-tertiary-fixed {% endif %}">
+                    {{ p.status }}
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    const fileInput = document.getElementById('prescriptionFile');
+    const dropZone = document.getElementById('dropZone');
+    const dropZoneText = document.getElementById('dropZoneText');
+
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+            dropZoneText.textContent = fileInput.files[0].name;
+        }
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-primary');
+    });
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-primary');
+    });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-primary');
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            dropZoneText.textContent = e.dataTransfer.files[0].name;
+        }
+    });
+</script>
+
+{% endblock %}

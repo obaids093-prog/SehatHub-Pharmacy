@@ -1,0 +1,726 @@
+{% extends "base.html" %}
+
+{% block title %}Your Shopping Cart | SehatHub{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     CUSTOM DELETE CONFIRMATION MODAL
+     Replaces the ugly native browser confirm() dialog.
+     Hidden by default; shown via showDeleteModal(cartItemId).
+     ============================================================ -->
+<div id="deleteModal"
+     class="fixed inset-0 z-[200] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-200"
+     role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+
+    <!-- Backdrop -->
+    <div id="deleteModalBackdrop"
+         class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+         onclick="closeDeleteModal()"></div>
+
+    <!-- Panel -->
+    <div class="relative bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm z-10 scale-95 transition-transform duration-200"
+         id="deleteModalPanel">
+        <div class="flex items-start gap-4 mb-5">
+            <div class="w-12 h-12 rounded-full bg-error-container flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-error text-2xl">delete</span>
+            </div>
+            <div>
+                <h3 class="font-bold text-on-surface text-lg" id="deleteModalTitle">Remove item?</h3>
+                <p class="text-body-sm text-on-surface-variant mt-1">
+                    "<span id="deleteModalItemName"></span>" will be removed from your cart.
+                </p>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="closeDeleteModal()"
+                    class="flex-1 py-3 rounded-xl border-2 border-outline-variant text-on-surface font-semibold hover:bg-surface-container transition-all">
+                Keep it
+            </button>
+            <button id="deleteModalConfirmBtn"
+                    class="flex-1 py-3 rounded-xl bg-error text-white font-semibold hover:bg-error/90 active:scale-[0.97] transition-all">
+                Remove
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8">
+
+    <h1 class="text-headline-lg font-headline-lg text-primary mb-1">Your Shopping Cart</h1>
+    <p class="text-body-sm text-on-surface-variant mb-6" id="itemCountText">
+        You have {{ cart_items|sum(attribute='quantity') }} item{{ 's' if cart_items|sum(attribute='quantity') != 1 else '' }} in your cart
+    </p>
+
+    <!-- Flash messages -->
+    {% if error %}
+        <div class="bg-error-container text-on-error-container px-4 py-3 rounded-lg mb-6 flex items-center gap-2">
+            <span class="material-symbols-outlined">error</span>{{ error }}
+        </div>
+    {% endif %}
+
+    <!-- ============================================================
+         EMPTY CART STATE
+         ============================================================ -->
+    {% if cart_items|length == 0 and not error %}
+        <div class="text-center py-16">
+            <div class="w-24 h-24 bg-surface-container rounded-full mx-auto flex items-center justify-center mb-6">
+                <span class="material-symbols-outlined text-5xl text-on-surface-variant opacity-40">shopping_cart_off</span>
+            </div>
+            <h2 class="text-headline-md font-bold mb-2">Your cart is empty</h2>
+            <p class="text-on-surface-variant text-body-md mb-6">Looks like you haven't added anything yet.</p>
+            <a href="{{ url_for('customer.medicine_catalog') }}"
+               class="inline-flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-full font-semibold hover:shadow-lg transition-all active:scale-[0.98]">
+                <span class="material-symbols-outlined">storefront</span>
+                Browse Medicines
+            </a>
+        </div>
+
+        <!-- Suggested popular products -->
+        {% if popular_medicines and popular_medicines|length > 0 %}
+        <div class="mt-12">
+            <h3 class="text-headline-md font-headline-lg text-on-surface mb-6 text-center">Popular right now</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {% for med in popular_medicines %}
+                <a href="{{ url_for('customer.product_detail', medicine_id=med.medicine_id) }}"
+                   class="bg-white rounded-2xl p-4 shadow-sm border border-outline-variant/10 group hover:-translate-y-1 hover:shadow-md transition-all">
+                    <div class="aspect-square rounded-xl overflow-hidden bg-surface-bright flex items-center justify-center mb-3">
+                        {% if med.image_url %}
+                            <img src="{{ url_for('static', filename=med.image_url) }}?v=2" alt="{{ med.name }}" class="w-full h-full object-contain p-2">
+                        {% else %}
+                            <span class="material-symbols-outlined text-5xl text-primary/30">medication_liquid</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-xs text-on-surface-variant mb-1">{{ med.brand_name or 'Generic' }}</p>
+                    <h4 class="font-bold text-sm leading-snug mb-2">{{ med.name }}</h4>
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-primary">Rs. {{ "%.0f"|format(med.min_price) if med.min_price else "N/A" }}</span>
+                        <span class="bg-secondary-container text-on-secondary-container p-1.5 rounded-full group-hover:bg-secondary group-hover:text-white transition-all">
+                            <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
+                        </span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+    {% else %}
+
+    <!-- ============================================================
+         OUT-OF-STOCK WARNING BANNER
+         Shown only if at least one item is out of stock.
+         Also blocks the Proceed to Checkout button.
+         ============================================================ -->
+    {% set has_oos = cart_items | selectattr('stock_qty', 'equalto', 0) | list | length > 0 %}
+    {% if has_oos %}
+    <div id="oosWarningBanner"
+         class="bg-error-container text-on-error-container rounded-xl px-4 py-3 mb-6 flex items-start gap-3">
+        <span class="material-symbols-outlined text-error flex-shrink-0 mt-0.5">warning</span>
+        <div class="flex-1">
+            <span class="font-bold block">Some items are out of stock</span>
+            <span class="text-sm">Remove out-of-stock items before you can proceed to checkout.</span>
+        </div>
+        <button onclick="removeAllOutOfStock()"
+                class="flex-shrink-0 bg-error text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-error/90 transition-all whitespace-nowrap">
+            Remove All
+        </button>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+
+        <!-- ============================================================
+             CART ITEMS LIST
+             ============================================================ -->
+        <div class="lg:col-span-2 space-y-3" id="cartItemsList">
+            {% for item in cart_items %}
+            <div class="bg-white rounded-2xl border border-outline-variant/10 p-4 flex gap-3 sm:gap-4 items-start sm:items-center transition-all"
+                 id="cartItem-{{ item.cart_item_id }}"
+                 data-price="{{ item.price }}"
+                 data-name="{{ item.medicine_name }}"
+                 data-oos="{{ 'true' if item.stock_qty == 0 else 'false' }}">
+
+                <!-- Product Image -->
+                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-surface-bright flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {% if item.image_url %}
+                        <img src="{{ url_for('static', filename=item.image_url) }}?v=2" alt="{{ item.medicine_name }}" class="w-full h-full object-contain p-1">
+                    {% else %}
+                        <span class="material-symbols-outlined text-3xl text-primary/30">medication</span>
+                    {% endif %}
+                </div>
+
+                <!-- Item Info -->
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-bold text-sm sm:text-base leading-snug mb-0.5 truncate">{{ item.medicine_name }}</h4>
+                    <p class="text-xs text-on-surface-variant mb-1.5">{{ item.brand_name or 'Generic' }} · {{ item.pack_size }}</p>
+                    {% if item.stock_qty > 0 %}
+                        <span class="text-xs text-secondary flex items-center gap-1 mb-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-secondary inline-block"></span> In Stock
+                        </span>
+                    {% else %}
+                        <span class="text-xs text-error flex items-center gap-1 mb-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-error inline-block"></span> Out of Stock
+                        </span>
+                    {% endif %}
+
+                    <!-- Quantity Controls (hidden on mobile — shown below price instead) -->
+                    <div class="hidden sm:flex items-center border border-outline-variant rounded-lg w-fit">
+                        <button type="button"
+                                onclick="updateQuantity({{ item.cart_item_id }}, -1)"
+                                class="px-3 py-1.5 text-on-surface-variant hover:text-primary transition-colors"
+                                {% if item.stock_qty == 0 %}disabled{% endif %}>−</button>
+                        <span class="px-3 font-bold quantity-display text-sm">{{ item.quantity }}</span>
+                        <button type="button"
+                                onclick="updateQuantity({{ item.cart_item_id }}, 1)"
+                                class="px-3 py-1.5 text-on-surface-variant hover:text-primary transition-colors"
+                                {% if item.stock_qty == 0 %}disabled{% endif %}>+</button>
+                    </div>
+                </div>
+
+                <!-- Price + Actions (right column) -->
+                <div class="flex flex-col items-end gap-2 flex-shrink-0">
+                    <div class="font-bold text-primary text-base sm:text-lg line-total">
+                        Rs. {{ "%.2f"|format(item.price * item.quantity) }}
+                    </div>
+
+                    <!-- Quantity Controls on mobile -->
+                    <div class="flex sm:hidden items-center border border-outline-variant rounded-lg">
+                        <button type="button"
+                                onclick="updateQuantity({{ item.cart_item_id }}, -1)"
+                                class="px-2.5 py-1 text-on-surface-variant hover:text-primary text-sm"
+                                {% if item.stock_qty == 0 %}disabled{% endif %}>−</button>
+                        <span class="px-2 font-bold quantity-display text-sm">{{ item.quantity }}</span>
+                        <button type="button"
+                                onclick="updateQuantity({{ item.cart_item_id }}, 1)"
+                                class="px-2.5 py-1 text-on-surface-variant hover:text-primary text-sm"
+                                {% if item.stock_qty == 0 %}disabled{% endif %}>+</button>
+                    </div>
+
+                    <div class="flex items-center gap-1 mt-2">
+                        <!-- Save for Later button -->
+                        <button type="button"
+                                onclick="saveForLater({{ item.cart_item_id }})"
+                                class="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-lg hover:bg-primary/10 flex items-center gap-1 text-xs"
+                                title="Save for later">
+                            <span class="material-symbols-outlined text-lg">bookmark</span>
+                            <span class="hidden sm:inline">Save</span>
+                        </button>
+                        <!-- Delete button -->
+                        <button type="button"
+                                onclick="showDeleteModal({{ item.cart_item_id }}, '{{ item.medicine_name | replace("'", "\\'") }}')"
+                                class="text-on-surface-variant hover:text-error transition-colors p-1 rounded-lg hover:bg-error-container/30 flex items-center gap-1 text-xs"
+                                title="Remove from cart">
+                            <span class="material-symbols-outlined text-lg">delete</span>
+                            <span class="hidden sm:inline">Remove</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            <!-- ============================================================
+                 SAVED FOR LATER SECTION
+                 ============================================================ -->
+            {% if saved_items and saved_items|length > 0 %}
+            <div class="mt-8 pt-6 border-t border-outline-variant/20">
+                <h3 class="text-headline-sm font-bold text-on-surface mb-4">Saved for Later ({{ saved_items|length }})</h3>
+                <div class="space-y-3">
+                    {% for item in saved_items %}
+                    <div class="bg-surface-container-lowest rounded-2xl border border-outline-variant/10 p-4 flex gap-3 sm:gap-4 items-start sm:items-center transition-all opacity-80 hover:opacity-100" id="savedItem-{{ item.saved_item_id }}">
+                        <!-- Product Image -->
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-surface-bright flex items-center justify-center flex-shrink-0 overflow-hidden grayscale">
+                            {% if item.image_url %}
+                                <img src="{{ url_for('static', filename=item.image_url) }}?v=2" alt="{{ item.medicine_name }}" class="w-full h-full object-contain p-1">
+                            {% else %}
+                                <span class="material-symbols-outlined text-3xl text-primary/30">medication</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Item Info -->
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-bold text-sm sm:text-base leading-snug mb-0.5 truncate">{{ item.medicine_name }}</h4>
+                            <p class="text-xs text-on-surface-variant mb-1.5">{{ item.brand_name or 'Generic' }} · {{ item.pack_size }}</p>
+                            <div class="font-bold text-on-surface-variant text-sm">
+                                Rs. {{ "%.2f"|format(item.price) }}
+                            </div>
+                        </div>
+
+                        <!-- Price + Actions -->
+                        <div class="flex flex-col items-end gap-2 flex-shrink-0">
+                            <div class="flex items-center gap-1">
+                                <button type="button"
+                                        onclick="moveToCart({{ item.saved_item_id }})"
+                                        class="text-primary hover:text-white hover:bg-primary border border-primary transition-all px-3 py-1.5 rounded-lg text-xs font-bold"
+                                        title="Move to cart">
+                                    Move to Cart
+                                </button>
+                                <button type="button"
+                                        onclick="removeSavedItem({{ item.saved_item_id }})"
+                                        class="text-on-surface-variant hover:text-error transition-colors p-1.5 rounded-lg hover:bg-error-container/30 flex items-center"
+                                        title="Remove">
+                                    <span class="material-symbols-outlined text-lg">close</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ============================================================
+             ORDER SUMMARY SIDEBAR
+             ============================================================ -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 sticky top-24">
+                <h3 class="font-headline-md text-lg mb-4">Order Summary</h3>
+
+                <div class="space-y-2 mb-4 pb-4 border-b border-outline-variant/20">
+                    <div class="flex justify-between text-body-sm">
+                        <span class="text-on-surface-variant">Subtotal</span>
+                        <span class="font-medium" id="subtotalDisplay">Rs. {{ "%.2f"|format(subtotal) }}</span>
+                    </div>
+                    <div class="flex justify-between text-body-sm">
+                        <span class="text-on-surface-variant">Shipping</span>
+                        {% if delivery_charge == 0 %}
+                            <span class="font-medium text-secondary" id="shippingDisplay">FREE</span>
+                        {% else %}
+                            <span class="font-medium" id="shippingDisplay">Rs. {{ "%.2f"|format(delivery_charge) }}</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Free delivery progress hint -->
+                    {% if delivery_charge and delivery_charge > 0 %}
+                    <div id="freeDeliveryHintWrapper">
+                        <p class="text-xs text-on-surface-variant/70 italic" id="freeDeliveryHint">
+                            Add Rs. {{ "%.2f"|format(2000 - subtotal) }} more to get FREE delivery!
+                        </p>
+                        <!-- Progress bar -->
+                        <div class="mt-2 bg-surface-container rounded-full h-1.5 overflow-hidden">
+                            <div id="freeDeliveryProgressBar"
+                                 class="bg-secondary h-full rounded-full transition-all duration-500"
+                                 style="width: {{ [(subtotal / 2000 * 100), 100]|min }}%"></div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div id="freeDeliveryHintWrapper" class="hidden">
+                        <p class="text-xs text-on-surface-variant/70 italic hidden" id="freeDeliveryHint"></p>
+                        <div class="mt-2 bg-surface-container rounded-full h-1.5 overflow-hidden">
+                            <div id="freeDeliveryProgressBar" class="bg-secondary h-full rounded-full" style="width:100%"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="flex justify-between mb-5">
+                    <span class="font-bold">Total</span>
+                    <span class="font-bold text-primary text-lg" id="totalDisplay">Rs. {{ "%.2f"|format(total) }}</span>
+                </div>
+
+                <!-- Promo Code — collapsible -->
+                <div class="mb-5">
+                    <button onclick="togglePromo()"
+                            class="text-xs text-primary font-semibold hover:underline flex items-center gap-1" id="promoToggleBtn">
+                        <span class="material-symbols-outlined text-sm">sell</span>
+                        Have a promo code?
+                    </button>
+                    <div id="promoWrapper" class="hidden mt-2">
+                        <div class="flex gap-2">
+                            <input id="promoInput"
+                                   type="text"
+                                   placeholder="Enter code"
+                                   class="flex-1 px-3 py-2 text-sm rounded-lg border border-outline-variant focus:ring-2 focus:ring-primary/20 outline-none uppercase tracking-wider"/>
+                            <button onclick="applyPromo()"
+                                    class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary/90 transition-all">
+                                Apply
+                            </button>
+                        </div>
+                        <p id="promoMessage" class="text-xs mt-1.5 hidden"></p>
+                    </div>
+                </div>
+
+                <!-- Proceed to Checkout button -->
+                {% if has_oos %}
+                <button disabled
+                        class="w-full py-4 bg-on-surface-variant/30 text-white font-headline-md text-base rounded-lg cursor-not-allowed flex justify-center items-center gap-2 mb-2"
+                        title="Remove out-of-stock items first">
+                    Proceed to Checkout
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+                <p class="text-center text-xs text-error">Remove out-of-stock items to continue.</p>
+                {% else %}
+                <a href="{{ url_for('customer.checkout') }}"
+                   id="checkoutBtn"
+                   class="group relative overflow-hidden w-full py-4 bg-primary text-white font-headline-md text-base rounded-lg hover:bg-primary-container hover:-translate-y-1 hover:shadow-[0_8px_20px_-6px_rgba(var(--color-primary-rgb),0.5)] active:scale-[0.98] transition-all duration-300 ease-out flex justify-center items-center gap-2"
+                   onclick="animateCheckout(this)">
+                    <span class="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></span>
+                    <span id="checkoutText">Proceed to Checkout</span>
+                    <span class="material-symbols-outlined transition-transform duration-300 group-hover:translate-x-1" id="checkoutIcon">arrow_forward</span>
+                </a>
+                {% endif %}
+
+                <p class="text-center text-xs text-on-surface-variant mt-3 flex items-center justify-center gap-1">
+                    <span class="material-symbols-outlined text-sm text-secondary">lock</span>
+                    Secure Checkout · 100% Authentic
+                </p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+    // ============================================================
+    // DELETE MODAL — shown instead of native browser confirm()
+    // ============================================================
+    let _pendingDeleteId = null;
+
+    function showDeleteModal(cartItemId, itemName) {
+        _pendingDeleteId = cartItemId;
+        document.getElementById('deleteModalItemName').textContent = itemName;
+
+        const modal = document.getElementById('deleteModal');
+        const panel = document.getElementById('deleteModalPanel');
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        panel.classList.remove('scale-95');
+        panel.classList.add('scale-100');
+
+        // Wire the confirm button freshly each time.
+        // IMPORTANT: capture the ID before closeDeleteModal() nullifies it.
+        document.getElementById('deleteModalConfirmBtn').onclick = function () {
+            const idToRemove = _pendingDeleteId;
+            closeDeleteModal();
+            removeItem(idToRemove);
+        };
+    }
+
+    function closeDeleteModal() {
+        const modal = document.getElementById('deleteModal');
+        const panel = document.getElementById('deleteModalPanel');
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        panel.classList.remove('scale-100');
+        panel.classList.add('scale-95');
+        _pendingDeleteId = null;
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeDeleteModal();
+    });
+
+    // ============================================================
+    // QUANTITY UPDATE — AJAX, no page reload
+    // ============================================================
+    function updateQuantity(cartItemId, delta) {
+        const itemRow = document.getElementById('cartItem-' + cartItemId);
+        const quantityDisplays = itemRow.querySelectorAll('.quantity-display');
+        const currentQuantity = parseInt(quantityDisplays[0].textContent);
+        const newQuantity = currentQuantity + delta;
+
+        if (newQuantity < 1) return; // use trash icon to remove
+
+        fetch("{{ url_for('customer.update_cart_item') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `cart_item_id=${cartItemId}&quantity=${newQuantity}&csrf_token=${encodeURIComponent(getCsrfToken())}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                // Update both the desktop and mobile quantity displays
+                quantityDisplays.forEach(d => d.textContent = newQuantity);
+                itemRow.querySelector('.line-total').textContent = 'Rs. ' + data.line_total.toFixed(2);
+                recalculateTotal();
+            } else {
+                cartToast(data.message || 'Something went wrong.', 'error');
+            }
+        })
+        .catch(() => cartToast('Network error. Please try again.', 'error'));
+    }
+
+    // ============================================================
+    // REMOVE ITEM — AJAX, animated removal
+    // ============================================================
+    function removeItem(cartItemId) {
+        fetch("{{ url_for('customer.remove_cart_item') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `cart_item_id=${cartItemId}&csrf_token=${encodeURIComponent(getCsrfToken())}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const row = document.getElementById('cartItem-' + cartItemId);
+                // Animate out, then remove from DOM
+                row.style.transition = 'all 0.3s ease';
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(-16px)';
+                setTimeout(() => {
+                    row.remove();
+                    recalculateTotal();
+                    checkOOSBanner();
+                }, 300);
+            } else {
+                cartToast(data.message || 'Something went wrong.', 'error');
+            }
+        })
+        .catch(() => cartToast('Network error. Please try again.', 'error'));
+    }
+
+    // ============================================================
+    // REMOVE ALL OUT-OF-STOCK — called from the warning banner
+    // ============================================================
+    function removeAllOutOfStock() {
+        const oosRows = [...document.querySelectorAll('#cartItemsList > div[id^="cartItem-"][data-oos="true"]')];
+        if (oosRows.length === 0) return;
+
+        // Fire remove requests for all OOS items in parallel
+        const promises = oosRows.map(row => {
+            const id = row.id.replace('cartItem-', '');
+            return fetch("{{ url_for('customer.remove_cart_item') }}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `cart_item_id=${id}&csrf_token=${encodeURIComponent(getCsrfToken())}`
+            }).then(r => r.json()).then(data => ({ id, success: data.success }));
+        });
+
+        Promise.all(promises).then(results => {
+            results.forEach(({ id, success }) => {
+                if (success) {
+                    const row = document.getElementById('cartItem-' + id);
+                    if (row) {
+                        row.style.transition = 'all 0.25s ease';
+                        row.style.opacity = '0';
+                        setTimeout(() => row.remove(), 250);
+                    }
+                }
+            });
+            setTimeout(() => {
+                recalculateTotal();
+                checkOOSBanner();
+            }, 300);
+        });
+    }
+
+    // ============================================================
+    // OOS BANNER VISIBILITY — hide banner once all OOS items gone
+    // Also enable/disable the checkout button dynamically
+    // ============================================================
+    function checkOOSBanner() {
+        const banner = document.getElementById('oosWarningBanner');
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        if (!banner) return;
+
+        const remaining = document.querySelectorAll('#cartItemsList > div[id^="cartItem-"][data-oos="true"]').length;
+        if (remaining === 0) {
+            banner.style.transition = 'all 0.3s ease';
+            banner.style.opacity = '0';
+            setTimeout(() => banner.remove(), 300);
+            // Re-enable the checkout button if it was blocked
+            if (checkoutBtn) checkoutBtn.removeAttribute('disabled');
+        }
+    }
+
+    // ============================================================
+    // RECALCULATE TOTALS — reads live DOM, no server round-trip
+    // ============================================================
+    function recalculateTotal() {
+        let subtotal = 0;
+        let totalQuantity = 0;
+        let rowCount = 0;
+
+        document.querySelectorAll('#cartItemsList > div[id^="cartItem-"]').forEach(row => {
+            const lineTotal = row.querySelector('.line-total');
+            const qtyDisplay = row.querySelector('.quantity-display');
+            if (!lineTotal || !qtyDisplay) return; // skip non-cart divs
+            const lineTotalText = lineTotal.textContent.replace('Rs. ', '');
+            subtotal += parseFloat(lineTotalText) || 0;
+            totalQuantity += parseInt(qtyDisplay.textContent) || 0;
+            rowCount += 1;
+        });
+
+        // Free delivery rule matches utils/pricing.py exactly
+        const FREE_DELIVERY_THRESHOLD = 2000.00;
+        const STANDARD_DELIVERY_CHARGE = 100.00;
+        const deliveryCharge = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : STANDARD_DELIVERY_CHARGE;
+        const total = subtotal + deliveryCharge;
+
+        const subtotalEl = document.getElementById('subtotalDisplay');
+        const shippingEl = document.getElementById('shippingDisplay');
+        const totalEl = document.getElementById('totalDisplay');
+        if (subtotalEl) subtotalEl.textContent = 'Rs. ' + subtotal.toFixed(2);
+        if (shippingEl) shippingEl.textContent = deliveryCharge === 0 ? 'FREE' : 'Rs. ' + deliveryCharge.toFixed(2);
+        if (totalEl) totalEl.textContent = 'Rs. ' + total.toFixed(2);
+
+        // Free delivery hint + progress bar
+        const hint = document.getElementById('freeDeliveryHint');
+        const hintWrapper = document.getElementById('freeDeliveryHintWrapper');
+        const progressBar = document.getElementById('freeDeliveryProgressBar');
+
+        if (hint && hintWrapper && progressBar) {
+            if (deliveryCharge > 0) {
+                hint.textContent = 'Add Rs. ' + (FREE_DELIVERY_THRESHOLD - subtotal).toFixed(2) + ' more to get FREE delivery!';
+                hint.classList.remove('hidden');
+                hintWrapper.classList.remove('hidden');
+                progressBar.style.width = Math.min((subtotal / FREE_DELIVERY_THRESHOLD) * 100, 100) + '%';
+            } else {
+                hint.classList.add('hidden');
+                hintWrapper.classList.add('hidden');
+                progressBar.style.width = '100%';
+            }
+        }
+
+        // Update item count text
+        const countEl = document.getElementById('itemCountText');
+        if (countEl) {
+            countEl.textContent = 'You have ' + totalQuantity + (totalQuantity === 1 ? ' item' : ' items') + ' in your cart';
+        }
+
+        // Keep the navbar cart badge in sync
+        updateNavbarBadge(totalQuantity);
+
+        // If the cart becomes empty, reload to show the empty-cart screen
+        if (rowCount === 0) {
+            location.reload();
+        }
+    }
+
+    // ============================================================
+    // NAVBAR BADGE SYNC
+    // ============================================================
+    function updateNavbarBadge(count) {
+        const badge = document.getElementById('navbarCartBadge');
+        if (!badge) return;
+        if (count > 0) {
+            badge.textContent = count;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
+    // ============================================================
+    // PROMO CODE — UI only (no backend endpoint yet).
+    // The field exists so users don't feel cheated; "SAVE10" shows
+    // a friendly "not yet active" message instead of a hard error.
+    // ============================================================
+    function togglePromo() {
+        const wrapper = document.getElementById('promoWrapper');
+        wrapper.classList.toggle('hidden');
+        if (!wrapper.classList.contains('hidden')) {
+            document.getElementById('promoInput').focus();
+        }
+    }
+
+    function applyPromo() {
+        const code = document.getElementById('promoInput').value.trim().toUpperCase();
+        const msg = document.getElementById('promoMessage');
+        if (!code) return;
+
+        // Placeholder — backend promo endpoint can be wired here later
+        msg.classList.remove('hidden', 'text-secondary', 'text-error');
+        msg.classList.add('text-on-surface-variant');
+        msg.textContent = 'Promo codes are not active yet. Check back soon!';
+    }
+
+    // ============================================================
+    // TOAST HELPER — delegates to base.html's window.showToast(category, message).
+    // Uses a different name so we never overwrite the global toast function.
+    // ============================================================
+    const cartToast = function (message, category) {
+        if (window.showToast) {
+            window.showToast(category, message);
+        } else {
+            console.warn('Cart toast:', message);
+        }
+    };
+    function saveForLater(cartItemId) {
+        fetch("{{ url_for('customer.save_for_later') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `cart_item_id=${cartItemId}&csrf_token=${encodeURIComponent(getCsrfToken())}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                cartToast(data.message || 'Something went wrong.', 'error');
+            }
+        })
+        .catch(() => cartToast('Network error. Please try again.', 'error'));
+    }
+
+    function moveToCart(savedItemId) {
+        fetch("{{ url_for('customer.move_to_cart') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `saved_item_id=${savedItemId}&csrf_token=${encodeURIComponent(getCsrfToken())}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                cartToast(data.message || 'Something went wrong.', 'error');
+            }
+        })
+        .catch(() => cartToast('Network error. Please try again.', 'error'));
+    }
+
+    function removeSavedItem(savedItemId) {
+        fetch("{{ url_for('customer.remove_saved_item') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `saved_item_id=${savedItemId}&csrf_token=${encodeURIComponent(getCsrfToken())}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const row = document.getElementById('savedItem-' + savedItemId);
+                row.style.transition = 'all 0.3s ease';
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(-16px)';
+                setTimeout(() => location.reload(), 300);
+            } else {
+                cartToast(data.message || 'Something went wrong.', 'error');
+            }
+        })
+        .catch(() => cartToast('Network error. Please try again.', 'error'));
+    }
+    function animateCheckout(btn) {
+        // Prevent multiple clicks
+        if (btn.classList.contains('cursor-wait')) return;
+        
+        // Add loading state
+        btn.classList.add('cursor-wait', 'opacity-90');
+        const icon = btn.querySelector('#checkoutIcon');
+        const text = btn.querySelector('#checkoutText');
+        
+        if (icon) {
+            icon.classList.remove('group-hover:translate-x-1');
+            icon.classList.add('animate-spin');
+            icon.textContent = 'progress_activity';
+        }
+        if (text) {
+            text.textContent = 'Processing...';
+        }
+        
+        // Let the link navigate naturally
+    }
+</script>
+
+<style>
+    @keyframes shimmer {
+        100% {
+            transform: translateX(100%);
+        }
+    }
+</style>
+
+{% endblock %}

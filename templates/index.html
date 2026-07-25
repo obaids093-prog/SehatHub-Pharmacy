@@ -1,0 +1,923 @@
+{% extends "base.html" %}
+
+{% block title %}SehatHub | Reliable Healthcare Delivered with Care{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     HERO SECTION — Cinematic Dark with Floating Shapes
+     ============================================================ -->
+<section class="relative w-full overflow-hidden" style="background: linear-gradient(135deg, #0B1426 0%, #0a2a5e 50%, #0B1426 100%); min-height: 600px;">
+    <!-- Floating Medical Shapes -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <svg class="absolute top-[10%] left-[5%] w-16 h-16 text-primary/20 float-card" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+        <svg class="absolute top-[20%] right-[8%] w-20 h-20 text-[#F5A623]/15 float-card" fill="currentColor" viewBox="0 0 24 24"><path d="M10.5 13H8v-3h2.5V7.5h3V10H16v3h-2.5v2.5h-3V13zM12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"/></svg>
+        <svg class="absolute bottom-[15%] left-[12%] w-14 h-14 text-secondary/15 float-card" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+        <svg class="absolute top-[60%] right-[15%] w-12 h-12 text-primary/10 float-card" fill="currentColor" viewBox="0 0 24 24"><path d="M4.5 5.5C4.5 4.12 5.62 3 7 3s2.5 1.12 2.5 2.5V9h5V5.5C14.5 4.12 15.62 3 17 3s2.5 1.12 2.5 2.5V9H22v8c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V9h2.5V5.5z"/></svg>
+        <svg class="absolute bottom-[30%] right-[40%] w-10 h-10 text-[#F5A623]/10 float-card" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        <!-- Large gradient orbs -->
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#F5A623]/8 rounded-full blur-[100px]"></div>
+    </div>
+
+    <div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-20 md:py-28 relative z-10 flex flex-col md:flex-row items-center gap-12">
+        <!-- Left: Text Content -->
+        <div class="flex-1 space-y-8 text-center md:text-left">
+            <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/10 rounded-full px-5 py-2 text-sm text-white/80">
+                <span class="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
+                Pakistan's Most Trusted Digital Pharmacy
+            </div>
+            <h1 class="text-4xl md:text-6xl lg:text-7xl font-extrabold font-headline-lg leading-[1.1] tracking-tight">
+                <span class="gradient-text">Your Health.</span><br/>
+                <span class="text-white">Our Mission.</span>
+            </h1>
+            <p class="text-lg md:text-xl text-white/70 font-medium max-w-lg leading-relaxed mx-auto md:mx-0" id="heroSubtitle">
+                Authentic medicines, expert pharmacist advice, and doorstep delivery — all in one place.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4 pt-2 justify-center md:justify-start">
+                <a href="{{ url_for('customer.upload_prescription') }}" class="group relative inline-flex items-center justify-center bg-primary text-white px-8 py-4 rounded-full font-bold text-lg glow-pulse overflow-hidden transition-all hover:scale-105">
+                    <span class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></span>
+                    <span class="material-symbols-outlined mr-3 relative z-10">upload_file</span>
+                    <span class="relative z-10">Upload Prescription</span>
+                </a>
+                <a href="{{ url_for('customer.medicine_catalog') }}" class="inline-flex items-center justify-center border-2 border-white/20 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-white/10 transition-all backdrop-blur-sm hover:border-white/40">
+                    <span class="material-symbols-outlined mr-3">storefront</span>
+                    Shop Medicines
+                </a>
+            </div>
+
+            <!-- Trust Chips -->
+            <div class="flex flex-wrap items-center gap-3 pt-4 justify-center md:justify-start">
+                <span class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white/70">
+                    <span class="material-symbols-outlined text-secondary text-base" style="font-variation-settings: 'FILL' 1;">verified</span> 100% Authentic
+                </span>
+                <span class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white/70">
+                    <span class="material-symbols-outlined text-[#F5A623] text-base" style="font-variation-settings: 'FILL' 1;">local_shipping</span> Free Delivery 2k+
+                </span>
+                <span class="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-2 text-sm text-white/70">
+                    <span class="material-symbols-outlined text-secondary text-base" style="font-variation-settings: 'FILL' 1;">support_agent</span> Pharmacist Support
+                </span>
+            </div>
+        </div>
+
+        <!-- Right: 3D Rotating Product Carousel -->
+        <div class="flex w-full md:flex-1 h-[350px] md:h-auto justify-center items-center relative mt-8 md:mt-0" id="heroCarouselWrapper">
+            <!-- Particle canvas behind everything -->
+            <canvas id="heroParticleCanvas" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index:0;"></canvas>
+
+            <!-- Orbit ring glow -->
+            <div class="hero3d-orbit-ring"></div>
+
+            <!-- 3D Scene container -->
+            <div class="hero3d-scene" id="hero3dScene">
+                <div class="hero3d-carousel" id="hero3dCarousel">
+
+                    {% if trending and trending|length > 0 %}
+                    <a href="{{ url_for('customer.product_detail', medicine_id=trending[0].medicine_id) }}" class="hero3d-card" data-index="0">
+                        <div class="hero3d-card-face">
+                            <div class="hero3d-card-glow"></div>
+                            <div class="hero3d-img-wrap">
+                                {% if trending[0].image_url %}
+                                <img src="{{ url_for('static', filename=trending[0].image_url) }}?v=2" alt="{{ trending[0].name }}" loading="eager">
+                                {% else %}
+                                <span class="material-symbols-outlined text-5xl text-primary/30">medication</span>
+                                {% endif %}
+                            </div>
+                            <div class="hero3d-card-info">
+                                <p class="hero3d-card-name">{{ trending[0].name }}</p>
+                                <p class="hero3d-card-price">Rs. {{ "%.0f"|format(trending[0].min_price) if trending[0].min_price else "N/A" }}</p>
+                            </div>
+                            <div class="hero3d-card-badge">
+                                <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">local_fire_department</span>
+                            </div>
+                        </div>
+                    </a>
+                    {% endif %}
+
+                    {% if trending and trending|length > 1 %}
+                    <a href="{{ url_for('customer.product_detail', medicine_id=trending[1].medicine_id) }}" class="hero3d-card" data-index="1">
+                        <div class="hero3d-card-face">
+                            <div class="hero3d-card-glow"></div>
+                            <div class="hero3d-img-wrap">
+                                {% if trending[1].image_url %}
+                                <img src="{{ url_for('static', filename=trending[1].image_url) }}?v=2" alt="{{ trending[1].name }}" loading="eager">
+                                {% else %}
+                                <span class="material-symbols-outlined text-5xl text-primary/30">pill</span>
+                                {% endif %}
+                            </div>
+                            <div class="hero3d-card-info">
+                                <p class="hero3d-card-name">{{ trending[1].name }}</p>
+                                <p class="hero3d-card-price hero3d-price-alt">Rs. {{ "%.0f"|format(trending[1].min_price) if trending[1].min_price else "N/A" }}</p>
+                            </div>
+                            <div class="hero3d-card-badge hero3d-badge-blue">
+                                <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">verified</span>
+                            </div>
+                        </div>
+                    </a>
+                    {% endif %}
+
+                    {% if trending and trending|length > 2 %}
+                    <a href="{{ url_for('customer.product_detail', medicine_id=trending[2].medicine_id) }}" class="hero3d-card" data-index="2">
+                        <div class="hero3d-card-face">
+                            <div class="hero3d-card-glow"></div>
+                            <div class="hero3d-img-wrap">
+                                {% if trending[2].image_url %}
+                                <img src="{{ url_for('static', filename=trending[2].image_url) }}?v=2" alt="{{ trending[2].name }}" loading="eager">
+                                {% else %}
+                                <span class="material-symbols-outlined text-5xl text-primary/30">health_and_safety</span>
+                                {% endif %}
+                            </div>
+                            <div class="hero3d-card-info">
+                                <p class="hero3d-card-name">{{ trending[2].name }}</p>
+                                <p class="hero3d-card-price">Rs. {{ "%.0f"|format(trending[2].min_price) if trending[2].min_price else "N/A" }}</p>
+                            </div>
+                            <div class="hero3d-card-badge hero3d-badge-gold">
+                                <span class="material-symbols-outlined text-sm" style="font-variation-settings:'FILL' 1;">star</span>
+                            </div>
+                        </div>
+                    </a>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            <!-- "Trending Now" floating label -->
+            <div class="hero3d-trending-label">
+                <span class="hero3d-trending-dot"></span>
+                Trending Now
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Hero 3D Carousel JS — drives rotation, mouse tilt, and particle canvas -->
+<script>
+(function() {
+    const carousel = document.getElementById('hero3dCarousel');
+    const scene = document.getElementById('hero3dScene');
+    const wrapper = document.getElementById('heroCarouselWrapper');
+    const canvas = document.getElementById('heroParticleCanvas');
+    if (!carousel || !scene || !wrapper) return;
+
+    const cards = carousel.querySelectorAll('.hero3d-card');
+    const numCards = cards.length;
+    if (numCards === 0) return;
+
+    /* ---------- 3D CAROUSEL ROTATION ---------- */
+    const angleStep = 360 / numCards;
+    const radius = 180; // translateZ distance
+    let currentAngle = 0;
+    let autoSpeed = 0.3; // deg per frame
+    let paused = false;
+
+    // Position each card around the circle
+    cards.forEach((card, i) => {
+        const angle = angleStep * i;
+        card.style.transform = 'rotateY(' + angle + 'deg) translateZ(' + radius + 'px)';
+    });
+
+    function renderCarousel() {
+        carousel.style.transform = 'rotateY(' + currentAngle + 'deg)';
+    }
+
+    function animate() {
+        if (!paused) {
+            currentAngle += autoSpeed;
+        }
+        renderCarousel();
+        requestAnimationFrame(animate);
+    }
+    animate();
+
+    // Pause on hover, resume on leave
+    wrapper.addEventListener('mouseenter', function() { paused = true; });
+    wrapper.addEventListener('mouseleave', function() {
+        paused = false;
+        scene.style.transform = '';
+    });
+
+    /* ---------- MOUSE PARALLAX TILT ---------- */
+    wrapper.addEventListener('mousemove', function(e) {
+        const rect = wrapper.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width - 0.5;   // -0.5 to 0.5
+        const y = (e.clientY - rect.top) / rect.height - 0.5;
+        const tiltX = y * -12; // deg
+        const tiltY = x * 12;
+        scene.style.transform = 'rotateX(' + tiltX + 'deg) rotateY(' + tiltY + 'deg)';
+    });
+
+    /* ---------- PARTICLE SYSTEM on CANVAS ---------- */
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    const PARTICLE_COUNT = 35;
+    const colors = ['rgba(245,166,35,', 'rgba(0,61,155,', 'rgba(0,194,255,', 'rgba(255,255,255,'];
+
+    function resizeCanvas() {
+        canvas.width = wrapper.offsetWidth;
+        canvas.height = wrapper.offsetHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    function createParticle() {
+        const colorBase = colors[Math.floor(Math.random() * colors.length)];
+        return {
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: Math.random() * 2.5 + 0.5,
+            dx: (Math.random() - 0.5) * 0.6,
+            dy: (Math.random() - 0.5) * 0.6,
+            alpha: Math.random() * 0.5 + 0.2,
+            alphaDir: Math.random() > 0.5 ? 0.005 : -0.005,
+            color: colorBase
+        };
+    }
+    for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(createParticle());
+
+    function drawParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let p of particles) {
+            p.x += p.dx;
+            p.y += p.dy;
+            p.alpha += p.alphaDir;
+            if (p.alpha <= 0.1 || p.alpha >= 0.7) p.alphaDir *= -1;
+            if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+            if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = p.color + p.alpha + ')';
+            ctx.fill();
+
+            // Subtle glow
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2);
+            ctx.fillStyle = p.color + (p.alpha * 0.15) + ')';
+            ctx.fill();
+        }
+        requestAnimationFrame(drawParticles);
+    }
+    drawParticles();
+
+    /* ---------- ENTRANCE ANIMATION ---------- */
+    // Cards start invisible, then pop in one-by-one
+    cards.forEach((card, i) => {
+        card.style.opacity = '0';
+        card.style.transition = 'opacity 0.6s ease ' + (0.3 + i * 0.25) + 's';
+        requestAnimationFrame(() => { card.style.opacity = '1'; });
+    });
+})();
+</script>
+
+<!-- ============================================================
+     CATEGORY QUICK-ACCESS — Floating Pills
+     ============================================================ -->
+<section class="py-8 px-margin-mobile md:px-margin-desktop bg-surface-container-lowest border-b border-outline-variant/10">
+    {% set icon_map = {'Pain Relief':'pill', 'Antibiotics':'medication', 'Vitamins & Supplements':'nutrition', 'Cold & Flu':'sick', 'Diabetes Care':'bloodtype', 'Digestive Health':'health_and_safety', 'Skin Care':'face_5', 'Baby Care':'child_care', 'Mental Health & Sedatives':'psychology', 'Medical Devices':'devices', 'Personal Care':'self_care'} %}
+    <div class="max-w-container-max mx-auto overflow-hidden relative">
+        <!-- Fade edges -->
+        <div class="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-surface-container-lowest to-transparent z-10 pointer-events-none"></div>
+        <div class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-surface-container-lowest to-transparent z-10 pointer-events-none"></div>
+        <div class="flex gap-3 overflow-x-auto hide-scrollbar py-2 px-4">
+            {% for cat in navbar_categories %}
+            <a href="{{ url_for('customer.medicine_catalog', category=cat.category_id) }}" class="flex items-center gap-2 whitespace-nowrap px-5 py-3 rounded-full font-bold text-sm border border-outline-variant/20 bg-surface hover:bg-primary hover:text-white hover:border-primary hover:shadow-lg transition-all group shrink-0 hover-lift-premium">
+                <span class="material-symbols-outlined text-lg text-primary group-hover:text-white transition-colors">{{ icon_map.get(cat.name, 'category') }}</span>
+                {{ cat.name }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     CATEGORY SPOTLIGHT CAROUSEL — One category at a time
+     ============================================================ -->
+<section class="reveal-on-scroll py-16 px-margin-mobile md:px-margin-desktop bg-surface-container-lowest" id="category-spotlight">
+    <div class="max-w-container-max mx-auto">
+        <!-- Section Header -->
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-4">
+            <div>
+                <h2 class="text-3xl md:text-4xl font-extrabold font-headline-lg text-on-surface">Shop by Category</h2>
+                <p class="text-on-surface-variant mt-2">Browse our curated collection of healthcare essentials</p>
+            </div>
+            <a href="{{ url_for('customer.medicine_catalog') }}" class="text-primary font-bold flex items-center gap-1 hover:gap-2 transition-all group">
+                View All Products <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </a>
+        </div>
+
+        <!-- Category Selector Tabs with Scroll Arrows -->
+        <div class="relative group mb-10">
+            <!-- Left Arrow -->
+            <button onclick="document.getElementById('cat-scroll-container').scrollBy({left: -300, behavior: 'smooth'})" 
+                    class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-surface/90 backdrop-blur shadow-[0_4px_12px_rgba(0,0,0,0.1)] rounded-full w-10 h-10 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity border border-outline-variant/20 -ml-5 hover:scale-110">
+                <span class="material-symbols-outlined font-bold">chevron_left</span>
+            </button>
+
+            <div id="cat-scroll-container" class="flex overflow-x-auto hide-scrollbar gap-3 pb-4 scroll-smooth px-2" style="mask-image: linear-gradient(to right, transparent, black 2%, black 98%, transparent);">
+                {% for (cat_name, cat_id), products in category_products.items() %}
+                <button onclick="switchSpotlight('{{ loop.index }}')" id="spot-btn-{{ loop.index }}" class="spot-btn flex items-center gap-2 whitespace-nowrap px-6 py-3 rounded-2xl font-bold text-sm transition-all shrink-0 {% if loop.index == 1 %}bg-primary text-white shadow-lg{% else %}bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest{% endif %}">
+                    {{ cat_name }}
+                </button>
+                {% endfor %}
+            </div>
+
+            <!-- Right Arrow -->
+            <button onclick="document.getElementById('cat-scroll-container').scrollBy({left: 300, behavior: 'smooth'})" 
+                    class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-surface/90 backdrop-blur shadow-[0_4px_12px_rgba(0,0,0,0.1)] rounded-full w-10 h-10 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity border border-outline-variant/20 -mr-5 hover:scale-110">
+                <span class="material-symbols-outlined font-bold">chevron_right</span>
+            </button>
+        </div>
+
+        <!-- Category Panels -->
+        {% set cat_accents = ['#003d9b', '#ef6c00', '#5e3c00', '#ba1a1a'] %}
+        {% set ns = namespace(idx=0) %}
+        {% for (cat_name, cat_id), products in category_products.items() %}
+        {% set accent = cat_accents[ns.idx % cat_accents|length] %}
+        {% set ns.idx = ns.idx + 1 %}
+        <div id="spot-panel-{{ loop.index }}" class="spot-panel {% if loop.index != 1 %}hidden{% endif %}">
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Featured Product (Large Card) -->
+                {% if products|length > 0 %}
+                {% set feat = products[0] %}
+                <a href="{{ url_for('customer.product_detail', medicine_id=feat.medicine_id) }}" class="lg:w-1/3 rounded-[28px] p-8 flex flex-col justify-between relative overflow-hidden group hover-lift-premium min-h-[380px]" style="background: linear-gradient(135deg, {{ accent }}15, {{ accent }}08);">
+                    <div class="absolute top-0 right-0 w-48 h-48 rounded-full blur-[60px] opacity-30" style="background: {{ accent }};"></div>
+                    <div>
+                        <span class="inline-flex items-center gap-1 text-xs font-bold px-3 py-1 rounded-full text-white mb-4" style="background: {{ accent }};">
+                            <span class="material-symbols-outlined text-xs">star</span> FEATURED
+                        </span>
+                        <h3 class="text-2xl font-extrabold text-on-surface line-clamp-2 leading-tight mb-2">{{ feat.name }}</h3>
+                        <p class="text-on-surface-variant text-sm mb-2">{{ feat.brand_name or 'Generic' }}</p>
+                        <div class="text-2xl font-extrabold" style="color: {{ accent }};">Rs. {{ "%.2f"|format(feat.min_price) if feat.min_price else "N/A" }}</div>
+                    </div>
+                    <div class="flex-1 flex items-center justify-center py-4">
+                        {% if feat.image_url %}
+                        <img src="{{ url_for('static', filename=feat.image_url) }}?v=2" alt="{{ feat.name }}" class="max-w-[200px] max-h-[180px] object-contain group-hover:scale-110 transition-transform duration-500 drop-shadow-lg">
+                        {% else %}
+                        <span class="material-symbols-outlined text-[100px]" style="color: {{ accent }}20;">medication</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center gap-2 font-bold text-sm" style="color: {{ accent }};">
+                        View Product <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                    </div>
+                </a>
+                {% endif %}
+
+                <!-- Product Grid (remaining products) -->
+                <div class="lg:w-2/3 grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {% for prod in products[1:] %}
+                    <a href="{{ url_for('customer.product_detail', medicine_id=prod.medicine_id) }}" class="bg-white rounded-2xl p-5 flex flex-col border border-outline-variant/15 hover:border-primary/30 hover:shadow-xl group hover-lift-premium relative overflow-hidden">
+                        <div class="h-28 mb-4 flex items-center justify-center relative">
+                            <div class="absolute inset-0 rounded-full blur-xl scale-0 group-hover:scale-100 transition-transform duration-500" style="background: {{ accent }}08;"></div>
+                            {% if prod.image_url %}
+                            <img src="{{ url_for('static', filename=prod.image_url) }}?v=2" alt="{{ prod.name }}" class="max-w-full max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-300 relative z-10">
+                            {% else %}
+                            <span class="material-symbols-outlined text-5xl text-on-surface-variant/15 relative z-10">medication</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex flex-col flex-1">
+                            <h3 class="font-bold text-sm text-on-surface line-clamp-2 leading-tight mb-1 group-hover:text-primary transition-colors">{{ prod.name }}</h3>
+                            <span class="text-xs text-on-surface-variant mb-auto">{{ prod.brand_name or 'Generic' }}</span>
+                            <div class="flex items-center justify-between mt-4 pt-3 border-t border-outline-variant/10">
+                                <span class="font-extrabold text-primary">Rs. {{ "%.0f"|format(prod.min_price) if prod.min_price else "N/A" }}</span>
+                                <button type="button" onclick="quickAddToCart(event, {{ prod.cheapest_variant_id or 'null' }}, '{{ prod.name|e }}')"
+                                        class="quick-add-btn w-8 h-8 rounded-full bg-secondary/10 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors hover:scale-110 active:scale-95">
+                                    <span class="material-symbols-outlined text-sm">add</span>
+                                </button>
+                            </div>
+                        </div>
+                    </a>
+                    {% endfor %}
+                    <!-- Fill empty if < 3 remaining -->
+                    {% if products|length < 4 %}
+                    {% for i in range(4 - products|length) %}
+                    <a href="{{ url_for('customer.medicine_catalog', category=cat_id) }}" class="bg-surface-container-high/30 rounded-2xl border-2 border-dashed border-outline-variant/20 flex flex-col items-center justify-center text-center p-6 transition-colors group cursor-pointer min-h-[220px] hover:bg-surface-container-high/60">
+                        <span class="material-symbols-outlined text-3xl text-on-surface-variant/25 group-hover:text-primary/50 mb-2 transition-colors">add_circle</span>
+                        <span class="text-xs font-medium text-on-surface-variant/40 group-hover:text-primary/60 transition-colors">Explore<br/>more</span>
+                    </a>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- ============================================================
+     BESTSELLERS
+     ============================================================ -->
+<section class="reveal-on-scroll py-16 px-margin-mobile md:px-margin-desktop bg-surface-container-lowest">
+    <div class="max-w-container-max mx-auto">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-3xl font-extrabold font-headline-lg text-on-surface">Top Sellers <span class="text-[#F5A623]">🔥</span></h2>
+            <a href="{{ url_for('customer.medicine_catalog') }}" class="text-primary font-bold flex items-center gap-1 hover:gap-2 transition-all">
+                Shop All <span class="material-symbols-outlined text-sm">arrow_forward</span>
+            </a>
+        </div>
+        <div class="relative group">
+            <!-- Left Arrow -->
+            <button onclick="document.getElementById('bestseller-scroll-container').scrollBy({left: -300, behavior: 'smooth'})" 
+                    class="absolute left-0 top-[40%] -translate-y-1/2 z-20 bg-surface/90 backdrop-blur shadow-[0_4px_12px_rgba(0,0,0,0.1)] rounded-full w-10 h-10 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity border border-outline-variant/20 -ml-4 hover:scale-110">
+                <span class="material-symbols-outlined font-bold">chevron_left</span>
+            </button>
+
+            <div id="bestseller-scroll-container" class="flex overflow-x-auto hide-scrollbar gap-4 pb-6 snap-x-mandatory scroll-smooth px-1" style="mask-image: linear-gradient(to right, transparent, black 2%, black 98%, transparent);">
+                {% for prod in bestsellers %}
+                <a href="{{ url_for('customer.product_detail', medicine_id=prod.medicine_id) }}" class="bg-white rounded-2xl p-5 flex flex-col border border-outline-variant/15 hover:border-primary/30 hover:shadow-xl group/card hover-lift-premium relative overflow-hidden min-w-[220px] max-w-[220px] shrink-0 snap-start">
+                    <div class="h-28 mb-4 flex items-center justify-center relative">
+                        <div class="absolute inset-0 rounded-full blur-xl scale-0 group-hover/card:scale-100 transition-transform duration-500" style="background: #003d9b08;"></div>
+                        {% if prod.image_url %}
+                        <img src="{{ url_for('static', filename=prod.image_url) }}?v=2" alt="{{ prod.name }}" class="max-w-full max-h-full object-contain mix-blend-multiply group-hover/card:scale-110 transition-transform duration-300 relative z-10">
+                        {% else %}
+                        <span class="material-symbols-outlined text-5xl text-on-surface-variant/15 relative z-10">medication</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex flex-col flex-1">
+                        <h3 class="font-bold text-sm text-on-surface line-clamp-2 leading-tight mb-1 group-hover/card:text-primary transition-colors">{{ prod.name }}</h3>
+                        <span class="text-xs text-on-surface-variant mb-auto">{{ prod.brand_name or 'Generic' }}</span>
+                        <div class="flex items-center justify-between mt-4 pt-3 border-t border-outline-variant/10">
+                            <span class="font-extrabold text-primary">Rs. {{ "%.0f"|format(prod.min_price) if prod.min_price else "N/A" }}</span>
+                            <button type="button" onclick="quickAddToCart(event, {{ prod.cheapest_variant_id or 'null' }}, '{{ prod.name|e }}')"
+                                    class="quick-add-btn w-8 h-8 rounded-full bg-secondary/10 text-secondary flex items-center justify-center group-hover/card:bg-secondary group-hover/card:text-white transition-colors hover:scale-110 active:scale-95">
+                                <span class="material-symbols-outlined text-sm">add</span>
+                            </button>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+
+            <!-- Right Arrow -->
+            <button onclick="document.getElementById('bestseller-scroll-container').scrollBy({left: 300, behavior: 'smooth'})" 
+                    class="absolute right-0 top-[40%] -translate-y-1/2 z-20 bg-surface/90 backdrop-blur shadow-[0_4px_12px_rgba(0,0,0,0.1)] rounded-full w-10 h-10 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity border border-outline-variant/20 -mr-4 hover:scale-110">
+                <span class="material-symbols-outlined font-bold">chevron_right</span>
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     PROMOTIONAL BENTO GRID — Deals & Offers
+     ============================================================ -->
+<section class="reveal-on-scroll py-12 px-margin-mobile md:px-margin-desktop bg-surface-container-low">
+    <div class="max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Card 1: Free Delivery (spans 2 cols) -->
+        <a href="{{ url_for('customer.medicine_catalog') }}" class="md:col-span-2 rounded-[28px] p-8 md:p-10 relative overflow-hidden group hover-lift-premium" style="background: linear-gradient(135deg, #ef6c00, #ff8c2b);">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[60px]"></div>
+            <div class="absolute bottom-0 left-0 w-48 h-48 bg-[#0B1426]/10 rounded-full blur-[50px]"></div>
+            <div class="relative z-10">
+                <span class="inline-flex items-center gap-2 bg-[#0B1426] text-white text-xs font-bold px-4 py-1.5 rounded-full mb-4">
+                    <span class="material-symbols-outlined text-xs">local_offer</span> SPECIAL OFFER
+                </span>
+                <h3 class="text-2xl md:text-3xl font-extrabold text-white mb-3">Free Delivery <span class="text-[#0B1426]">on Rs. 2,000+</span></h3>
+                <p class="text-white/80 max-w-sm mb-6">Order your medicines online and get them delivered to your doorstep — absolutely free on orders above Rs. 2,000.</p>
+                <span class="inline-flex items-center gap-2 bg-white text-[#ef6c00] font-bold px-5 py-2.5 rounded-full group-hover:gap-3 transition-all">
+                    Shop Now <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </span>
+            </div>
+            <div class="absolute bottom-6 right-8 hidden md:block">
+                <span class="material-symbols-outlined text-[120px] text-white/10">local_shipping</span>
+            </div>
+        </a>
+
+        <!-- Card 2: Upload Prescription -->
+        <a href="{{ url_for('customer.upload_prescription') }}" class="rounded-[28px] p-8 relative overflow-hidden group hover-lift-premium bg-gradient-to-br from-primary to-primary-container">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-[40px]"></div>
+            <div class="relative z-10 flex flex-col h-full justify-between">
+                <div>
+                    <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <span class="material-symbols-outlined text-white text-2xl">description</span>
+                    </div>
+                    <h3 class="text-xl font-extrabold text-white mb-2">Upload Prescription</h3>
+                    <p class="text-white/70 text-sm">Get your medicines reviewed by certified pharmacists & delivered fast.</p>
+                </div>
+                <span class="inline-flex items-center gap-2 text-white/90 font-bold mt-6 text-sm group-hover:gap-3 transition-all">
+                    Upload Now <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                </span>
+            </div>
+        </a>
+    </div>
+</section>
+
+<!-- ============================================================
+     TOP BRANDS — Auto-Scrolling Infinite Marquee
+     ============================================================ -->
+<section class="reveal-on-scroll py-12 overflow-hidden" style="background: linear-gradient(180deg, #f1faf9 0%, #e8f6f5 100%);">
+    <div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop mb-8">
+        <h2 class="text-2xl font-extrabold font-headline-lg text-on-surface text-center">Trusted by <span class="text-primary">Top Brands</span></h2>
+    </div>
+    <!-- Marquee Row 1 -->
+    <div class="overflow-hidden mb-4">
+        <div class="marquee-track">
+            {% for brand in top_brands %}
+            <a href="{{ url_for('customer.medicine_catalog', brand=brand.brand_id) }}" class="mx-3 bg-white rounded-2xl border border-outline-variant/20 px-8 py-5 flex items-center justify-center hover:border-primary hover:shadow-lg transition-all cursor-pointer shrink-0 min-w-[180px] group">
+                <span class="text-sm font-bold text-on-surface-variant group-hover:text-primary transition-colors whitespace-nowrap">{{ brand.name }}</span>
+            </a>
+            {% endfor %}
+            <!-- Duplicate for seamless loop -->
+            {% for brand in top_brands %}
+            <a href="{{ url_for('customer.medicine_catalog', brand=brand.brand_id) }}" class="mx-3 bg-white rounded-2xl border border-outline-variant/20 px-8 py-5 flex items-center justify-center hover:border-primary hover:shadow-lg transition-all cursor-pointer shrink-0 min-w-[180px] group">
+                <span class="text-sm font-bold text-on-surface-variant group-hover:text-primary transition-colors whitespace-nowrap">{{ brand.name }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    <!-- Marquee Row 2 (reverse) -->
+    <div class="overflow-hidden">
+        <div class="marquee-track-reverse">
+            {% for brand in top_brands|reverse %}
+            <a href="{{ url_for('customer.medicine_catalog', brand=brand.brand_id) }}" class="mx-3 bg-white rounded-2xl border border-outline-variant/20 px-8 py-5 flex items-center justify-center hover:border-primary hover:shadow-lg transition-all cursor-pointer shrink-0 min-w-[180px] group">
+                <span class="text-sm font-bold text-on-surface-variant group-hover:text-primary transition-colors whitespace-nowrap">{{ brand.name }}</span>
+            </a>
+            {% endfor %}
+            {% for brand in top_brands|reverse %}
+            <a href="{{ url_for('customer.medicine_catalog', brand=brand.brand_id) }}" class="mx-3 bg-white rounded-2xl border border-outline-variant/20 px-8 py-5 flex items-center justify-center hover:border-primary hover:shadow-lg transition-all cursor-pointer shrink-0 min-w-[180px] group">
+                <span class="text-sm font-bold text-on-surface-variant group-hover:text-primary transition-colors whitespace-nowrap">{{ brand.name }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     STATS COUNTER — Glassmorphism Cards on Dark Background
+     ============================================================ -->
+<section class="reveal-on-scroll py-16 px-margin-mobile md:px-margin-desktop relative overflow-hidden" style="background: linear-gradient(135deg, #0B1426 0%, #0a2a5e 100%);">
+    <!-- Particle dots decoration -->
+    <div class="absolute inset-0 pointer-events-none opacity-30">
+        {% for i in range(20) %}
+        <div class="absolute w-1 h-1 bg-white rounded-full" style="top: {{ range(10, 90) | random }}%; left: {{ range(5, 95) | random }}%; opacity: {{ [0.2, 0.3, 0.4, 0.5] | random }};"></div>
+        {% endfor %}
+    </div>
+    <div class="max-w-container-max mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 relative z-10">
+        <div class="glass-dark rounded-2xl p-6 text-center hover-lift-premium">
+            <span class="material-symbols-outlined text-3xl text-[#F5A623] mb-3" style="font-variation-settings: 'FILL' 1;">groups</span>
+            <div class="text-3xl md:text-4xl font-extrabold text-white mb-1" id="stat1">0+</div>
+            <div class="text-xs uppercase tracking-widest text-white/50 font-medium">Customers</div>
+        </div>
+        <div class="glass-dark rounded-2xl p-6 text-center hover-lift-premium">
+            <span class="material-symbols-outlined text-3xl text-secondary mb-3" style="font-variation-settings: 'FILL' 1;">package_2</span>
+            <div class="text-3xl md:text-4xl font-extrabold text-white mb-1" id="stat2">0+</div>
+            <div class="text-xs uppercase tracking-widest text-white/50 font-medium">Orders Delivered</div>
+        </div>
+        <div class="glass-dark rounded-2xl p-6 text-center hover-lift-premium">
+            <span class="material-symbols-outlined text-3xl text-primary-fixed-dim mb-3" style="font-variation-settings: 'FILL' 1;">medical_information</span>
+            <div class="text-3xl md:text-4xl font-extrabold text-white mb-1" id="stat3">0+</div>
+            <div class="text-xs uppercase tracking-widest text-white/50 font-medium">Pharmacists</div>
+        </div>
+        <div class="glass-dark rounded-2xl p-6 text-center hover-lift-premium">
+            <span class="material-symbols-outlined text-3xl text-[#F5A623] mb-3" style="font-variation-settings: 'FILL' 1;">location_city</span>
+            <div class="text-3xl md:text-4xl font-extrabold text-white mb-1" id="stat4">0+</div>
+            <div class="text-xs uppercase tracking-widest text-white/50 font-medium">Cities Reached</div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     TESTIMONIALS — Horizontal Auto-Scroll Carousel
+     ============================================================ -->
+<section class="reveal-on-scroll py-16 px-margin-mobile md:px-margin-desktop bg-surface-container-lowest overflow-hidden">
+    <div class="max-w-container-max mx-auto text-center mb-10">
+        <h2 class="text-3xl md:text-4xl font-extrabold font-headline-lg text-on-surface mb-2">What Our Customers Say</h2>
+        <p class="text-on-surface-variant">Real experiences from {{ stats.customers }}+ happy users across Pakistan</p>
+    </div>
+    <div class="overflow-hidden">
+        <div class="marquee-track" style="animation-duration: 40s;">
+            {% set testimonials = [
+                {"name": "Ahmed Khan", "initials": "AK", "city": "Karachi", "color": "#003d9b", "stars": 5, "text": "Incredibly fast delivery! I ordered my parents' heart medication and it arrived the same evening. SehatHub is a lifesaver.", "date": "June 2026"},
+                {"name": "Sara Malik", "initials": "SM", "city": "Lahore", "color": "#ef6c00", "stars": 5, "text": "The only online pharmacy I trust for authentic baby formula. Their packaging is secure and delivery is always on time.", "date": "May 2026"},
+                {"name": "Rizwan Butt", "initials": "RB", "city": "Islamabad", "color": "#5e3c00", "stars": 4, "text": "The pharmacist consultation service is brilliant. They helped me understand my prescription before I confirmed the order.", "date": "July 2026"},
+                {"name": "Fatima Shah", "initials": "FS", "city": "Peshawar", "color": "#003d9b", "stars": 5, "text": "Best prices for medical devices. Got my BP monitor delivered the next day with warranty. Highly recommended!", "date": "June 2026"},
+                {"name": "Usman Ali", "initials": "UA", "city": "Multan", "color": "#ef6c00", "stars": 5, "text": "SehatHub made it so easy to get my monthly medicines. Upload prescription, wait a bit, and they deliver. Simple!", "date": "July 2026"}
+            ] %}
+            {% for t in testimonials + testimonials %}
+            <div class="mx-3 bg-white rounded-2xl border border-outline-variant/15 p-6 min-w-[320px] max-w-[360px] shrink-0 flex flex-col shadow-sm hover:shadow-lg transition-shadow">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0" style="background: {{ t.color }};">{{ t.initials }}</div>
+                    <div>
+                        <div class="font-bold text-sm text-on-surface">{{ t.name }}</div>
+                        <div class="text-xs text-on-surface-variant">{{ t.city }}, PK</div>
+                    </div>
+                </div>
+                <div class="flex gap-0.5 mb-3">
+                    {% for s in range(t.stars) %}
+                    <span class="material-symbols-outlined text-sm text-[#F5A623]" style="font-variation-settings: 'FILL' 1;">star</span>
+                    {% endfor %}
+                    {% for s in range(5 - t.stars) %}
+                    <span class="material-symbols-outlined text-sm text-[#F5A623]/30" style="font-variation-settings: 'FILL' 1;">star</span>
+                    {% endfor %}
+                </div>
+                <p class="text-sm text-on-surface-variant italic flex-1 leading-relaxed">"{{ t.text }}"</p>
+                <p class="text-xs text-on-surface-variant/50 mt-4">{{ t.date }} · Verified Purchase</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     PRESCRIPTION CTA — Glowing Action Card
+     ============================================================ -->
+<section class="reveal-on-scroll py-16 px-margin-mobile md:px-margin-desktop" style="background: linear-gradient(135deg, #0B1426 0%, #0a2a5e 100%);">
+    <div class="max-w-container-max mx-auto">
+        <div class="rounded-[32px] p-10 md:p-16 flex flex-col md:flex-row items-center gap-12 relative overflow-hidden" style="background: linear-gradient(135deg, rgba(0, 61, 155,0.15), rgba(245,166,35,0.08)); border: 1px solid rgba(255,255,255,0.08);">
+            <!-- Glow decorations -->
+            <div class="absolute -bottom-20 -left-20 w-64 h-64 bg-primary/20 rounded-full blur-[80px]"></div>
+            <div class="absolute -top-20 -right-20 w-48 h-48 bg-[#F5A623]/15 rounded-full blur-[60px]"></div>
+
+            <div class="flex-1 z-10 text-center md:text-left">
+                <span class="inline-flex items-center gap-2 bg-white/10 border border-white/10 rounded-full px-4 py-2 text-sm text-white/70 mb-6">
+                    <span class="material-symbols-outlined text-secondary text-base">verified</span> Trusted by Licensed Pharmacists
+                </span>
+                <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4 leading-tight">Need Medicines?<br/><span class="gradient-text">Upload Your Prescription.</span></h2>
+                <p class="text-white/60 md:text-lg mb-8 max-w-md mx-auto md:mx-0">Our certified pharmacists will review your prescription, verify authenticity, and deliver medicines directly to your door — secure, private, and 100% authentic.</p>
+                <a href="{{ url_for('customer.upload_prescription') }}" class="inline-flex items-center gap-3 bg-[#F5A623] text-white px-10 py-5 rounded-full font-bold text-lg hover:shadow-2xl transition-all glow-gold hover:scale-105 active:scale-95">
+                    <span class="material-symbols-outlined">upload_file</span>
+                    Upload Now
+                </a>
+            </div>
+            <div class="relative z-10 hidden md:block">
+                <div class="w-56 h-56 glass-dark rounded-3xl flex items-center justify-center float-card">
+                    <span class="material-symbols-outlined text-[100px] text-white/20" style="font-variation-settings: 'FILL' 1;">description</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ============================================================
+     NEWSLETTER
+     ============================================================ -->
+<section class="reveal-on-scroll py-16 px-margin-mobile md:px-margin-desktop bg-surface">
+    <div class="max-w-container-max mx-auto border-y border-outline-variant/20 py-12 flex flex-col lg:flex-row justify-between items-center gap-8">
+        <div class="text-center lg:text-left">
+            <h3 class="text-2xl font-extrabold font-headline-lg mb-2">Join Our Wellness Community 💊</h3>
+            <p class="text-on-surface-variant">Get health tips, expert advice and exclusive offers weekly.</p>
+        </div>
+        <div id="newsletterFormWrapper" class="flex w-full max-w-lg">
+            <form id="newsletterForm" class="flex w-full gap-2" onsubmit="handleNewsletterSubmit(event)">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input id="newsletterEmailInput" class="flex-1 px-6 py-4 rounded-full border border-outline-variant focus:ring-2 focus:ring-primary/20 outline-none bg-surface-container" placeholder="Enter your email address" type="email" name="email" required />
+                <button class="bg-primary text-white px-8 py-4 rounded-full font-bold hover:shadow-lg hover:bg-primary-container transition-all whitespace-nowrap" type="submit">
+                    Subscribe
+                </button>
+            </form>
+        </div>
+        <div id="newsletterSuccess" class="hidden flex-col items-center lg:items-start gap-2 w-full max-w-lg">
+            <div class="flex items-center gap-3 bg-secondary-container/40 text-on-secondary-container rounded-2xl px-6 py-4 w-full">
+                <span class="material-symbols-outlined text-secondary text-2xl" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                <div>
+                    <div class="font-bold">You're subscribed! 🎉</div>
+                    <div class="text-xs text-on-surface-variant">Thanks for joining. Check your inbox for a welcome email.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- BOTTOM NAV (Mobile only) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-2 md:hidden bg-surface shadow-[0_-2px_10px_rgba(0,0,0,0.05)] rounded-t-xl">
+    <a href="{{ url_for('home') }}" class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1">
+        <span class="material-symbols-outlined">home</span>
+        <span class="text-label-md">Home</span>
+    </a>
+    <a href="{{ url_for('customer.medicine_catalog') }}" class="flex flex-col items-center justify-center text-on-surface-variant">
+        <span class="material-symbols-outlined">category</span>
+        <span class="text-label-md">Shop</span>
+    </a>
+    <a href="{{ url_for('customer.order_history') }}" class="flex flex-col items-center justify-center text-on-surface-variant">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <span class="text-label-md">Orders</span>
+    </a>
+    <a href="{{ url_for('customer.view_cart') }}" class="flex flex-col items-center justify-center text-on-surface-variant">
+        <span class="material-symbols-outlined">shopping_cart</span>
+        <span class="text-label-md">Cart</span>
+    </a>
+</nav>
+
+<script>
+    // ============================================================
+    // Quick Add to Cart (product card '+' button)
+    // Stops the click from following the card's own link (to the
+    // product detail page) and instead adds the item directly via
+    // AJAX - so browsing the homepage isn't interrupted by a full
+    // page navigation just to add one item.
+    // ============================================================
+    function quickAddToCart(event, variantId, medicineName) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        // If nobody's logged in, don't even try the AJAX call - the
+        // route would redirect to the login page (HTML, not JSON),
+        // which the code below can't parse as a cart response. Send
+        // them to log in directly instead, with a clear reason why.
+        const roleMeta = document.querySelector('meta[name="user-role"]');
+        const isLoggedIn = roleMeta && roleMeta.getAttribute('content');
+        if (!isLoggedIn) {
+            window.showToast('error', 'Please log in to add items to your cart.');
+            setTimeout(function () {
+                window.location.href = "{{ url_for('auth.login') }}";
+            }, 1200);
+            return;
+        }
+
+        if (!variantId) {
+            window.showToast('error', 'This item has no purchasable pack size yet.');
+            return;
+        }
+
+        const btn = event.currentTarget;
+        const icon = btn.querySelector('.material-symbols-outlined');
+        const originalIcon = icon.textContent;
+        btn.disabled = true;
+
+        fetch("{{ url_for('customer.quick_add_to_cart') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `variant_id=${variantId}&csrf_token=${encodeURIComponent(getCsrfToken())}`
+        })
+            .then(function (r) {
+                // If the session expired mid-browsing, this redirects to the
+                // login page (HTML) instead of returning JSON - catch that
+                // specific case with a clear message rather than a generic one
+                const contentType = r.headers.get('content-type') || '';
+                if (!contentType.includes('application/json')) {
+                    throw new Error('not-logged-in');
+                }
+                return r.json();
+            })
+            .then(function (data) {
+                if (data.success) {
+                    // Brief checkmark confirmation, then back to normal
+                    icon.textContent = 'check';
+                    btn.classList.add('bg-secondary', 'text-white');
+                    window.showToast('success', `${medicineName} added to cart!`);
+
+                    const badge = document.getElementById('navbarCartBadge');
+                    if (badge && typeof data.cart_count !== 'undefined') {
+                        badge.textContent = data.cart_count;
+                        badge.classList.remove('hidden');
+                    }
+
+                    setTimeout(function () {
+                        icon.textContent = originalIcon;
+                        btn.classList.remove('bg-secondary', 'text-white');
+                        btn.disabled = false;
+                    }, 1200);
+                } else {
+                    window.showToast('error', data.message || 'Could not add that item.');
+                    btn.disabled = false;
+                }
+            })
+            .catch(function (err) {
+                if (err.message === 'not-logged-in') {
+                    window.showToast('error', 'Your session expired. Please log in again.');
+                    setTimeout(function () {
+                        window.location.href = "{{ url_for('auth.login') }}";
+                    }, 1200);
+                } else {
+                    window.showToast('error', 'Something went wrong. Please try again.');
+                }
+                btn.disabled = false;
+            });
+    }
+
+    // ============================================================
+    // Category Spotlight Switcher
+    // ============================================================
+    function switchSpotlight(index) {
+        const currentVisible = document.querySelector('.spot-panel:not(.hidden)');
+        const newPanel = document.getElementById('spot-panel-' + index);
+
+        document.querySelectorAll('.spot-btn').forEach(b => {
+            b.classList.remove('bg-primary', 'text-white', 'shadow-lg');
+            b.classList.add('bg-surface-container-high', 'text-on-surface-variant');
+        });
+        const btn = document.getElementById('spot-btn-' + index);
+        if (btn) {
+            btn.classList.remove('bg-surface-container-high', 'text-on-surface-variant');
+            btn.classList.add('bg-primary', 'text-white', 'shadow-lg');
+        }
+
+        if (!newPanel || currentVisible === newPanel) return;
+
+        function showNewPanel() {
+            newPanel.classList.remove('hidden');
+            newPanel.classList.add('fade-out'); // start invisible...
+            void newPanel.offsetWidth;          // ...force a reflow so the browser registers that state...
+            newPanel.classList.remove('fade-out'); // ...then transition to visible
+        }
+
+        if (currentVisible) {
+            currentVisible.classList.add('fade-out');
+            setTimeout(function () {
+                currentVisible.classList.add('hidden');
+                currentVisible.classList.remove('fade-out');
+                showNewPanel();
+            }, 200);
+        } else {
+            showNewPanel();
+        }
+    }
+
+    // ============================================================
+    // Stat counter animation
+    // ============================================================
+    function animateValue(obj, start, end, duration) {
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            obj.innerHTML = Math.floor(progress * (end - start) + start) + '+';
+            if (progress < 1) window.requestAnimationFrame(step);
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    const statSection = document.getElementById('stat1');
+    if (statSection) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateValue(document.getElementById('stat1'), 0, {{ stats.customers }}, 2000);
+                    animateValue(document.getElementById('stat2'), 0, {{ stats.orders_delivered }}, 2000);
+                    animateValue(document.getElementById('stat3'), 0, {{ stats.pharmacists }}, 2000);
+                    animateValue(document.getElementById('stat4'), 0, {{ stats.cities }}, 2000);
+                    observer.unobserve(entry.target);
+                    
+                    // Poll for real-time updates after initial animation
+                    setInterval(() => {
+                        fetch('/api/public-stats').then(r => r.json()).then(data => {
+                            if (data.customers !== undefined) {
+                                const s1 = document.getElementById('stat1');
+                                const s2 = document.getElementById('stat2');
+                                const s3 = document.getElementById('stat3');
+                                const s4 = document.getElementById('stat4');
+                                const c1 = parseInt(s1.innerText);
+                                const c2 = parseInt(s2.innerText);
+                                const c3 = parseInt(s3.innerText);
+                                const c4 = parseInt(s4.innerText);
+                                if (c1 !== data.customers) animateValue(s1, c1, data.customers, 1000);
+                                if (c2 !== data.orders_delivered) animateValue(s2, c2, data.orders_delivered, 1000);
+                                if (c3 !== data.pharmacists) animateValue(s3, c3, data.pharmacists, 1000);
+                                if (c4 !== data.cities) animateValue(s4, c4, data.cities, 1000);
+                            }
+                        }).catch(() => {});
+                    }, 5000);
+                }
+            });
+        }, { threshold: 0.5 });
+        observer.observe(statSection.parentElement.parentElement);
+    }
+
+    // ============================================================
+    // Newsletter
+    // ============================================================
+    function handleNewsletterSubmit(e) {
+        e.preventDefault();
+        const email = document.getElementById('newsletterEmailInput').value.trim();
+        if (!email) return;
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        fetch("{{ url_for('newsletter_subscribe') }}", {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: `email=${encodeURIComponent(email)}&csrf_token=${encodeURIComponent(csrfToken)}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('newsletterForm').classList.add('hidden');
+                const successEl = document.getElementById('newsletterSuccess');
+                successEl.classList.remove('hidden');
+                successEl.classList.add('flex');
+            } else {
+                if (window.showToast) window.showToast('error', data.message || 'Something went wrong.');
+            }
+        })
+        .catch(() => {
+            if (window.showToast) window.showToast('error', 'Network error. Please try again.');
+        });
+    }
+</script>
+
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    @media (max-width: 767px) {
+        body { padding-bottom: 64px; }
+    }
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 32px -8px rgba(0, 61, 155, 0.2);
+    }
+</style>
+{% endblock %}

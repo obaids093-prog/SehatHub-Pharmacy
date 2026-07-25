@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+
+{% block title %}{{ medicine.name if medicine else 'Medicine Not Found' }} | SehatHub{% endblock %}
+
+{% block content %}
+
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8">
+
+    {% if error or not medicine %}
+        <!-- ============================================================
+             ERROR STATE - medicine not found or database issue
+             ============================================================ -->
+        <div class="text-center py-20">
+            <span class="material-symbols-outlined text-6xl text-on-surface-variant opacity-30 mb-4 block">error</span>
+            <h2 class="text-headline-md font-bold mb-2">{{ error or "Medicine not found." }}</h2>
+            <a href="{{ url_for('customer.medicine_catalog') }}" class="text-primary font-bold hover:underline">← Back to Medicines</a>
+        </div>
+
+    {% else %}
+
+    <!-- Breadcrumb -->
+    <div class="text-body-sm text-on-surface-variant mb-6">
+        <a href="/" class="hover:text-primary">Home</a>
+        <span class="mx-2">›</span>
+        <a href="{{ url_for('customer.medicine_catalog') }}" class="hover:text-primary">Medicines</a>
+        <span class="mx-2">›</span>
+        <span class="text-primary font-medium">{{ medicine.name }}</span>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter mb-10">
+
+        <!-- ============================================================
+             LEFT: IMAGE GALLERY (Premium)
+             ============================================================ -->
+        <div class="lg:col-span-1">
+            <div class="bg-surface-container-lowest rounded-3xl border border-outline-variant/15 aspect-square flex items-center justify-center relative overflow-hidden group hover:shadow-2xl transition-all duration-500">
+                <!-- Ambient glow effect -->
+                <div class="absolute inset-0 rounded-full blur-[80px] opacity-20 scale-75 group-hover:scale-110 transition-transform duration-700 bg-primary z-0"></div>
+                
+                {% if medicine.type == 'Prescription' %}
+                    <span class="absolute top-4 left-4 bg-tertiary-fixed text-on-tertiary-fixed text-xs font-bold px-4 py-1.5 rounded-full uppercase z-20 flex items-center gap-1 shadow-sm">
+                        <span class="material-symbols-outlined text-[14px]">prescriptions</span> Rx Required
+                    </span>
+                {% endif %}
+                
+                {% if medicine.image_url %}
+                    <img src="{{ url_for('static', filename=medicine.image_url) }}?v=2" alt="{{ medicine.name }}" class="w-full h-full object-contain p-8 relative z-10 group-hover:scale-110 transition-transform duration-500 drop-shadow-xl cursor-zoom-in">
+                {% else %}
+                    <span class="material-symbols-outlined text-9xl text-primary/20 relative z-10">medication</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ============================================================
+             MIDDLE: MEDICINE INFO + PACK SIZE SELECTOR
+             ============================================================ -->
+        <div class="lg:col-span-1">
+            <p class="text-xs font-bold text-primary uppercase tracking-wide mb-2">{{ medicine.brand_name or 'Generic' }}</p>
+            <h1 class="text-headline-lg font-headline-lg text-on-surface mb-1">{{ medicine.name }}</h1>
+            
+            {% if medicine.generic_name %}
+            <div class="bg-surface-container-lowest border border-outline-variant/20 rounded-lg p-3 inline-block mb-4">
+                <span class="text-xs text-on-surface-variant uppercase tracking-wider font-bold block mb-0.5">Formulation</span>
+                <span class="text-body-md text-on-surface italic">{{ medicine.generic_name }}</span>
+            </div>
+            {% endif %}
+
+            <!-- Star rating -->
+            <div class="flex items-center gap-2 mb-6">
+                <div class="flex text-tertiary-fixed-dim">
+                    {% for i in range(1, 6) %}
+                        <span class="material-symbols-outlined text-lg" style="font-variation-settings: 'FILL' {{ 1 if i <= average_rating|round(0, 'floor') else 0 }};">star</span>
+                    {% endfor %}
+                </div>
+                <span class="text-body-sm text-on-surface-variant">({{ reviews|length }} Reviews)</span>
+            </div>
+
+            {% if variants %}
+            <!-- Pack size selector - JS below updates price/quantity-button data attributes -->
+            <div class="bg-surface-container-low rounded-xl p-5 mb-6">
+                <p class="text-label-md font-bold text-on-surface-variant mb-3">Select Pack Size</p>
+                <div class="flex flex-wrap gap-2" id="packSizeButtons">
+                    {% for variant in variants %}
+                    <button type="button"
+                            onclick="selectVariant({{ variant.variant_id }}, '{{ variant.pack_size }}', {{ variant.price }}, {{ variant.stock_qty }})"
+                            data-variant-id="{{ variant.variant_id }}"
+                            class="variant-btn px-4 py-2 rounded-lg border text-body-sm font-medium transition-all
+                                {% if loop.first %} border-primary bg-primary/5 text-primary {% else %} border-outline-variant text-on-surface-variant hover:border-primary {% endif %}">
+                        {{ variant.pack_size }}
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- ============================================================
+             RIGHT: PRICE + ADD TO CART CARD
+             ============================================================ -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 sticky top-24">
+
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-body-sm text-on-surface-variant">Total Payable</span>
+                    <span class="text-headline-md font-bold text-primary" id="displayPrice">
+                        Rs. {{ "%.2f"|format(variants[0].price) if variants else "N/A" }}
+                    </span>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <label class="text-body-sm text-on-surface-variant">Quantity</label>
+                    <div class="flex items-center border border-outline-variant rounded-lg">
+                        <button type="button" onclick="changeQuantity(-1)" class="px-3 py-2 text-on-surface-variant hover:text-primary">−</button>
+                        <span id="quantityDisplay" class="px-4 font-bold">1</span>
+                        <button type="button" onclick="changeQuantity(1)" class="px-3 py-2 text-on-surface-variant hover:text-primary">+</button>
+                    </div>
+                </div>
+
+                {% if variants and variants[0].stock_qty > 0 %}
+                    <p class="text-xs text-secondary flex items-center gap-1 mb-4" id="stockStatus">
+                        <span class="material-symbols-outlined text-sm">check_circle</span> In Stock
+                    </p>
+                {% else %}
+                    <p class="text-xs text-error flex items-center gap-1 mb-4" id="stockStatus">
+                        <span class="material-symbols-outlined text-sm">cancel</span> Out of Stock
+                    </p>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('customer.add_to_cart') }}" id="addToCartForm" onsubmit="animateAddToCart(this)">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="variant_id" id="selectedVariantId" value="{{ variants[0].variant_id if variants else '' }}">
+                    <input type="hidden" name="quantity" id="selectedQuantity" value="1">
+
+                    <button type="submit" id="addToCartBtn" class="group relative w-full py-4 bg-primary text-white font-headline-md text-base rounded-lg hover:bg-primary-container hover:-translate-y-1 hover:shadow-[0_8px_20px_-6px_rgba(var(--color-primary-rgb),0.5)] active:scale-[0.98] transition-all duration-300 ease-out flex justify-center items-center gap-2 mb-3 overflow-hidden {% if not variants or variants[0].stock_qty == 0 %}opacity-50 cursor-not-allowed hover:-translate-y-0 hover:shadow-none{% endif %}" {% if not variants or variants[0].stock_qty == 0 %}disabled{% endif %}>
+                        <span class="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></span>
+                        <span class="material-symbols-outlined transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" id="addToCartIcon">shopping_cart</span>
+                        <span id="addToCartText">{% if not variants or variants[0].stock_qty == 0 %}Out of Stock{% else %}Add to Cart{% endif %}</span>
+                    </button>
+                </form>
+
+                <div class="flex items-center justify-center gap-2 text-xs text-on-surface-variant border-t border-outline-variant/20 pt-4 mt-2">
+                    <span class="material-symbols-outlined text-sm text-secondary">verified</span>
+                    100% Genuine &amp; Safe Checkout
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================
+         TABS: Description / Dosage & Usage / Side Effects
+         ============================================================ -->
+    <div class="bg-white rounded-2xl border border-outline-variant/10 mb-10">
+        <div class="flex border-b border-outline-variant/20 overflow-x-auto">
+            <button onclick="showTab('description')" id="tab-description" class="tab-button px-6 py-4 text-body-sm font-bold border-b-2 border-primary text-primary whitespace-nowrap">Description</button>
+            <button onclick="showTab('usage')" id="tab-usage" class="tab-button px-6 py-4 text-body-sm font-medium border-b-2 border-transparent text-on-surface-variant whitespace-nowrap">Dosage &amp; Usage</button>
+            <button onclick="showTab('sideeffects')" id="tab-sideeffects" class="tab-button px-6 py-4 text-body-sm font-medium border-b-2 border-transparent text-on-surface-variant whitespace-nowrap">Side Effects</button>
+        </div>
+
+        <div class="p-6">
+            <div id="content-description" class="tab-content">
+                <h3 class="font-bold text-lg mb-3">About {{ medicine.name }}</h3>
+                <p class="text-body-md text-on-surface-variant leading-relaxed">{{ medicine.description or "No description available." }}</p>
+            </div>
+            <div id="content-usage" class="tab-content hidden">
+                <h3 class="font-bold text-lg mb-3">Dosage &amp; Usage</h3>
+                <p class="text-body-md text-on-surface-variant leading-relaxed">{{ medicine.usage_info or "No usage information available." }}</p>
+            </div>
+            <div id="content-sideeffects" class="tab-content hidden">
+                <h3 class="font-bold text-lg mb-3">Common Side Effects</h3>
+                <p class="text-body-md text-on-surface-variant leading-relaxed">{{ medicine.side_effects or "No side effect information available." }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ============================================================
+         SIMILAR PRODUCTS SECTION
+         ============================================================ -->
+    {% if similar_medicines and similar_medicines|length > 0 %}
+    <div class="mb-10">
+        <h2 class="text-headline-md font-headline-md mb-6">Frequently Bought Together</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {% for med in similar_medicines %}
+            <a href="{{ url_for('customer.product_detail', medicine_id=med.medicine_id) }}" class="bg-white rounded-2xl p-4 shadow-sm border border-outline-variant/10 hover:shadow-md transition-all group flex flex-col h-full">
+                <div class="relative aspect-square rounded-xl overflow-hidden bg-surface-bright mb-4 flex items-center justify-center">
+                    {% if med.image_url %}
+                        <img src="{{ url_for('static', filename=med.image_url) }}?v=2" alt="{{ med.name }}" class="w-full h-full object-contain p-2">
+                    {% else %}
+                        <span class="material-symbols-outlined text-5xl text-primary/30">medication</span>
+                    {% endif %}
+                </div>
+                <div class="flex-grow">
+                    <p class="text-xs text-on-surface-variant mb-1 uppercase tracking-wide">{{ med.brand_name or 'Generic' }}</p>
+                    <h4 class="font-bold text-sm leading-snug mb-2">{{ med.name }}</h4>
+                </div>
+                <div class="mt-auto flex justify-between items-center">
+                    <span class="font-bold text-primary">Rs. {{ "%.0f"|format(med.min_price) if med.min_price else "N/A" }}</span>
+                    <span class="bg-secondary-container text-on-secondary-container p-1.5 rounded-full group-hover:bg-secondary group-hover:text-white transition-all cursor-pointer">
+                        <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
+                    </span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ============================================================
+         REVIEWS SECTION
+         ============================================================ -->
+    <div class="mb-10">
+        <h2 class="text-headline-md font-headline-md mb-6">Customer Reviews ({{ reviews|length }})</h2>
+
+        {% if reviews|length == 0 %}
+            <p class="text-on-surface-variant text-body-sm">No reviews yet for this medicine.</p>
+        {% else %}
+            <div class="space-y-4">
+                {% for review in reviews %}
+                <div class="bg-white rounded-xl border border-outline-variant/10 p-5">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
+                        <div>
+                            <span class="font-bold text-body-sm flex items-center gap-1.5">
+                                {{ review.full_name }}
+                                <span class="bg-secondary-container text-on-secondary-container text-[10px] uppercase font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5" title="This customer purchased this item.">
+                                    <span class="material-symbols-outlined text-[10px]">verified</span> Verified Buyer
+                                </span>
+                            </span>
+                            <span class="text-xs text-on-surface-variant mt-1 block">{{ review.created_at.strftime('%B %d, %Y') if review.created_at else '' }}</span>
+                        </div>
+                        <div class="flex text-tertiary-fixed-dim">
+                            {% for i in range(1, 6) %}
+                                <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' {{ 1 if i <= review.rating else 0 }};">star</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <p class="text-body-sm text-on-surface-variant">{{ review.comment }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ============================================================
+         RELATED MEDICINES SECTION
+         ============================================================ -->
+    {% if similar_medicines and similar_medicines|length > 0 %}
+    <div class="mt-16 pt-10 border-t border-outline-variant/10">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl font-extrabold font-headline-lg text-on-surface">Frequently Bought Together</h2>
+        </div>
+        
+        <div class="relative group">
+            <!-- Left Arrow -->
+            <button onclick="document.getElementById('related-scroll-container').scrollBy({left: -300, behavior: 'smooth'})" 
+                    class="absolute left-0 top-[40%] -translate-y-1/2 z-20 bg-surface/90 backdrop-blur shadow-[0_4px_12px_rgba(0,0,0,0.1)] rounded-full w-10 h-10 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity border border-outline-variant/20 -ml-4 hover:scale-110">
+                <span class="material-symbols-outlined font-bold">chevron_left</span>
+            </button>
+
+            <div id="related-scroll-container" class="flex overflow-x-auto hide-scrollbar gap-4 pb-6 snap-x-mandatory scroll-smooth px-1" style="mask-image: linear-gradient(to right, transparent, black 2%, black 98%, transparent);">
+                {% for prod in similar_medicines %}
+                <a href="{{ url_for('customer.product_detail', medicine_id=prod.medicine_id) }}" class="bg-white rounded-2xl p-5 flex flex-col border border-outline-variant/15 hover:border-primary/30 hover:shadow-xl group/card hover-lift-premium relative overflow-hidden min-w-[220px] max-w-[220px] shrink-0 snap-start">
+                    <div class="h-28 mb-4 flex items-center justify-center relative">
+                        <div class="absolute inset-0 rounded-full blur-xl scale-0 group-hover/card:scale-100 transition-transform duration-500" style="background: #003d9b08;"></div>
+                        {% if prod.image_url %}
+                        <img src="{{ url_for('static', filename=prod.image_url) }}?v=2" alt="{{ prod.name }}" class="max-w-full max-h-full object-contain mix-blend-multiply group-hover/card:scale-110 transition-transform duration-300 relative z-10">
+                        {% else %}
+                        <span class="material-symbols-outlined text-5xl text-on-surface-variant/15 relative z-10">medication</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex flex-col flex-1">
+                        <h3 class="font-bold text-sm text-on-surface line-clamp-2 leading-tight mb-1 group-hover/card:text-primary transition-colors">{{ prod.name }}</h3>
+                        <span class="text-xs text-on-surface-variant mb-auto">{{ prod.brand_name or 'Generic' }}</span>
+                        <div class="flex items-center mt-4 pt-3 border-t border-outline-variant/10">
+                            <span class="font-extrabold text-primary">Rs. {{ "%.0f"|format(prod.min_price) if prod.min_price else "N/A" }}</span>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+
+            <!-- Right Arrow -->
+            <button onclick="document.getElementById('related-scroll-container').scrollBy({left: 300, behavior: 'smooth'})" 
+                    class="absolute right-0 top-[40%] -translate-y-1/2 z-20 bg-surface/90 backdrop-blur shadow-[0_4px_12px_rgba(0,0,0,0.1)] rounded-full w-10 h-10 flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-opacity border border-outline-variant/20 -mr-4 hover:scale-110">
+                <span class="material-symbols-outlined font-bold">chevron_right</span>
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    {% endif %}
+</div>
+
+<script>
+    // ============================================================
+    // Pack size selection - updates price, stock, and the hidden
+    // form fields without reloading the page
+    // ============================================================
+    function selectVariant(variantId, packSize, price, stockQty) {
+        document.getElementById('displayPrice').textContent = 'Rs. ' + price.toFixed(2);
+        document.getElementById('selectedVariantId').value = variantId;
+
+        const stockStatus = document.getElementById('stockStatus');
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        
+        if (stockQty > 0) {
+            stockStatus.innerHTML = '<span class="material-symbols-outlined text-sm">check_circle</span> In Stock';
+            stockStatus.className = 'text-xs text-secondary flex items-center gap-1 mb-4';
+            
+            addToCartBtn.disabled = false;
+            addToCartBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'hover:-translate-y-0', 'hover:shadow-none');
+            document.getElementById('addToCartIcon').textContent = 'shopping_cart';
+            document.getElementById('addToCartText').textContent = 'Add to Cart';
+        } else {
+            stockStatus.innerHTML = '<span class="material-symbols-outlined text-sm">cancel</span> Out of Stock';
+            stockStatus.className = 'text-xs text-error flex items-center gap-1 mb-4';
+            
+            addToCartBtn.disabled = true;
+            addToCartBtn.classList.add('opacity-50', 'cursor-not-allowed', 'hover:-translate-y-0', 'hover:shadow-none');
+            document.getElementById('addToCartIcon').textContent = 'remove_shopping_cart';
+            document.getElementById('addToCartText').textContent = 'Out of Stock';
+        }
+
+        // Highlight the selected button, un-highlight the rest
+        document.querySelectorAll('.variant-btn').forEach(btn => {
+            if (btn.dataset.variantId === String(variantId)) {
+                btn.classList.add('border-primary', 'bg-primary/5', 'text-primary');
+                btn.classList.remove('border-outline-variant', 'text-on-surface-variant');
+            } else {
+                btn.classList.remove('border-primary', 'bg-primary/5', 'text-primary');
+                btn.classList.add('border-outline-variant', 'text-on-surface-variant');
+            }
+        });
+    }
+
+    // ============================================================
+    // Quantity +/- buttons
+    // ============================================================
+    let currentQuantity = 1;
+    function changeQuantity(delta) {
+        currentQuantity = Math.max(1, currentQuantity + delta);
+        document.getElementById('quantityDisplay').textContent = currentQuantity;
+        document.getElementById('selectedQuantity').value = currentQuantity;
+    }
+
+    // ============================================================
+    // Tab switching
+    // ============================================================
+    function showTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.getElementById('content-' + tabName).classList.remove('hidden');
+
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('border-primary', 'text-primary', 'font-bold');
+            btn.classList.add('border-transparent', 'text-on-surface-variant', 'font-medium');
+        });
+        const activeBtn = document.getElementById('tab-' + tabName);
+        activeBtn.classList.add('border-primary', 'text-primary', 'font-bold');
+        activeBtn.classList.remove('border-transparent', 'text-on-surface-variant', 'font-medium');
+    }
+
+    // ============================================================
+    // Add to Cart Animation
+    // ============================================================
+    function animateAddToCart(form) {
+        const btn = form.querySelector('#addToCartBtn');
+        const icon = form.querySelector('#addToCartIcon');
+        const text = form.querySelector('#addToCartText');
+        
+        // Prevent multiple clicks
+        if (btn.disabled) return false;
+        
+        // Add loading state
+        btn.classList.add('cursor-wait', 'opacity-90');
+        icon.classList.add('animate-spin');
+        icon.textContent = 'progress_activity';
+        text.textContent = 'Adding...';
+        
+        // Let the form submit naturally
+        return true;
+    }
+</script>
+
+<style>
+    @keyframes shimmer {
+        100% {
+            transform: translateX(100%);
+        }
+    }
+</style>
+
+{% endblock %}

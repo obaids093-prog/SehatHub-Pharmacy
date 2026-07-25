@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Order History | SehatHub{% endblock %}
+
+{% block content %}
+
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8">
+
+    <h1 class="text-headline-lg font-headline-lg text-on-surface mb-1">Order History</h1>
+    <p class="text-body-sm text-on-surface-variant mb-8">View and manage your past medicine orders.</p>
+
+    {% if error %}
+        <div class="bg-error-container text-on-error-container px-4 py-3 rounded-lg mb-6">{{ error }}</div>
+    {% endif %}
+
+    {% if orders|length == 0 and not error %}
+        <div class="text-center py-20">
+            <span class="material-symbols-outlined text-6xl text-on-surface-variant opacity-30 mb-4 block">receipt_long</span>
+            <h2 class="text-headline-md font-bold mb-2">No orders yet</h2>
+            <a href="{{ url_for('customer.medicine_catalog') }}" class="text-primary font-bold hover:underline">Browse Medicines →</a>
+        </div>
+    {% else %}
+
+    <div class="space-y-4">
+        {% for order in orders %}
+        <div class="bg-white rounded-2xl border border-outline-variant/10 p-5 flex flex-col md:flex-row md:items-center gap-4">
+
+            <div class="flex-1">
+                <div class="flex items-center gap-3 mb-1">
+                    <span class="font-bold">#SH-{{ "%04d"|format(order.order_id) }}</span>
+                    <span class="text-xs px-2.5 py-1 rounded-full font-bold uppercase
+                        {% if order.status == 'delivered' %} bg-secondary-container text-on-secondary-container
+                        {% elif order.status == 'cancelled' %} bg-error-container text-on-error-container
+                        {% else %} bg-primary-container/10 text-primary {% endif %}">
+                        {{ order.status }}
+                    </span>
+                </div>
+                <p class="text-xs text-on-surface-variant">{{ order.created_at.strftime('%d %b %Y, %I:%M %p') }} · {{ order.item_count }} item{{ 's' if order.item_count != 1 else '' }}</p>
+            </div>
+
+            <div class="text-left md:text-right">
+                <p class="font-bold text-primary text-lg">Rs. {{ "%.2f"|format(order.total_amount) }}</p>
+                <p class="text-xs text-on-surface-variant capitalize">{{ order.payment_method.replace('_', ' ') }}</p>
+            </div>
+
+            <a href="{{ url_for('customer.order_detail', order_id=order.order_id) }}"
+               class="px-5 py-2.5 border-2 border-primary text-primary rounded-full font-bold text-sm hover:bg-primary/5 transition-all whitespace-nowrap text-center">
+                View Details
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Log In | SehatHub{% endblock %}
+
+{% block header %}
+<!-- ============================================================
+     HEADER (simple version - same override pattern as signup)
+     ============================================================ -->
+<header class="absolute top-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-desktop h-24">
+    <a href="{{ url_for('home') }}" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <span class="material-symbols-outlined text-secondary text-3xl glow-pulse" style="font-variation-settings: 'FILL' 1;">health_and_safety</span>
+        <span class="font-headline-md text-headline-md font-bold text-white">SehatHub</span>
+    </a>
+    <a class="text-white/80 font-label-md text-label-md hover:text-white transition-colors flex items-center gap-1 bg-white/10 px-4 py-2 rounded-full backdrop-blur-md border border-white/20 hover:bg-white/20" href="https://wa.me/923001234567?text=Hi%20SehatHub%20Support,%20I%20need%20help%20logging%20in" target="_blank" rel="noopener">
+        <span class="material-symbols-outlined text-[18px]">support_agent</span> Need help?
+    </a>
+</header>
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     LOGIN FORM - Premium Glassmorphism Design
+     ============================================================ -->
+<main class="min-h-screen pt-24 pb-12 px-margin-mobile flex items-center justify-center relative overflow-hidden bg-[#0B1426]">
+
+    <!-- Atmospheric background blobs (Cinematic, Premium) -->
+    <div class="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-primary/30 rounded-full blur-[120px] blob-animation"></div>
+    <div class="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-secondary/20 rounded-full blur-[100px] blob-animation" style="animation-delay: -5s;"></div>
+    <div class="absolute top-[40%] left-[30%] w-[300px] h-[300px] bg-[#F5A623]/10 rounded-full blur-[90px] blob-animation" style="animation-delay: -2s;"></div>
+
+    <div class="w-full max-w-[1000px] grid md:grid-cols-2 gap-0 glass-dark rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 z-10 reveal-on-scroll relative">
+        
+        <!-- Subtle gradient border effect for the entire card -->
+        <div class="absolute inset-0 border-2 border-transparent rounded-2xl pointer-events-none" style="background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05)) border-box; -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0); -webkit-mask-composite: destination-out; mask-composite: exclude;"></div>
+
+        <!-- Left Side: Login Form -->
+        <div class="p-8 md:p-12 flex flex-col justify-center relative z-10">
+
+            <div class="text-center mb-8 fade-up">
+                <div class="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-full mx-auto flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(0, 61, 155, 0.5)]">
+                    <span class="material-symbols-outlined text-3xl text-white" style="font-variation-settings: 'FILL' 1;">lock</span>
+                </div>
+                <h1 class="text-headline-lg font-headline-lg text-white mb-2">Welcome Back</h1>
+                <p class="text-white/60 font-body-sm">Sign in to manage your healthcare and pharmacy needs.</p>
+            </div>
+
+            <!-- Social Login (Google) -->
+            <div class="mb-6 fade-up" style="animation-delay: 0.1s;">
+                <button type="button" onclick="alert('Google Login requires a live domain and Google API credentials. This will be activated when SehatHub goes live in production!');" class="w-full py-3.5 bg-white/5 border border-white/10 rounded-lg text-white font-semibold hover:bg-white/10 transition-all flex items-center justify-center gap-3 shadow-sm hover-lift-premium">
+                    <svg viewBox="0 0 24 24" class="w-5 h-5">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        <path d="M1 1h22v22H1z" fill="none"/>
+                    </svg>
+                    Continue with Google
+                </button>
+            </div>
+
+            <div class="flex items-center gap-4 mb-6 fade-up" style="animation-delay: 0.15s;">
+                <div class="h-px bg-white/10 flex-1"></div>
+                <span class="text-xs text-white/40 font-medium uppercase tracking-wider">or sign in with email</span>
+                <div class="h-px bg-white/10 flex-1"></div>
+            </div>
+
+            <!-- Flash messages: shows errors like "incorrect password" or success after signup -->
+            <form class="space-y-5 stagger-reveal visible" method="POST" action="{{ url_for('auth.login') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                <div class="space-y-1.5">
+                    <label class="block font-label-md text-label-md text-white/80" for="email">Email or Username</label>
+                    <input class="w-full px-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white font-body-md focus:border-secondary focus:ring-1 focus:ring-secondary focus:bg-white/10 outline-none transition-all placeholder:text-white/30 backdrop-blur-sm"
+                           id="email" name="email" placeholder="obaidshah@gmail.com" type="text" required value="{{ request.form.email or '' }}"/>
+                </div>
+
+                <div class="space-y-1.5">
+                    <div class="flex justify-between items-center">
+                        <label class="block font-label-md text-label-md text-white/80" for="password">Password</label>
+                        <a class="text-xs text-secondary font-medium hover:text-white transition-colors" href="{{ url_for('auth.forgot_password') }}">Forgot Password?</a>
+                    </div>
+                    <div class="relative">
+                        <input class="w-full px-4 py-3 rounded-lg border border-white/10 bg-white/5 text-white font-body-md focus:border-secondary focus:ring-1 focus:ring-secondary focus:bg-white/10 outline-none transition-all placeholder:text-white/30 backdrop-blur-sm"
+                               id="password" name="password" placeholder="Enter your password" type="password" required/>
+                        <button type="button" onclick="togglePassword('password', 'loginPasswordEyeIcon')" class="absolute right-3 top-1/2 -translate-y-1/2 text-secondary hover:brightness-110 transition-colors z-10">
+                            <span class="material-symbols-outlined text-xl" id="loginPasswordEyeIcon">visibility</span>
+                        </button>
+                    </div>
+                </div>
+
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input class="h-5 w-5 rounded border-white/20 bg-white/5 text-secondary focus:ring-secondary/50 focus:ring-offset-0 cursor-pointer" id="remember" name="remember" type="checkbox"/>
+                    <span class="text-white/60 font-body-sm">Remember this device</span>
+                </label>
+
+                <button class="w-full py-4 bg-gradient-to-r from-primary to-secondary text-white font-headline-md text-[16px] rounded-lg hover:shadow-[0_0_20px_rgba(239, 108, 0, 0.4)] active:scale-[0.98] transition-all flex justify-center items-center gap-2 hover-lift-premium"
+                        type="submit">
+                    Sign In to SehatHub
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+            </form>
+
+            <div class="text-center pt-6 mt-6 border-t border-white/10 fade-up" style="animation-delay: 0.4s;">
+                <span class="text-white/60 font-body-sm">New to SehatHub?</span>
+                <a class="text-secondary font-bold hover:text-white transition-colors ml-1" href="{{ url_for('auth.signup') }}">Create an account</a>
+            </div>
+
+            <div class="flex items-center justify-center gap-2 mt-6 text-xs text-white/40 fade-up" style="animation-delay: 0.5s;">
+                <span class="material-symbols-outlined text-sm text-secondary">verified_user</span>
+                <span>Secure &amp; Encrypted</span>
+                <span class="opacity-40">•</span>
+                <span>256-bit AES Encryption</span>
+            </div>
+        </div>
+
+        <!-- Right Side: Visual Anchor with Cinematic Overlay -->
+        <div class="hidden md:flex relative bg-[#071b3d] overflow-hidden items-center justify-center border-l border-white/10">
+            
+            <!-- Dynamic geometric shapes for premium feel -->
+            <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                <div class="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-secondary/10 rounded-full blur-[80px] float-card"></div>
+                <div class="absolute bottom-[-10%] left-[-10%] w-[350px] h-[350px] bg-primary/20 rounded-full blur-[80px] float-card float-card"></div>
+            </div>
+
+            <!-- Glassy pattern overlay -->
+            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')] opacity-50 mix-blend-overlay"></div>
+
+            <div class="relative z-10 h-full p-12 flex flex-col justify-center text-white text-center w-full">
+                <!-- Floating Icons -->
+                <div class="relative w-48 h-48 mx-auto mb-8">
+                    <div class="absolute inset-0 bg-white/5 rounded-full border border-white/10 animate-[spin_20s_linear_infinite]"></div>
+                    <div class="absolute inset-4 bg-white/5 rounded-full border border-white/10 animate-[spin_15s_linear_infinite_reverse]"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-6xl text-secondary glow-pulse" style="font-variation-settings: 'FILL' 1;">health_and_safety</span>
+                    </div>
+                    <!-- Orbiting sub-icons -->
+                    <span class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 material-symbols-outlined text-white/50 text-2xl bg-[#071b3d] p-1 rounded-full border border-white/10 float-card">medication</span>
+                    <span class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 material-symbols-outlined text-white/50 text-2xl bg-[#071b3d] p-1 rounded-full border border-white/10 float-card float-card">local_pharmacy</span>
+                </div>
+
+                <h2 class="text-3xl lg:text-4xl font-headline-lg mb-4 leading-tight fade-up">Your health,<br/><span class="gradient-text">always within reach.</span></h2>
+                <p class="text-white/70 font-body-md max-w-sm mx-auto fade-up" style="animation-delay: 0.1s;">Sign in to track your orders, manage prescriptions, and get medicines delivered fast.</p>
+                
+                <!-- Trust Badges -->
+                <div class="flex justify-center gap-4 mt-10 fade-up" style="animation-delay: 0.2s;">
+                    <div class="glass-card bg-white/5 border-white/10 px-4 py-2 rounded-lg flex items-center gap-2">
+                        <span class="material-symbols-outlined text-secondary text-sm">bolt</span>
+                        <span class="text-xs font-medium">Fast Delivery</span>
+                    </div>
+                    <div class="glass-card bg-white/5 border-white/10 px-4 py-2 rounded-lg flex items-center gap-2">
+                        <span class="material-symbols-outlined text-secondary text-sm">verified</span>
+                        <span class="text-xs font-medium">100% Genuine</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.textContent = 'visibility_off';
+        } else {
+            input.type = 'password';
+            icon.textContent = 'visibility';
+        }
+    }
+</script>
+
+{% endblock %}

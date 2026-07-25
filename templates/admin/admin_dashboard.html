@@ -1,0 +1,273 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Admin Dashboard | SehatHub{% endblock %}
+
+{% block admin_content %}
+
+<!-- HERO BANNER -->
+<div class="relative overflow-hidden rounded-3xl mb-8 p-8 md:p-10 text-white shadow-xl" style="background: linear-gradient(135deg, #0B1426 0%, #0a2a5e 100%);">
+    <!-- Floating SVGs & Orbs -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+        <div class="absolute top-[-20%] right-[-10%] w-64 h-64 bg-primary/30 rounded-full blur-[80px]"></div>
+        <div class="absolute bottom-[-30%] left-[10%] w-72 h-72 bg-[#F5A623]/50 rounded-full blur-[90px]"></div>
+        <svg class="absolute top-[20%] right-[15%] w-12 h-12 text-primary/20 float-card" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+        <svg class="absolute bottom-[20%] left-[40%] w-16 h-16 text-[#F5A623]/15 float-card" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+    </div>
+    
+    <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="text-center md:text-left">
+            <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/10 rounded-full px-4 py-1.5 text-xs font-bold text-white mb-4 shadow-sm">
+                <span class="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
+                Live System Overview
+            </div>
+            <h1 class="text-3xl md:text-5xl font-extrabold font-headline-lg tracking-tight mb-2">
+                Welcome back, <span class="gradient-text bg-clip-text text-transparent bg-gradient-to-r from-[#F5A623] to-[#ffc875]">Admin</span>
+            </h1>
+            <p class="text-white/70 text-sm md:text-base max-w-lg">Track your medical systems performance and patient outreach.</p>
+        </div>
+        <div class="hidden md:flex w-24 h-24 bg-[#F5A623]/15 backdrop-blur-xl rounded-full items-center justify-center border border-[#F5A623]/30 float-card shadow-lg shrink-0 relative" style="box-shadow: 0 0 30px rgba(245, 166, 35, 0.25);">
+            <span class="material-symbols-outlined text-5xl text-white drop-shadow-md">monitoring</span>
+            <div class="absolute inset-0 rounded-full border border-[#F5A623]/40 animate-[ping_3s_infinite]"></div>
+        </div>
+    </div>
+</div>
+
+<!-- STAT CARDS -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-primary/30 hover:shadow-xl transition-all">
+        <div class="absolute inset-0 bg-primary/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
+        <div class="relative z-10">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-primary text-2xl">payments</span>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-1 bg-surface-container-high text-on-surface-variant rounded-full uppercase tracking-wider">Overall</span>
+            </div>
+            <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Total Sales</p>
+            <p class="text-3xl font-extrabold text-on-surface group-hover:text-primary transition-colors">Rs. {{ "{:,.0f}".format(stats.total_sales or 0) }}</p>
+        </div>
+    </div>
+    
+    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-secondary/30 hover:shadow-xl transition-all">
+        <div class="absolute inset-0 bg-secondary/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
+        <div class="relative z-10">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-secondary text-2xl">group</span>
+                </div>
+            </div>
+            <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Active Users</p>
+            <p class="text-3xl font-extrabold text-on-surface group-hover:text-secondary transition-colors">{{ stats.active_users or 0 }}</p>
+        </div>
+    </div>
+    
+    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-[#F5A623]/30 hover:shadow-xl transition-all">
+        <div class="absolute inset-0 bg-[#F5A623]/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
+        <div class="relative z-10">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-12 h-12 rounded-xl bg-[#F5A623]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-[#F5A623] text-2xl">receipt_long</span>
+                </div>
+                {% if stats.pending_orders %}
+                <span class="flex h-3 w-3 relative">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F5A623] opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-[#F5A623]"></span>
+                </span>
+                {% endif %}
+            </div>
+            <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Pending Orders</p>
+            <p class="text-3xl font-extrabold text-on-surface group-hover:text-[#F5A623] transition-colors">{{ stats.pending_orders or 0 }}</p>
+            {% if stats.pending_orders %}<p class="text-[10px] text-error font-bold mt-2 uppercase flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">warning</span> Requires attention</p>{% endif %}
+        </div>
+    </div>
+    
+    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-error/30 hover:shadow-xl transition-all">
+        <div class="absolute inset-0 bg-error/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
+        <div class="relative z-10">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-error text-2xl">inventory_2</span>
+                </div>
+            </div>
+            <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Low Stock Alerts</p>
+            <p class="text-3xl font-extrabold text-on-surface group-hover:text-error transition-colors">{{ stats.low_stock_count or 0 }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     REVENUE CHART + TOP MEDICINES
+     ============================================================ -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div class="lg:col-span-2 bg-white rounded-3xl border border-outline-variant/15 p-6 md:p-8 shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden group">
+        <div class="absolute -right-20 -top-20 w-64 h-64 bg-primary/5 rounded-full blur-[60px] pointer-events-none group-hover:bg-primary/10 transition-colors"></div>
+        <div class="flex justify-between items-start md:items-center mb-6 relative z-10 flex-col md:flex-row gap-4">
+            <div>
+                <h3 class="font-headline-md text-xl font-extrabold text-on-surface">Revenue Overview</h3>
+                <p class="text-xs text-on-surface-variant mt-1">Performance over the last 7 days</p>
+            </div>
+            <span class="px-3 py-1.5 bg-surface-container-high rounded-lg text-primary font-bold text-xs uppercase tracking-wider">This Week</span>
+        </div>
+        <div class="relative z-10 h-[250px] w-full">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-3xl border border-outline-variant/15 p-6 md:p-8 shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden">
+        <div class="absolute -left-20 -bottom-20 w-48 h-48 bg-[#F5A623]/5 rounded-full blur-[50px] pointer-events-none"></div>
+        <h3 class="font-headline-md text-xl font-extrabold mb-6 relative z-10 flex justify-between items-center">
+            <span>Top Medicines</span>
+            <span class="text-xl">🔥</span>
+        </h3>
+        <div class="space-y-5 relative z-10">
+            {% for med in top_medicines %}
+            <div class="group/item">
+                <div class="flex justify-between text-sm mb-2 items-center">
+                    <span class="font-bold text-on-surface group-hover/item:text-primary transition-colors flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-primary/50 group-hover/item:scale-150 transition-transform"></span>
+                        {{ med.name }}
+                    </span>
+                    <span class="text-[10px] font-bold px-2 py-1 bg-surface-container-high rounded-full text-on-surface-variant">{{ med.units_sold }} sold</span>
+                </div>
+                <div class="h-2 bg-surface-container-high rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-primary to-[#ef6c00] rounded-full relative overflow-hidden" style="width: {{ med.pct }}%">
+                        <div class="absolute inset-0 bg-white/20 -translate-x-full group-hover/item:animate-[shimmer_1s_infinite]"></div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="h-full flex flex-col items-center justify-center py-10 opacity-50">
+                <span class="material-symbols-outlined text-4xl mb-2">insert_chart</span>
+                <p class="text-sm font-medium">No sales data yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+        <a href="{{ url_for('admin.sales_reports') }}" class="mt-6 flex items-center justify-center gap-2 text-primary text-sm font-bold bg-primary/5 hover:bg-primary/10 rounded-xl py-3 transition-colors relative z-10 hover-lift-premium">
+            View Full Reports <span class="material-symbols-outlined text-sm">arrow_forward</span>
+        </a>
+    </div>
+</div>
+
+<!-- ============================================================
+     RECENT ACTIVITY
+     ============================================================ -->
+<div class="bg-white rounded-3xl border border-outline-variant/15 overflow-hidden shadow-sm hover:shadow-lg transition-shadow relative">
+    <div class="p-6 md:p-8 pb-4 flex justify-between items-center border-b border-outline-variant/10 bg-surface-container-lowest">
+        <div>
+            <h3 class="font-headline-md text-xl font-extrabold text-on-surface">Recent Activity</h3>
+            <p class="text-xs text-on-surface-variant mt-1">Latest interactions across the platform</p>
+        </div>
+        <span class="material-symbols-outlined text-tertiary-container text-3xl opacity-50">history</span>
+    </div>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-xs text-on-surface-variant font-bold uppercase bg-surface-container-lowest border-b border-outline-variant/10">
+                    <th class="px-8 py-4 tracking-wider">Event</th>
+                    <th class="px-8 py-4 tracking-wider">User / Customer</th>
+                    <th class="px-8 py-4 tracking-wider">Details</th>
+                    <th class="px-8 py-4 tracking-wider">Status</th>
+                    <th class="px-8 py-4 tracking-wider">Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in recent_activity %}
+                <tr class="border-b border-outline-variant/5 last:border-0 hover:bg-surface-container-lowest transition-colors group cursor-default">
+                    <td class="px-8 py-4 flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-primary bg-primary/5 group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined text-xl">{{ a.icon }}</span>
+                        </div>
+                        <span class="font-bold text-on-surface group-hover:text-primary transition-colors whitespace-nowrap">{{ a.type }}</span>
+                    </td>
+                    <td class="px-8 py-4 font-bold text-on-surface whitespace-nowrap">{{ a.person }}</td>
+                    <td class="px-8 py-4 text-on-surface-variant min-w-[200px]">{{ a.detail }}</td>
+                    <td class="px-8 py-4">
+                        <span class="text-[10px] px-3 py-1.5 rounded-full font-bold uppercase tracking-wider whitespace-nowrap
+                            {% if a.status in ['delivered','active'] %} bg-secondary/10 text-secondary border border-secondary/20
+                            {% elif a.status in ['cancelled'] %} bg-error/10 text-error border border-error/20
+                            {% else %} bg-tertiary-fixed text-on-tertiary-fixed border border-tertiary-fixed-dim/20 {% endif %}">
+                            {{ a.status }}
+                        </span>
+                    </td>
+                    <td class="px-8 py-4 text-on-surface-variant whitespace-nowrap text-xs font-medium">{{ a.time.strftime('%d %b, %I:%M %p') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-8 py-16 text-center">
+                        <div class="flex flex-col items-center justify-center opacity-40">
+                            <span class="material-symbols-outlined text-5xl mb-3">history</span>
+                            <span class="text-sm font-medium">No recent activity yet.</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('revenueChart');
+        if (ctx) {
+            const canvasCtx = ctx.getContext('2d');
+            const gradient = canvasCtx.createLinearGradient(0, 0, 0, 250);
+            gradient.addColorStop(0, 'rgba(0, 61, 155, 0.4)');
+            gradient.addColorStop(1, 'rgba(0, 61, 155, 0.0)');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: {{ revenue_chart|map(attribute='label')|list|tojson }},
+                    datasets: [{
+                        label: 'Revenue (Rs.)',
+                        data: {{ revenue_chart|map(attribute='value')|list|tojson }},
+                        borderColor: '#003d9b',
+                        borderWidth: 3,
+                        backgroundColor: gradient,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#003d9b',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#0B1426',
+                            titleFont: { size: 13, family: 'Inter' },
+                            bodyFont: { size: 14, family: 'Inter', weight: 'bold' },
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Rs. ' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+                            ticks: { font: { family: 'Inter' }, color: '#737373' }
+                        },
+                        x: {
+                            grid: { display: false, drawBorder: false },
+                            ticks: { font: { family: 'Inter' }, color: '#737373' }
+                        }
+                    },
+                    interaction: { intersect: false, mode: 'index' }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

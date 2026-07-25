@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}About Us | SehatHub{% endblock %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop py-12">
+
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-body-sm text-on-surface-variant mb-6">
+        <a href="{{ url_for('home') }}" class="hover:text-primary transition-colors">Home</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="text-on-surface font-medium">About Us</span>
+    </div>
+
+    <h1 class="text-headline-lg font-headline-lg text-on-surface mb-4">About SehatHub</h1>
+    <p class="text-body-lg text-on-surface-variant mb-10">Reliable healthcare, delivered with care.</p>
+
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Our Story</h2>
+        <p class="text-body-md text-on-surface-variant mb-3">
+            SehatHub started with a simple idea: getting medicines shouldn't mean standing in line at a
+            crowded pharmacy, especially when you're unwell or caring for someone who is. We built SehatHub
+            to bring genuine, licensed medicines and healthcare essentials to your doorstep across Pakistan -
+            quickly, safely, and with the same care a trusted neighborhood pharmacist would give you.
+        </p>
+    </section>
+
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Our Mission</h2>
+        <p class="text-body-md text-on-surface-variant mb-3">
+            To make essential healthcare accessible to every household in Pakistan by combining a wide
+            catalog of genuine medicines with fast, dependable delivery - all backed by licensed pharmacists
+            who verify every prescription before it's dispensed.
+        </p>
+    </section>
+
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">What Makes Us Different</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex items-start gap-3 bg-surface-container rounded-2xl p-5">
+                <span class="material-symbols-outlined text-secondary text-2xl">verified</span>
+                <div>
+                    <p class="font-bold text-on-surface mb-1">Licensed Pharmacist Review</p>
+                    <p class="text-sm text-on-surface-variant">Every prescription medicine is checked by a real pharmacist before your order is packed.</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-3 bg-surface-container rounded-2xl p-5">
+                <span class="material-symbols-outlined text-secondary text-2xl">local_shipping</span>
+                <div>
+                    <p class="font-bold text-on-surface mb-1">Fast, Tracked Delivery</p>
+                    <p class="text-sm text-on-surface-variant">Follow your order from placed to delivered, right from your account.</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-3 bg-surface-container rounded-2xl p-5">
+                <span class="material-symbols-outlined text-secondary text-2xl">inventory_2</span>
+                <div>
+                    <p class="font-bold text-on-surface mb-1">Wide, Genuine Catalog</p>
+                    <p class="text-sm text-on-surface-variant">From everyday essentials to prescription medicines, sourced from trusted brands.</p>
+                </div>
+            </div>
+            <div class="flex items-start gap-3 bg-surface-container rounded-2xl p-5">
+                <span class="material-symbols-outlined text-secondary text-2xl">support_agent</span>
+                <div>
+                    <p class="font-bold text-on-surface mb-1">Support When You Need It</p>
+                    <p class="text-sm text-on-surface-variant">Our team is here to help with orders, prescriptions, and questions.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-surface-container rounded-2xl p-6 text-center">
+        <p class="text-body-md text-on-surface-variant mb-3">Have a question or want to get in touch?</p>
+        <a href="{{ url_for('contact_us') }}" class="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-bold rounded-lg hover:bg-primary-container transition-all">
+            <span class="material-symbols-outlined text-lg">mail</span>
+            Contact Us
+        </a>
+    </section>
+
+</div>
+
+{% endblock %}

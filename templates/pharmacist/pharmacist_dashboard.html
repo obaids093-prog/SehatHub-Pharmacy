@@ -1,0 +1,288 @@
+{% extends "pharmacist_base.html" %}
+
+{% block title %}Pharmacist Dashboard | SehatHub{% endblock %}
+
+{% block pharmacist_content %}
+
+<!-- HERO BANNER -->
+<div class="relative overflow-hidden rounded-3xl mb-8 p-8 md:p-10 text-white shadow-xl" style="background: linear-gradient(135deg, #0B1426 0%, #0a2a5e 100%);">
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+        <div class="absolute top-[-20%] right-[-10%] w-64 h-64 bg-white/10 rounded-full blur-[80px]"></div>
+        <div class="absolute bottom-[-30%] left-[10%] w-72 h-72 bg-secondary/50 rounded-full blur-[90px]"></div>
+        <svg class="absolute top-[20%] right-[15%] w-12 h-12 text-white/10 float-card" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
+        <svg class="absolute bottom-[20%] left-[40%] w-16 h-16 text-secondary/15 float-card" fill="currentColor" viewBox="0 0 24 24"><path d="M10.5 13H8v-3h2.5V7.5h3V10H16v3h-2.5v2.5h-3V13zM12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"/></svg>
+    </div>
+    
+    <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="text-center md:text-left">
+            <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/10 rounded-full px-4 py-1.5 text-xs font-bold text-white mb-4 shadow-sm">
+                <span class="w-2 h-2 bg-secondary rounded-full animate-pulse"></span>
+                Pharmacist Workspace
+            </div>
+            <h1 class="text-3xl md:text-5xl font-extrabold font-headline-lg tracking-tight mb-2">
+                Hello, <span class="text-secondary drop-shadow-md">Expert</span>
+            </h1>
+            <p class="text-white/70 text-sm md:text-base max-w-lg">Manage prescriptions, track inventory, and review orders with precision.</p>
+        </div>
+        <div class="hidden md:flex w-24 h-24 bg-secondary/15 backdrop-blur-xl rounded-full items-center justify-center border border-secondary/30 float-card shadow-lg shrink-0 relative" style="box-shadow: 0 0 30px rgba(239, 108, 0, 0.25);">
+            <span class="material-symbols-outlined text-5xl text-white drop-shadow-md">health_and_safety</span>
+            <div class="absolute inset-0 rounded-full border border-secondary/40 animate-[ping_3s_infinite]"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     STATS CARDS
+     ============================================================ -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-tertiary-fixed-dim/30 hover:shadow-xl transition-all">
+        <div class="absolute inset-0 bg-tertiary-fixed-dim/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
+        <div class="relative z-10">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-12 h-12 rounded-xl bg-tertiary-fixed-dim/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-tertiary-fixed-dim text-2xl">assignment_late</span>
+                </div>
+                {% if stats.pending_verifications %}
+                <span class="flex h-3 w-3 relative">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-tertiary-fixed-dim opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-tertiary-fixed-dim"></span>
+                </span>
+                {% endif %}
+            </div>
+            <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Pending Verifications</p>
+            <p class="text-3xl font-extrabold text-on-surface group-hover:text-tertiary-fixed-dim transition-colors">{{ stats.pending_verifications or 0 }}</p>
+        </div>
+    </div>
+    
+    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-primary/30 hover:shadow-xl transition-all">
+        <div class="absolute inset-0 bg-primary/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
+        <div class="relative z-10">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-primary text-2xl">shopping_cart</span>
+                </div>
+            </div>
+            <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">New Orders Today</p>
+            <p class="text-3xl font-extrabold text-on-surface group-hover:text-primary transition-colors">{{ stats.new_orders_today or 0 }}</p>
+        </div>
+    </div>
+
+    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-error/30 hover:shadow-xl transition-all">
+        <div class="absolute inset-0 bg-error/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
+        <div class="relative z-10">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-12 h-12 rounded-xl bg-error/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-error text-2xl">inventory_2</span>
+                </div>
+            </div>
+            <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Low Stock Alerts</p>
+            <p class="text-3xl font-extrabold text-on-surface group-hover:text-error transition-colors">{{ stats.low_stock_count or 0 }}</p>
+        </div>
+    </div>
+
+    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-secondary/30 hover:shadow-xl transition-all">
+        <div class="absolute inset-0 bg-secondary/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
+        <div class="relative z-10">
+            <div class="flex justify-between items-start mb-4">
+                <div class="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-secondary text-2xl">verified</span>
+                </div>
+            </div>
+            <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Completed Reviews</p>
+            <p class="text-3xl font-extrabold text-on-surface group-hover:text-secondary transition-colors">{{ stats.completed_reviews or 0 }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+    <!-- ============================================================
+         PRESCRIPTION VERIFICATION
+         ============================================================ -->
+    <div class="lg:col-span-2 bg-white rounded-3xl border border-outline-variant/15 p-6 md:p-8 shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden">
+        <div class="absolute -right-20 -top-20 w-64 h-64 bg-tertiary-fixed-dim/5 rounded-full blur-[60px] pointer-events-none"></div>
+        
+        <div class="flex justify-between items-center mb-6 relative z-10 border-b border-outline-variant/10 pb-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-tertiary-fixed-dim/10 flex items-center justify-center text-tertiary-fixed-dim">
+                    <span class="material-symbols-outlined">assignment_late</span>
+                </div>
+                <div>
+                    <h3 class="font-headline-md text-xl font-extrabold">Prescription Verification</h3>
+                    <p class="text-xs text-on-surface-variant mt-1">Awaiting your approval</p>
+                </div>
+            </div>
+            <a href="{{ url_for('pharmacist.prescription_list') }}" class="text-primary text-sm font-bold hover:underline hover:text-primary-container transition-colors px-3 py-1.5 bg-surface-container rounded-lg">View All</a>
+        </div>
+
+        {% if prescriptions|length == 0 %}
+            <div class="flex flex-col items-center justify-center py-10 opacity-50 relative z-10">
+                <span class="material-symbols-outlined text-5xl mb-3">assignment_turned_in</span>
+                <p class="text-sm font-medium">No pending prescriptions right now.</p>
+            </div>
+        {% else %}
+        <div class="space-y-4 relative z-10">
+            {% for p in prescriptions %}
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-2xl bg-surface-container-lowest border border-outline-variant/15 hover:border-tertiary-fixed-dim/30 hover:shadow-md transition-all group">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br from-tertiary-fixed-dim to-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed font-bold text-lg shadow-sm group-hover:scale-110 transition-transform">
+                        {{ p.patient_name[0] if p.patient_name else '?' }}
+                    </div>
+                    <div>
+                        <p class="font-bold text-on-surface text-base">{{ p.patient_name }}</p>
+                        {% if p.requested_medicines %}
+                            <p class="text-sm text-tertiary-fixed-dim font-bold truncate max-w-[250px]" title="{{ p.requested_medicines }}">{{ p.requested_medicines }}</p>
+                        {% else %}
+                            <p class="text-[10px] px-2.5 py-1 bg-surface-container-high rounded-full text-on-surface-variant font-bold uppercase tracking-wider inline-block mt-1">General Upload</p>
+                        {% endif %}
+                        <p class="text-xs text-on-surface-variant mt-1.5 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-[14px]">schedule</span> {{ p.uploaded_at.strftime('%I:%M %p') }}
+                        </p>
+                    </div>
+                </div>
+                <a href="{{ url_for('pharmacist.prescription_list') }}" class="px-6 py-2.5 bg-tertiary-fixed-dim text-white text-sm font-bold rounded-xl hover:bg-tertiary-fixed transition-all text-center group-hover:scale-105 active:scale-95 shadow-sm">Verify Now</a>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ============================================================
+         INVENTORY ALERTS
+         ============================================================ -->
+    <div class="bg-white rounded-3xl border border-outline-variant/15 p-6 md:p-8 shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden">
+        <div class="absolute -left-20 -bottom-20 w-48 h-48 bg-error/5 rounded-full blur-[50px] pointer-events-none"></div>
+        
+        <div class="flex items-center gap-3 mb-6 relative z-10 border-b border-outline-variant/10 pb-4">
+            <div class="w-10 h-10 rounded-xl bg-error/10 flex items-center justify-center text-error">
+                <span class="material-symbols-outlined">inventory_2</span>
+            </div>
+            <div>
+                <h3 class="font-headline-md text-xl font-extrabold">Inventory Alerts</h3>
+                <p class="text-xs text-on-surface-variant mt-1">Low stock warnings</p>
+            </div>
+        </div>
+
+        {% if low_stock_items|length == 0 %}
+            <div class="flex flex-col items-center justify-center py-10 opacity-50 relative z-10">
+                <span class="material-symbols-outlined text-5xl mb-3">check_circle</span>
+                <p class="text-sm font-medium">All stock levels are healthy.</p>
+            </div>
+        {% else %}
+        <div class="space-y-4 relative z-10">
+            {% for item in low_stock_items %}
+            <div class="p-5 rounded-2xl bg-error/5 border border-error/20 hover:bg-error/10 hover:border-error/30 transition-all">
+                <p class="font-bold text-on-surface text-base">{{ item.medicine_name }}</p>
+                <div class="flex justify-between items-center mt-3 pt-3 border-t border-error/10">
+                    <span class="text-xs font-bold text-on-surface-variant">{{ item.pack_size }}</span>
+                    <span class="text-xs px-3 py-1 bg-error text-white rounded-full font-bold shadow-sm animate-pulse">{{ item.stock_qty }} left</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <a href="{{ url_for('pharmacist.inventory') }}" class="block text-center mt-6 py-3 border-2 border-primary/20 text-primary text-sm font-bold rounded-xl hover:bg-primary hover:text-white transition-all relative z-10 hover-lift-premium">
+            Manage Inventory
+        </a>
+    </div>
+</div>
+
+<!-- ============================================================
+     ORDER FULFILLMENT
+     ============================================================ -->
+<div class="bg-white rounded-3xl border border-outline-variant/15 p-6 md:p-8 shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden mb-8">
+    <div class="absolute -left-20 top-1/2 w-64 h-64 bg-secondary/5 rounded-full blur-[60px] pointer-events-none"></div>
+    
+    <div class="flex items-center gap-3 mb-6 relative z-10 border-b border-outline-variant/10 pb-4">
+        <div class="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
+            <span class="material-symbols-outlined">local_shipping</span>
+        </div>
+        <div>
+            <h3 class="font-headline-md text-xl font-extrabold">Order Fulfillment</h3>
+            <p class="text-xs text-on-surface-variant mt-1">Ready to be packed and shipped</p>
+        </div>
+    </div>
+
+    {% if orders_to_fulfill|length == 0 %}
+        <div class="flex flex-col items-center justify-center py-12 opacity-50 relative z-10">
+            <span class="material-symbols-outlined text-6xl mb-4">task_alt</span>
+            <p class="text-base font-medium">No orders waiting to be packed.</p>
+        </div>
+    {% else %}
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 relative z-10">
+        {% for order in orders_to_fulfill %}
+        <div class="border border-outline-variant/15 rounded-2xl p-6 hover:shadow-lg hover:border-secondary/30 transition-all bg-surface-container-lowest group relative overflow-hidden hover-lift-premium">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-secondary/5 rounded-full blur-[20px] -translate-y-1/2 translate-x-1/2"></div>
+            <div class="flex justify-between items-center mb-4">
+                <span class="font-extrabold text-sm text-secondary">#SH-{{ "%04d"|format(order.order_id) }}</span>
+                <span class="text-[10px] px-3 py-1.5 rounded-full font-bold uppercase tracking-wider
+                    {% if order.status == 'placed' %} bg-tertiary-fixed text-on-tertiary-fixed border border-tertiary-fixed-dim/20
+                    {% else %} bg-secondary/10 text-secondary border border-secondary/20 {% endif %}">
+                    {% if order.status == 'placed' %}Confirmation{% else %}Packing{% endif %}
+                </span>
+            </div>
+            
+            <p class="text-lg font-bold text-on-surface mb-1 group-hover:text-secondary transition-colors">{{ order.customer_name }}</p>
+            <p class="text-xs text-on-surface-variant font-medium mb-4 truncate" title="{{ order.item_names or 'No items' }}">{{ order.item_names or 'No items' }}</p>
+            
+            <div class="flex items-center justify-between py-3 border-y border-outline-variant/10 mb-5">
+                <span class="text-xs text-on-surface-variant font-bold flex items-center gap-1.5">
+                    <span class="material-symbols-outlined text-[16px]">inventory</span> {{ order.item_count }} item{{ 's' if order.item_count != 1 else '' }}
+                </span>
+                <span class="text-base font-extrabold text-on-surface">Rs. {{ "%.2f"|format(order.total_amount) }}</span>
+            </div>
+            
+            <div class="flex gap-3">
+                <form method="POST" action="{{ url_for('pharmacist.pack_order', order_id=order.order_id) }}" class="flex-1">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button type="submit" class="w-full py-3 bg-secondary text-on-secondary text-xs font-bold rounded-xl hover:bg-secondary/90 transition-all shadow-sm flex items-center justify-center gap-1.5 group-hover:scale-[1.02] active:scale-95">
+                        <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                        {{ 'Confirm Order' if order.status == 'placed' else 'Mark as Packed' }}
+                    </button>
+                </form>
+                <button type="button" onclick="openCancelOrderModal({{ order.order_id }})"
+                        class="px-4 py-3 border border-error/30 text-error text-xs font-bold rounded-xl hover:bg-error-container hover:border-error transition-all flex items-center justify-center" title="Cancel Order">
+                    <span class="material-symbols-outlined text-[20px]">cancel</span>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- ============================================================
+     CANCEL ORDER REASON MODAL
+     ============================================================ -->
+<dialog id="cancelOrderModal" class="rounded-[2rem] p-0 backdrop:bg-black/60 backdrop:backdrop-blur-sm w-full max-w-md shadow-2xl border border-white/10 m-auto">
+    <form method="POST" id="cancelOrderForm" class="p-8">
+        <div class="flex items-center gap-4 mb-5">
+            <div class="w-14 h-14 rounded-full bg-error/10 flex items-center justify-center text-error animate-pulse">
+                <span class="material-symbols-outlined text-3xl">warning</span>
+            </div>
+            <h3 class="font-headline-md text-2xl font-extrabold">Cancel Order</h3>
+        </div>
+        
+        <p class="text-sm text-on-surface-variant mb-6 leading-relaxed">Please explain why - the customer will see this reason. Stock will be added back automatically.</p>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <textarea name="reason" required rows="4" placeholder="e.g. Item out of stock. / Unable to reach customer to confirm address."
+                  class="w-full px-5 py-4 rounded-xl border border-outline-variant/30 bg-surface text-sm focus:ring-2 focus:ring-error/30 outline-none mb-6 resize-none transition-shadow font-medium"></textarea>
+                  
+        <div class="flex justify-end gap-3">
+            <button type="button" onclick="document.getElementById('cancelOrderModal').close()" class="px-6 py-3 text-sm font-bold text-on-surface-variant hover:bg-surface-container rounded-xl transition-all">Back</button>
+            <button type="submit" class="px-6 py-3 bg-error text-white text-sm font-bold rounded-xl hover:bg-error/90 hover:shadow-lg hover:shadow-error/20 transition-all active:scale-95">Confirm Cancellation</button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+    function openCancelOrderModal(orderId) {
+        const modal = document.getElementById('cancelOrderModal');
+        const form = document.getElementById('cancelOrderForm');
+        form.action = "{{ url_for('pharmacist.cancel_order', order_id=0) }}".replace('0', orderId);
+        modal.showModal();
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,17 @@
+# Secret files - never commit these
+.env
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Uploaded prescription images (user data, not code)
+uploads/prescriptions/*
+!uploads/prescriptions/.gitkeep
+
+# VS Code settings
+.vscode/
+
+# Virtual environment (if you create one later)
+venv/
+env/

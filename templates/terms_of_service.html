@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Service | SehatHub{% endblock %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop py-12">
+
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-body-sm text-on-surface-variant mb-6">
+        <a href="{{ url_for('home') }}" class="hover:text-primary transition-colors">Home</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="text-on-surface font-medium">Terms of Service</span>
+    </div>
+
+    <h1 class="text-headline-lg font-headline-lg text-on-surface mb-10">Terms of Service</h1>
+
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Using SehatHub</h2>
+        <p class="text-body-md text-on-surface-variant">
+            By creating an account and placing orders on SehatHub, you agree to provide accurate information
+            (including a valid delivery address and phone number) and to use the platform only for legitimate
+            personal or family healthcare purchases.
+        </p>
+    </section>
+
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Prescription Medicines</h2>
+        <ul class="space-y-2 text-body-md text-on-surface-variant">
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">check_circle</span>
+                Prescription-only medicines require a valid, clearly legible prescription uploaded before checkout
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">check_circle</span>
+                A licensed pharmacist reviews and approves or rejects each prescription before the order proceeds
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">check_circle</span>
+                We reserve the right to reject any prescription that appears invalid, unclear, or altered
+            </li>
+        </ul>
+    </section>
+
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Orders & Payment</h2>
+        <p class="text-body-md text-on-surface-variant">
+            Orders are currently fulfilled via Cash on Delivery. Placing an order is a commitment to accept
+            and pay for it upon delivery. Orders may be cancelled by our pharmacist team before packing
+            (for example, if an item is out of stock) - you will be notified with a reason.
+        </p>
+    </section>
+
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Returns & Refunds</h2>
+        <p class="text-body-md text-on-surface-variant">
+            Returns are handled under our separate <a href="{{ url_for('refund_policy') }}" class="text-primary font-semibold hover:underline">Refund Policy</a>,
+            which covers eligibility, non-returnable items, and the refund process.
+        </p>
+    </section>
+
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Account Responsibility</h2>
+        <p class="text-body-md text-on-surface-variant">
+            You're responsible for keeping your account credentials secure and for all activity under your
+            account. If you suspect unauthorized access, please contact us immediately.
+        </p>
+    </section>
+
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Limitation</h2>
+        <p class="text-body-md text-on-surface-variant">
+            SehatHub facilitates the ordering and delivery of medicines but does not replace professional
+            medical advice. Always consult a doctor for diagnosis and treatment decisions.
+        </p>
+    </section>
+
+    <section class="bg-surface-container rounded-2xl p-6">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Questions?</h2>
+        <p class="text-body-md text-on-surface-variant">
+            Reach out anytime at <a href="{{ url_for('contact_us') }}" class="text-primary font-semibold hover:underline">our Contact page</a>.
+        </p>
+    </section>
+
+</div>
+
+{% endblock %}

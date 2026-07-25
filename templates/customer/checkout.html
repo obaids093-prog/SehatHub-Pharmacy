@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+
+{% block title %}Checkout | SehatHub{% endblock %}
+
+{% block header %}
+<!-- Simple header for checkout - matches signup/login pattern, keeps the user focused -->
+<header class="sticky top-0 z-50 flex justify-between items-center px-margin-mobile md:px-margin-desktop w-full h-20 bg-surface/80 backdrop-blur-md">
+    <a href="{{ url_for('home') }}" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <span class="material-symbols-outlined text-primary text-3xl" style="font-variation-settings: 'FILL' 1;">health_and_safety</span>
+        <span class="font-headline-md text-headline-md font-bold text-primary">SehatHub</span>
+    </a>
+    <span class="flex items-center gap-2 text-secondary text-label-md font-bold uppercase tracking-wide">
+        <span class="material-symbols-outlined text-lg">verified_user</span> Secure Checkout
+    </span>
+</header>
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8">
+
+    <!-- ============================================================
+         CHECKOUT PROGRESS STEPPER
+         ============================================================ -->
+    <div class="flex items-center justify-between w-full max-w-2xl mx-auto mb-10 relative px-4">
+        <!-- Connecting Line Background -->
+        <div class="absolute left-10 right-10 top-5 -translate-y-1/2 h-1 bg-surface-container-high z-0 rounded-full"></div>
+        <!-- Connecting Line Active -->
+        <div class="absolute left-10 right-1/2 top-5 -translate-y-1/2 h-1 bg-primary z-0 rounded-full"></div>
+
+        <!-- Step 1: Cart -->
+        <div class="relative z-10 flex flex-col items-center gap-2">
+            <a href="{{ url_for('customer.view_cart') }}" class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-md hover:scale-110 transition-transform">
+                <span class="material-symbols-outlined text-[20px] font-bold">check</span>
+            </a>
+            <span class="text-xs font-bold text-on-surface">Cart</span>
+        </div>
+
+        <!-- Step 2: Checkout (Current) -->
+        <div class="relative z-10 flex flex-col items-center gap-2">
+            <div class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shadow-md ring-4 ring-primary/20">
+                <span class="material-symbols-outlined text-[20px]">local_shipping</span>
+            </div>
+            <span class="text-xs font-bold text-primary">Checkout</span>
+        </div>
+
+        <!-- Step 3: Done -->
+        <div class="relative z-10 flex flex-col items-center gap-2">
+            <div class="w-10 h-10 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center border-2 border-surface">
+                <span class="material-symbols-outlined text-[20px]">task_alt</span>
+            </div>
+            <span class="text-xs font-bold text-on-surface-variant">Done</span>
+        </div>
+    </div>
+
+    <h1 class="text-headline-lg font-headline-lg text-on-surface mb-8">Checkout Details</h1>
+
+    <!-- ============================================================
+         PRESCRIPTION WARNING BANNER
+         ============================================================ -->
+    {% if requires_prescription %}
+    <div class="bg-error-container/30 border border-error/20 text-on-surface rounded-xl px-4 py-3 mb-8 flex items-start gap-3">
+        <span class="material-symbols-outlined text-error flex-shrink-0 mt-0.5">warning</span>
+        <div>
+            <span class="font-bold block text-error">Prescription Required</span>
+            <span class="text-sm">Your order includes prescription medicines (marked with Rx). Our pharmacist will verify your uploaded prescription before dispatch.</span>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+
+        <!-- ============================================================
+             LEFT: ADDRESS + PAYMENT FORM
+             ============================================================ -->
+        <div class="lg:col-span-2">
+            <form method="POST" action="{{ url_for('customer.checkout') }}" id="checkoutForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                  {% if messages %}
+                    {% for category, message in messages %}
+                      <div class="px-4 py-3 rounded-lg mb-6 flex items-center gap-2 {{ 'bg-error-container text-on-error-container' if category == 'error' else 'bg-success-container text-on-success-container' }}">
+                          <span class="material-symbols-outlined">{{ 'error' if category == 'error' else 'check_circle' }}</span>
+                          {{ message }}
+                      </div>
+                    {% endfor %}
+                  {% endif %}
+                {% endwith %}
+
+                <!-- Delivery Address Card -->
+                <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 mb-6">
+                    <h3 class="flex items-center gap-2 font-headline-md text-lg mb-5">
+                        <span class="material-symbols-outlined text-primary">location_on</span> Delivery Address
+                    </h3>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block font-label-md text-label-md text-on-surface mb-1.5" for="full_name">Full Name</label>
+                            <input class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-bright text-on-surface font-body-md focus:ring-2 focus:ring-primary/30 outline-none"
+                                   id="full_name" name="full_name" placeholder="e.g. Obaid Shah" type="text" required value="{{ default_full_name or session.full_name or '' }}"/>
+                        </div>
+
+                        <div>
+                            <label class="block font-label-md text-label-md text-on-surface mb-1.5" for="phone">Phone Number</label>
+                            <input class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-bright text-on-surface font-body-md focus:ring-2 focus:ring-primary/30 outline-none"
+                                   id="phone" name="phone" placeholder="03XX-XXXXXXX" type="tel" required
+                                   pattern="^(03\d{9}|(\+92|92)3\d{9})$" title="Enter a valid Pakistani mobile number, e.g. 0301-2345678" value="{{ default_phone or '' }}"/>
+                        </div>
+
+                        <div>
+                            <label class="block font-label-md text-label-md text-on-surface mb-1.5" for="address_line">House / Street / Area</label>
+                            <input class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-bright text-on-surface font-body-md focus:ring-2 focus:ring-primary/30 outline-none"
+                                   id="address_line" name="address_line" placeholder="House 12, Street 5, F-10" type="text" required value="{{ default_address or '' }}"/>
+                        </div>
+                        
+                        <div>
+                            <label class="block font-label-md text-label-md text-on-surface mb-1.5" for="landmark">Landmark / Postal Code <span class="text-xs text-on-surface-variant font-normal">(optional)</span></label>
+                            <input class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-bright text-on-surface font-body-md focus:ring-2 focus:ring-primary/30 outline-none"
+                                   id="landmark" name="landmark" placeholder="Near National Bank" type="text"/>
+                        </div>
+
+                        <div>
+                            <label class="block font-label-md text-label-md text-on-surface mb-1.5" for="city">City</label>
+                            <input class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-bright text-on-surface font-body-md focus:ring-2 focus:ring-primary/30 outline-none"
+                                   id="city" name="city" placeholder="Islamabad" type="text" required value="{{ default_city or '' }}"/>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Method Card -->
+                <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 mb-6">
+                    <h3 class="flex items-center gap-2 font-headline-md text-lg mb-5">
+                        <span class="material-symbols-outlined text-primary">payments</span> Payment Method
+                    </h3>
+
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-3 p-4 rounded-lg border-2 border-primary bg-primary/5 cursor-pointer">
+                            <input type="radio" name="payment_method" value="cash_on_delivery" checked class="text-primary focus:ring-primary"/>
+                            <div class="flex-1">
+                                <span class="font-bold block">Cash on Delivery (COD)</span>
+                                <span class="text-xs text-on-surface-variant">Pay when you receive your package.</span>
+                            </div>
+                            <span class="material-symbols-outlined text-primary">local_shipping</span>
+                        </label>
+
+                        <!-- Hidden disabled methods, showing a polite "Coming Soon" note instead -->
+                        <div class="p-4 rounded-lg border border-outline-variant/20 bg-surface-container-lowest">
+                            <details class="group">
+                                <summary class="flex justify-between items-center font-medium cursor-pointer list-none">
+                                    <span class="text-sm text-on-surface-variant">More payment options coming soon!</span>
+                                    <span class="transition group-open:rotate-180">
+                                        <svg fill="none" height="24" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                                    </span>
+                                </summary>
+                                <div class="text-xs text-on-surface-variant mt-3 animate-fade-in space-y-2">
+                                    <p>• Credit / Debit Cards</p>
+                                    <p>• JazzCash</p>
+                                    <p>• EasyPaisa</p>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Special Delivery Instructions -->
+                <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 mb-6">
+                    <h3 class="flex items-center gap-2 font-headline-md text-lg mb-3">
+                        <span class="material-symbols-outlined text-primary">edit_note</span> Delivery Instructions <span class="text-xs text-on-surface-variant font-normal">(optional)</span>
+                    </h3>
+                    <textarea name="special_instructions" rows="3" placeholder="e.g. Call before delivery, leave with security guard, ring the doorbell twice..."
+                              class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-bright text-on-surface font-body-md focus:ring-2 focus:ring-primary/30 outline-none resize-none"></textarea>
+                </div>
+
+                <!-- Show Estimated Delivery Time below instructions -->
+                <div class="bg-primary-container/20 border border-primary/10 rounded-xl p-4 mb-6 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary flex-shrink-0">schedule</span>
+                    <div>
+                        <span class="font-bold text-sm block">Delivery ETA: 2-3 Days</span>
+                        <span class="text-xs text-on-surface-variant">Same-Day delivery available within Islamabad.</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="checkoutSubmitBtn w-full lg:hidden py-4 bg-primary text-white font-headline-md text-base rounded-lg hover:bg-primary-container transition-all shadow-sm flex justify-center items-center gap-2">
+                    Place Your Order
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- ============================================================
+             RIGHT: ORDER SUMMARY
+             ============================================================ -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 sticky top-24">
+                <h3 class="font-headline-md text-lg mb-4">Order Summary</h3>
+
+                <div class="space-y-3 mb-4 pb-4 border-b border-outline-variant/20 max-h-64 overflow-y-auto" id="checkoutItemsList">
+                    {% for item in cart_items %}
+                    <div class="flex justify-between items-start text-body-sm gap-2 relative group pr-6" id="checkoutItem-{{ item.cart_item_id }}" data-price="{{ item.price }}">
+                        <div class="w-10 h-10 rounded-lg bg-surface-bright flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+                            {% if item.type == 'Prescription' %}
+                                <span class="absolute top-0 right-0 bg-error text-white text-[8px] font-bold px-1 rounded-bl">Rx</span>
+                            {% endif %}
+                            
+                            {% if item.image_url %}
+                                <img src="{{ url_for('static', filename=item.image_url) }}?v=2" alt="{{ item.medicine_name }}" class="w-full h-full object-contain p-0.5">
+                            {% else %}
+                                <span class="material-symbols-outlined text-lg text-primary/30">medication</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <span class="text-on-surface-variant block truncate">{{ item.medicine_name }}</span>
+                            <span class="text-xs text-on-surface-variant opacity-70 block truncate">{{ item.pack_size }}</span>
+                            <div class="flex items-center border border-outline-variant rounded-lg w-fit mt-1.5 bg-white">
+                                <button type="button" onclick="updateCheckoutQuantity({{ item.cart_item_id }}, -1)" class="px-2.5 py-0.5 text-on-surface-variant hover:text-primary text-sm">−</button>
+                                <span class="px-2 text-sm font-bold quantity-display">{{ item.quantity }}</span>
+                                <button type="button" onclick="updateCheckoutQuantity({{ item.cart_item_id }}, 1)" class="px-2.5 py-0.5 text-on-surface-variant hover:text-primary text-sm">+</button>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                            <span class="font-medium whitespace-nowrap line-total">Rs. {{ "%.2f"|format(item.price * item.quantity) }}</span>
+                        </div>
+                        
+                        <!-- Remove button positioned on the absolute right edge -->
+                        <button type="button" 
+                                onclick="removeCheckoutItem({{ item.cart_item_id }})" 
+                                class="absolute top-0 right-0 text-on-surface-variant/50 hover:text-error transition-colors p-0.5"
+                                title="Remove from cart">
+                            <span class="material-symbols-outlined text-[16px]">close</span>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="space-y-2 mb-4 pb-4 border-b border-outline-variant/20">
+                    <div class="flex justify-between text-body-sm">
+                        <span class="text-on-surface-variant">Subtotal (<span id="summaryItemsCount">{{ cart_items|length }}</span> items)</span>
+                        <span class="font-medium" id="checkoutSubtotalDisplay">Rs. {{ "%.2f"|format(subtotal) }}</span>
+                    </div>
+                    <div class="flex justify-between text-body-sm">
+                        <span class="text-on-surface-variant">Shipping &amp; Handling</span>
+                        {% if delivery_charge == 0 %}
+                            <span class="font-medium text-secondary" id="checkoutShippingDisplay">FREE</span>
+                        {% else %}
+                            <span class="font-medium" id="checkoutShippingDisplay">Rs. {{ "%.2f"|format(delivery_charge) }}</span>
+                        {% endif %}
+                    </div>
+                    {% if delivery_charge > 0 %}
+                    <p class="text-xs text-on-surface-variant/70 italic" id="freeDeliveryHint">Add Rs. {{ "%.2f"|format(2000 - subtotal) }} more to get FREE delivery!</p>
+                    {% else %}
+                    <p class="text-xs text-on-surface-variant/70 italic hidden" id="freeDeliveryHint"></p>
+                    {% endif %}
+                </div>
+
+                <div class="flex justify-between mb-4">
+                    <span class="font-bold">Total</span>
+                    <span class="font-bold text-primary text-lg" id="checkoutTotalDisplay">Rs. {{ "%.2f"|format(total) }}</span>
+                </div>
+                
+                <div class="bg-primary-container/20 border border-primary/10 rounded-xl p-3 mb-6 flex items-center gap-2 hidden lg:flex">
+                    <span class="material-symbols-outlined text-primary text-lg">schedule</span>
+                    <div class="text-sm">
+                        <span class="font-bold block">Delivery ETA: 2-3 Days</span>
+                        <span class="text-xs text-on-surface-variant block mt-0.5">Same-Day in Islamabad</span>
+                    </div>
+                </div>
+
+                <button type="submit" form="" onclick="document.getElementById('checkoutForm').requestSubmit()"
+                        class="checkoutSubmitBtn hidden lg:flex w-full py-4 bg-primary text-white font-headline-md text-base rounded-lg hover:bg-primary-container active:scale-[0.98] transition-all shadow-sm justify-center items-center gap-2">
+                    Place Your Order
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+
+                <p class="text-center text-xs text-on-surface-variant mt-4">
+                    By placing your order, you agree to SehatHub's
+                    <a href="{{ url_for('terms_of_service') }}" class="text-primary hover:underline">Terms</a> &amp;
+                    <a href="{{ url_for('privacy_policy') }}" class="text-primary hover:underline">Privacy Policy</a>.
+                </p>
+
+                <div class="bg-secondary-container/30 rounded-lg p-3 mt-4 flex items-start gap-2">
+                    <span class="material-symbols-outlined text-secondary text-lg">lock</span>
+                    <p class="text-xs text-on-surface-variant">Your order information is encrypted and secure. We never share your data with third parties.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ============================================================
+    // Quantity +/- on the checkout page - reuses the SAME backend
+    // endpoint as the cart page (/customer/cart/update). No new
+    // route was needed because checkout's order summary just reads
+    // from the same cart_items table.
+    // ============================================================
+    function updateCheckoutQuantity(cartItemId, delta) {
+        const itemRow = document.getElementById('checkoutItem-' + cartItemId);
+        const quantityDisplay = itemRow.querySelector('.quantity-display');
+        const currentQuantity = parseInt(quantityDisplay.textContent);
+        const newQuantity = currentQuantity + delta;
+
+        if (newQuantity < 1) return; // never go below 1
+
+        fetch("{{ url_for('customer.update_cart_item') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `cart_item_id=${cartItemId}&quantity=${newQuantity}&csrf_token=${encodeURIComponent(getCsrfToken())}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                quantityDisplay.textContent = newQuantity;
+                itemRow.querySelector('.line-total').textContent = 'Rs. ' + data.line_total.toFixed(2);
+                recalculateCheckoutTotal();
+            } else {
+                if(window.showGlobalToast) window.showGlobalToast(data.message || 'Something went wrong.', 'error');
+                else alert(data.message || 'Something went wrong.');
+            }
+        })
+        .catch(() => {
+            if(window.showGlobalToast) window.showGlobalToast('Network error. Please try again.', 'error');
+            else alert('Network error. Please try again.');
+        });
+    }
+
+    // ============================================================
+    // REMOVE ITEM - AJAX call to remove item entirely from checkout
+    // ============================================================
+    function removeCheckoutItem(cartItemId) {
+        fetch("{{ url_for('customer.remove_cart_item') }}", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `cart_item_id=${cartItemId}&csrf_token=${encodeURIComponent(getCsrfToken())}`
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const row = document.getElementById('checkoutItem-' + cartItemId);
+                row.style.transition = 'all 0.3s ease';
+                row.style.opacity = '0';
+                row.style.transform = 'translateX(16px)';
+                setTimeout(() => {
+                    row.remove();
+                    
+                    const remainingRows = document.querySelectorAll('#checkoutItemsList > div').length;
+                    if (remainingRows === 0) {
+                        // Cart empty, redirect to catalog
+                        window.location.href = "{{ url_for('customer.medicine_catalog') }}";
+                    } else {
+                        recalculateCheckoutTotal();
+                    }
+                }, 300);
+            } else {
+                if(window.showGlobalToast) window.showGlobalToast(data.message || 'Something went wrong.', 'error');
+            }
+        })
+        .catch(() => {
+            if(window.showGlobalToast) window.showGlobalToast('Network error. Please try again.', 'error');
+        });
+    }
+
+    // Recalculates subtotal/total by reading each visible line total -
+    // same approach as the cart page, kept consistent on purpose.
+    // Also keeps the navbar cart badge in sync (without this, the badge
+    // would only update on a full page reload, not after this AJAX change).
+    function recalculateCheckoutTotal() {
+        let subtotal = 0;
+        let totalQuantity = 0;
+        let uniqueItems = 0;
+        
+        document.querySelectorAll('#checkoutItemsList > div').forEach(row => {
+            const lineTotalText = row.querySelector('.line-total').textContent.replace('Rs. ', '');
+            subtotal += parseFloat(lineTotalText);
+            totalQuantity += parseInt(row.querySelector('.quantity-display').textContent);
+            uniqueItems += 1;
+        });
+
+        // Same free-delivery rule as the backend (utils/pricing.py):
+        // Rs. 2000+ subtotal = free delivery, otherwise Rs. 100 flat charge.
+        // Keep this number in sync with FREE_DELIVERY_THRESHOLD/STANDARD_DELIVERY_CHARGE
+        // in utils/pricing.py if those ever change.
+        const FREE_DELIVERY_THRESHOLD = 2000.00;
+        const STANDARD_DELIVERY_CHARGE = 100.00;
+        const deliveryCharge = subtotal >= FREE_DELIVERY_THRESHOLD ? 0 : STANDARD_DELIVERY_CHARGE;
+        const total = subtotal + deliveryCharge;
+
+        document.getElementById('checkoutSubtotalDisplay').textContent = 'Rs. ' + subtotal.toFixed(2);
+        document.getElementById('checkoutShippingDisplay').textContent = deliveryCharge === 0 ? 'FREE' : 'Rs. ' + deliveryCharge.toFixed(2);
+        document.getElementById('checkoutTotalDisplay').textContent = 'Rs. ' + total.toFixed(2);
+        
+        const summaryCount = document.getElementById('summaryItemsCount');
+        if (summaryCount) summaryCount.textContent = uniqueItems;
+
+        const hint = document.getElementById('freeDeliveryHint');
+        if (hint) {
+            if (deliveryCharge > 0) {
+                hint.textContent = 'Add Rs. ' + (FREE_DELIVERY_THRESHOLD - subtotal).toFixed(2) + ' more to get FREE delivery!';
+                hint.classList.remove('hidden');
+            } else {
+                hint.classList.add('hidden');
+            }
+        }
+
+        const badge = document.getElementById('navbarCartBadge');
+        if (badge) {
+            if (totalQuantity > 0) {
+                badge.textContent = totalQuantity;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+    }
+</script>
+
+<!-- ============================================================
+     RETURN POLICY REMINDER (checkout only)
+     Replaces the old homepage popup banner - shown here instead
+     since checkout is where the return policy actually matters to
+     the customer. Slides up briefly, auto-hides after a few
+     seconds, and does NOT keep reappearing on this page load once
+     dismissed (it will show again on the next checkout visit).
+     ============================================================ -->
+<div id="checkoutReturnPolicyBanner"
+     class="fixed left-1/2 -translate-x-1/2 bottom-6 z-40 w-[92%] max-w-xl bg-white border border-outline-variant/20 rounded-2xl shadow-lg p-4 flex items-start gap-3 transition-all duration-500 opacity-0 translate-y-6 pointer-events-none">
+    <span class="material-symbols-outlined text-primary text-2xl flex-shrink-0">info</span>
+    <div class="flex-1 text-sm text-on-surface-variant">
+        <span class="font-bold text-on-surface">Return Policy:</span>
+        Medicines can be returned within <span class="font-bold text-on-surface">2 days</span> of delivery.
+        Cold-chain items (e.g. insulin, vaccines) requiring refrigeration are
+        <span class="font-bold text-error">not returnable</span>.
+        <a href="{{ url_for('refund_policy') }}" class="text-primary font-semibold hover:underline">Read full policy</a>
+    </div>
+    <button type="button" onclick="dismissCheckoutReturnPolicyBanner()" class="text-on-surface-variant hover:text-on-surface flex-shrink-0">
+        <span class="material-symbols-outlined text-lg">close</span>
+    </button>
+</div>
+
+<script>
+    (function () {
+        const banner = document.getElementById('checkoutReturnPolicyBanner');
+        if (!banner) return;
+
+        let autoHideTimer = null;
+
+        function showBanner() {
+            banner.classList.remove('opacity-0', 'translate-y-6', 'pointer-events-none');
+            // Auto-hide after 6 seconds if the customer doesn't close it manually
+            autoHideTimer = setTimeout(hideBanner, 6000);
+        }
+        function hideBanner() {
+            banner.classList.add('opacity-0', 'translate-y-6', 'pointer-events-none');
+        }
+
+        // Shows once, shortly after the checkout page loads
+        setTimeout(showBanner, 1000);
+
+        // Manual close: hide immediately and cancel the auto-hide timer
+        // (no repeat on this page load either way - it only shows again
+        // the next time the customer visits checkout)
+        window.dismissCheckoutReturnPolicyBanner = function () {
+            if (autoHideTimer) clearTimeout(autoHideTimer);
+            hideBanner();
+        };
+    })();
+</script>
+
+<script>
+// ============================================================
+// PREVENT DOUBLE-SUBMIT
+// On a slow connection, a customer might tap "Place Your Order"
+// more than once before the page navigates away, creating two
+// separate orders for the same cart. This disables both submit
+// buttons (mobile + desktop) the moment the form is submitted, so
+// a second tap does nothing.
+// ============================================================
+(function () {
+    const form = document.getElementById('checkoutForm');
+    if (!form) return;
+
+    form.addEventListener('submit', function () {
+        document.querySelectorAll('.checkoutSubmitBtn').forEach(function (btn) {
+            btn.disabled = true;
+            btn.classList.add('opacity-60', 'cursor-not-allowed');
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> Placing Order...';
+        });
+    });
+})();
+</script>
+
+{% endblock %}

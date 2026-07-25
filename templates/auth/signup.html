@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account | SehatHub{% endblock %}
+
+{% block header %}
+<!-- ============================================================
+     HEADER (simple version - just logo + help link, no full nav)
+     Overrides the default base.html navbar since signup/login
+     pages should stay focused, without cart/search/account distractions.
+     ============================================================ -->
+<header class="absolute top-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-desktop h-24">
+    <a href="{{ url_for('home') }}" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <span class="material-symbols-outlined text-secondary text-3xl glow-pulse" style="font-variation-settings: 'FILL' 1;">health_and_safety</span>
+        <span class="font-headline-md text-headline-md font-bold text-white">SehatHub</span>
+    </a>
+    <a class="text-white/80 font-label-md text-label-md hover:text-white transition-colors flex items-center gap-1 bg-white/10 px-4 py-2 rounded-full backdrop-blur-md border border-white/20 hover:bg-white/20" href="https://wa.me/923001234567?text=Hi%20SehatHub%20Support,%20I%20need%20help%20signing%20up" target="_blank" rel="noopener">
+        <span class="material-symbols-outlined text-[18px]">support_agent</span> Need help?
+    </a>
+</header>
+{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     SIGNUP FORM - Premium Glassmorphism Design
+     ============================================================ -->
+<main class="min-h-screen pt-24 pb-12 px-margin-mobile flex items-center justify-center relative overflow-hidden bg-[#0B1426]">
+
+    <!-- Atmospheric background blobs (Cinematic, Premium) -->
+    <div class="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-primary/30 rounded-full blur-[120px] blob-animation"></div>
+    <div class="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-secondary/20 rounded-full blur-[100px] blob-animation" style="animation-delay: -5s;"></div>
+    <div class="absolute top-[40%] left-[30%] w-[300px] h-[300px] bg-[#F5A623]/10 rounded-full blur-[90px] blob-animation" style="animation-delay: -2s;"></div>
+
+    <div class="w-full max-w-[1100px] grid md:grid-cols-2 gap-0 glass-dark rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 z-10 reveal-on-scroll relative">
+        
+        <!-- Subtle gradient border effect for the entire card -->
+        <div class="absolute inset-0 border-2 border-transparent rounded-2xl pointer-events-none" style="background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05)) border-box; -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0); -webkit-mask-composite: destination-out; mask-composite: exclude;"></div>
+
+        <!-- Left Side: Visual Anchor with Cinematic Overlay -->
+        <div class="hidden md:flex relative bg-[#071b3d] overflow-hidden items-center justify-center border-r border-white/10">
+            
+            <!-- Dynamic geometric shapes for premium feel -->
+            <div class="absolute inset-0 overflow-hidden pointer-events-none">
+                <div class="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-secondary/10 rounded-full blur-[80px] float-card"></div>
+                <div class="absolute bottom-[-10%] left-[-10%] w-[350px] h-[350px] bg-primary/20 rounded-full blur-[80px] float-card float-card"></div>
+            </div>
+
+            <!-- Glassy pattern overlay -->
+            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')] opacity-50 mix-blend-overlay"></div>
+
+            <div class="relative z-10 h-full p-12 flex flex-col justify-center text-white text-center w-full">
+                <!-- Floating Icons -->
+                <div class="relative w-48 h-48 mx-auto mb-8">
+                    <div class="absolute inset-0 bg-white/5 rounded-full border border-white/10 animate-[spin_20s_linear_infinite]"></div>
+                    <div class="absolute inset-4 bg-white/5 rounded-full border border-white/10 animate-[spin_15s_linear_infinite_reverse]"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-6xl text-secondary glow-pulse" style="font-variation-settings: 'FILL' 1;">spa</span>
+                    </div>
+                    <!-- Orbiting sub-icons -->
+                    <span class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 material-symbols-outlined text-white/50 text-2xl bg-[#071b3d] p-1 rounded-full border border-white/10 float-card">medication</span>
+                    <span class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 material-symbols-outlined text-white/50 text-2xl bg-[#071b3d] p-1 rounded-full border border-white/10 float-card float-card">monitor_heart</span>
+                </div>
+
+                <h2 class="text-3xl lg:text-4xl font-headline-lg mb-4 leading-tight fade-up"><span class="gradient-text">Your Journey</span><br/>to Better Health Starts Here.</h2>
+                <p class="text-white/70 font-body-md max-w-sm mx-auto fade-up" style="animation-delay: 0.1s;">Experience clinical empathy with a seamless digital health companion designed for your care.</p>
+                
+                <div class="space-y-4 pt-10 border-t border-white/10 mt-8 fade-up" style="animation-delay: 0.2s;">
+                    <div class="flex justify-center items-center gap-3">
+                        <span class="material-symbols-outlined text-secondary">verified_user</span>
+                        <span class="font-label-md text-label-md text-white/90">Secure, Encrypted Health Records</span>
+                    </div>
+                    <div class="flex justify-center items-center gap-3">
+                        <span class="material-symbols-outlined text-secondary">medication</span>
+                        <span class="font-label-md text-label-md text-white/90">Direct Access to Expert Care</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Single-Page Registration Form -->
+        <div class="p-8 md:p-10 flex flex-col relative z-10 overflow-y-auto">
+            <div class="mb-8 fade-up">
+                <h1 class="text-headline-lg font-headline-lg text-white mb-2">Create Account</h1>
+                <p class="text-white/60 font-body-sm">Join SehatHub today for clinical-grade care at your fingertips.</p>
+            </div>
+
+            <!-- Social Login (Google) -->
+            <div class="mb-6 fade-up" style="animation-delay: 0.1s;">
+                <button type="button" onclick="alert('Google Signup requires a live domain and Google API credentials. This will be activated when SehatHub goes live in production!');" class="w-full py-3.5 bg-white/5 border border-white/10 rounded-lg text-white font-semibold hover:bg-white/10 transition-all flex items-center justify-center gap-3 shadow-sm hover-lift-premium">
+                    <svg viewBox="0 0 24 24" class="w-5 h-5">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        <path d="M1 1h22v22H1z" fill="none"/>
+                    </svg>
+                    Sign up with Google
+                </button>
+            </div>
+
+            <div class="flex items-center gap-4 mb-6 fade-up" style="animation-delay: 0.15s;">
+                <div class="h-px bg-white/10 flex-1"></div>
+                <span class="text-xs text-white/40 font-medium uppercase tracking-wider">or sign up with email</span>
+                <div class="h-px bg-white/10 flex-1"></div>
+            </div>
+
+            <!-- Flash messages: shows errors like "email already registered" sent from the backend -->
+            <form class="space-y-4 stagger-reveal visible" method="POST" action="{{ url_for('auth.signup') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                <div class="space-y-1">
+                    <label class="block font-label-md text-[13px] text-white/80" for="fullName">Full Name</label>
+                    <input class="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/5 text-white font-body-md focus:border-secondary focus:ring-1 focus:ring-secondary focus:bg-white/10 outline-none transition-all placeholder:text-white/30 backdrop-blur-sm"
+                           id="fullName" name="full_name" placeholder="e.g. Obaid Shah" type="text" required value="{{ request.form.full_name or '' }}"/>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block font-label-md text-[13px] text-white/80" for="email">Email Address</label>
+                    <input class="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/5 text-white font-body-md focus:border-secondary focus:ring-1 focus:ring-secondary focus:bg-white/10 outline-none transition-all placeholder:text-white/30 backdrop-blur-sm"
+                           id="email" name="email" placeholder="you@example.com" type="email" required value="{{ request.form.email or '' }}"/>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="block font-label-md text-[13px] text-white/80" for="phone">Phone Number</label>
+                    <input class="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/5 text-white font-body-md focus:border-secondary focus:ring-1 focus:ring-secondary focus:bg-white/10 outline-none transition-all placeholder:text-white/30 backdrop-blur-sm"
+                           id="phone" name="phone" placeholder="03XX-XXXXXXX" type="tel" required
+                           pattern="^(03\d{9}|(\+92|92)3\d{9})$" title="Enter a valid Pakistani mobile number, e.g. 0301-2345678"
+                           value="{{ request.form.phone or '' }}"/>
+                    <p class="text-[11px] text-white/40">Format: 03XX-XXXXXXX</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-1 relative">
+                        <label class="block font-label-md text-[13px] text-white/80" for="password">Password</label>
+                        <div class="relative">
+                            <input class="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/5 text-white font-body-md focus:border-secondary focus:ring-1 focus:ring-secondary focus:bg-white/10 outline-none transition-all placeholder:text-white/30 backdrop-blur-sm"
+                                   id="password" name="password" placeholder="At least 8 chars" type="password" required minlength="8"
+                                   pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$" title="At least 8 characters, with an uppercase letter, a lowercase letter, and a number"/>
+                            <button type="button" onclick="togglePassword('password', 'passwordEyeIcon')" class="absolute right-3 top-1/2 -translate-y-1/2 text-secondary hover:brightness-110 transition-colors z-10">
+                                <span class="material-symbols-outlined text-[18px]" id="passwordEyeIcon">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1 relative">
+                        <label class="block font-label-md text-[13px] text-white/80" for="confirmPassword">Confirm Password</label>
+                        <div class="relative">
+                            <input class="w-full px-4 py-2.5 rounded-lg border border-white/10 bg-white/5 text-white font-body-md focus:border-secondary focus:ring-1 focus:ring-secondary focus:bg-white/10 outline-none transition-all placeholder:text-white/30 backdrop-blur-sm"
+                                   id="confirmPassword" name="confirm_password" placeholder="Confirm" type="password" required minlength="8"/>
+                            <button type="button" onclick="togglePassword('confirmPassword', 'confirmPasswordEyeIcon')" class="absolute right-3 top-1/2 -translate-y-1/2 text-secondary hover:brightness-110 transition-colors z-10">
+                                <span class="material-symbols-outlined text-[18px]" id="confirmPasswordEyeIcon">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live strength meter -->
+                <div class="space-y-1 pb-2">
+                    <div class="flex gap-1 mt-1" id="passwordStrengthBars">
+                        <div class="h-1 flex-1 rounded-full bg-white/10 transition-colors" data-bar="1"></div>
+                        <div class="h-1 flex-1 rounded-full bg-white/10 transition-colors" data-bar="2"></div>
+                        <div class="h-1 flex-1 rounded-full bg-white/10 transition-colors" data-bar="3"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-0.5">
+                        <p class="text-[11px] font-medium" id="passwordStrengthLabel"></p>
+                        <p class="text-[10px] text-white/40 text-right">Requires upper, lower, & number</p>
+                    </div>
+                </div>
+
+                <script>
+                    (function () {
+                        const input = document.getElementById('password');
+                        const bars = document.querySelectorAll('#passwordStrengthBars [data-bar]');
+                        const label = document.getElementById('passwordStrengthLabel');
+                        if (!input || !bars.length || !label) return;
+
+                        function scorePassword(pw) {
+                            if (!pw) return 0;
+                            let score = 0;
+                            if (pw.length >= 8) score++;
+                            if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+                            if (/\d/.test(pw) && pw.length >= 10) score++;
+                            return score; // 0-3
+                        }
+
+                        const LEVELS = [
+                            { color: 'bg-white/10', text: '', textColor: '' },
+                            { color: 'bg-error', text: 'Weak', textColor: 'text-error' },
+                            { color: 'bg-tertiary-fixed-dim', text: 'Medium', textColor: 'text-tertiary-fixed-dim' },
+                            { color: 'bg-secondary', text: 'Strong', textColor: 'text-secondary' }
+                        ];
+
+                        input.addEventListener('input', function () {
+                            const score = scorePassword(input.value);
+                            const level = LEVELS[score];
+
+                            bars.forEach(function (bar, i) {
+                                bar.className = 'h-1 flex-1 rounded-full transition-colors ' + (i < score ? level.color : 'bg-white/10');
+                            });
+
+                            label.textContent = input.value ? level.text : '';
+                            label.className = 'text-[11px] font-medium mt-0.5 ' + level.textColor;
+                        });
+                    })();
+                </script>
+
+                <div class="pt-2">
+                    <label class="flex items-start gap-3 group cursor-pointer">
+                        <input class="h-5 w-5 rounded border-white/20 bg-white/5 text-secondary focus:ring-secondary/50 focus:ring-offset-0 mt-0.5 cursor-pointer" id="terms" name="terms" type="checkbox" required/>
+                        <span class="text-white/60 text-[13px] leading-snug">
+                            I agree to the <a class="text-secondary font-medium hover:text-white transition-colors" href="{{ url_for('terms_of_service') }}" target="_blank">Terms of Service</a> and <a class="text-secondary font-medium hover:text-white transition-colors" href="{{ url_for('privacy_policy') }}" target="_blank">Privacy Policy</a>.
+                        </span>
+                    </label>
+                </div>
+
+                <button class="w-full py-3.5 bg-gradient-to-r from-primary to-secondary text-white font-headline-md text-[16px] rounded-lg hover:shadow-[0_0_20px_rgba(239, 108, 0, 0.4)] active:scale-[0.98] transition-all flex justify-center items-center gap-2 hover-lift-premium"
+                        type="submit">
+                    Create Account
+                    <span class="material-symbols-outlined">how_to_reg</span>
+                </button>
+            </form>
+
+            <div class="text-center pt-5 mt-5 border-t border-white/10 fade-up" style="animation-delay: 0.4s;">
+                <span class="text-white/60 font-body-sm">Already have an account?</span>
+                <a class="text-secondary font-bold hover:text-white transition-colors ml-1" href="{{ url_for('auth.login') }}">Log in</a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    function togglePassword(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.textContent = 'visibility_off';
+        } else {
+            input.type = 'password';
+            icon.textContent = 'visibility';
+        }
+    }
+</script>
+
+{% endblock %}

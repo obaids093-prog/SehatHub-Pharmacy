@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Order #SH-{{ "%04d"|format(order.order_id) }} | SehatHub{% endblock %}
+
+{% block head %}
+    {{ super() }}
+    {% if order.status not in ['delivered', 'cancelled'] %}
+    <!-- Auto-poll every 30 seconds for live tracking updates -->
+    <meta http-equiv="refresh" content="30">
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<div class="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8">
+
+    <div class="text-body-sm text-on-surface-variant mb-6">
+        <a href="{{ url_for('customer.order_history') }}" class="hover:text-primary">Order History</a>
+        <span class="mx-2">›</span>
+        <span class="text-primary font-medium">#SH-{{ "%04d"|format(order.order_id) }}</span>
+    </div>
+
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-8">
+        <h1 class="text-headline-lg font-headline-lg text-on-surface">Order #SH-{{ "%04d"|format(order.order_id) }}</h1>
+        <p class="text-body-sm text-on-surface-variant">Placed on {{ order.created_at.strftime('%d %b %Y, %I:%M %p') }}</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- ============================================================
+                 STATUS TIMELINE (Track Order)
+                 ============================================================ -->
+            <div class="bg-white rounded-2xl border border-outline-variant/10 p-6">
+                <h3 class="font-headline-md text-lg mb-6">Order Status</h3>
+
+                {% if is_cancelled %}
+                    <div class="flex items-center gap-3 text-error mb-2">
+                        <span class="material-symbols-outlined text-2xl">cancel</span>
+                        <span class="font-bold">This order was cancelled.</span>
+                    </div>
+                    {% if order.cancellation_reason %}
+                        <p class="text-sm text-on-surface-variant pl-9">Reason: {{ order.cancellation_reason }}</p>
+                    {% endif %}
+                {% else %}
+                <div class="flex items-center justify-between relative">
+                    {% for stage in timeline %}
+                    <div class="flex-1 flex flex-col items-center relative z-10">
+                        <div class="w-9 h-9 rounded-full flex items-center justify-center mb-2
+                            {% if stage.completed %} bg-primary text-white {% else %} bg-surface-container-high text-on-surface-variant {% endif %}">
+                            {% if stage.completed %}
+                                <span class="material-symbols-outlined text-lg">check</span>
+                            {% else %}
+                                <span class="w-2 h-2 rounded-full bg-on-surface-variant/40"></span>
+                            {% endif %}
+                        </div>
+                        <span class="text-xs text-center capitalize font-medium {% if stage.is_current %} text-primary font-bold {% else %} text-on-surface-variant {% endif %}">
+                            {{ stage.name }}
+                        </span>
+                    </div>
+                    {% if not loop.last %}
+                    <div class="absolute top-[18px] h-0.5 {% if stage.completed %} bg-primary {% else %} bg-surface-container-high {% endif %}" style="left: {{ (loop.index0 / (timeline|length - 1)) * 100 }}%; width: {{ 100 / (timeline|length - 1) }}%;"></div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                
+                <!-- Mock Rider Info if Out for Delivery (Shipped) -->
+                {% if order.status == 'shipped' %}
+                <div class="mt-8 bg-surface-bright rounded-xl border border-outline-variant/20 p-4 flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center flex-shrink-0">
+                        <span class="material-symbols-outlined text-secondary text-2xl">two_wheeler</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wide">Out for Delivery</p>
+                        <p class="font-bold text-on-surface">Rider: Ali Khan</p>
+                    </div>
+                    <a href="tel:03001234567" class="bg-primary/10 text-primary p-3 rounded-full hover:bg-primary/20 transition-colors" title="Call Rider">
+                        <span class="material-symbols-outlined">call</span>
+                    </a>
+                </div>
+                {% endif %}
+                
+                {% endif %}
+            </div>
+
+            <!-- ============================================================
+                 ITEMS IN THIS ORDER
+                 ============================================================ -->
+            <div class="bg-white rounded-2xl border border-outline-variant/10 p-6">
+                <h3 class="font-headline-md text-lg mb-4">Items in this order</h3>
+                <div class="space-y-4">
+                    {% for item in items %}
+                    <div class="flex items-center gap-4 pb-4 border-b border-outline-variant/10 last:border-0 last:pb-0">
+                        <div class="w-14 h-14 rounded-xl bg-surface-bright flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            {% if item.image_url %}
+                                <img src="{{ url_for('static', filename=item.image_url) }}?v=2" alt="{{ item.medicine_name }}" class="w-full h-full object-contain p-1">
+                            {% else %}
+                                <span class="material-symbols-outlined text-2xl text-primary/30">medication</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-bold">{{ item.medicine_name }}</p>
+                            <p class="text-xs text-on-surface-variant">{{ item.brand_name or 'Generic' }} · {{ item.pack_size }} · Qty: {{ item.quantity }}</p>
+                        </div>
+                        <span class="font-bold text-primary">Rs. {{ "%.2f"|format(item.price_at_purchase * item.quantity) }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             ORDER INFO SIDEBAR
+             ============================================================ -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 sticky top-24 space-y-5">
+
+                <div>
+                    <p class="text-xs text-on-surface-variant uppercase font-bold tracking-wide mb-1">Delivering To</p>
+                    <p class="text-body-sm">{{ order.delivery_address }}</p>
+                </div>
+
+                {% if order.special_instructions %}
+                <div>
+                    <p class="text-xs text-on-surface-variant uppercase font-bold tracking-wide mb-1">Delivery Instructions</p>
+                    <p class="text-body-sm italic">{{ order.special_instructions }}</p>
+                </div>
+                {% endif %}
+
+                <div>
+                    <p class="text-xs text-on-surface-variant uppercase font-bold tracking-wide mb-1">Payment Method</p>
+                    <p class="text-body-sm capitalize">{{ order.payment_method.replace('_', ' ') }}</p>
+                </div>
+
+                <div class="border-t border-outline-variant/20 pt-4 flex justify-between">
+                    <span class="font-bold">Total Paid</span>
+                    <span class="font-bold text-primary text-lg">Rs. {{ "%.2f"|format(order.total_amount) }}</span>
+                </div>
+                
+                <!-- Cancel Order Action -->
+                {% if order.status in ['placed', 'confirmed'] %}
+                <div class="border-t border-outline-variant/20 pt-4">
+                    <form method="POST" action="{{ url_for('customer.cancel_order', order_id=order.order_id) }}" onsubmit="return confirm('Are you sure you want to cancel this order? This cannot be undone.');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button type="submit" class="w-full py-3 rounded-lg border border-error text-error font-bold hover:bg-error-container transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-[18px]">cancel</span> Cancel Order
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

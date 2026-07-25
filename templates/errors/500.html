@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Something Went Wrong | SehatHub{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-margin-mobile md:px-margin-desktop py-24 text-center">
+    <div class="w-32 h-32 mx-auto bg-error/10 rounded-full flex items-center justify-center mb-8 animate-[pulse_3s_infinite]">
+        <span class="material-symbols-outlined text-error text-6xl">warning</span>
+    </div>
+    <h1 class="text-[80px] font-black text-error leading-none mb-2">500</h1>
+    <h2 class="text-headline-md font-headline-md text-on-surface mb-4">Internal Server Error</h2>
+    <p class="text-body-md text-on-surface-variant mb-10 max-w-md mx-auto">
+        Something went wrong on our end. Our technical team has been notified and is working to fix the issue.
+    </p>
+    <a href="{{ url_for('home') }}"
+       class="inline-flex items-center gap-2 px-8 py-4 bg-primary text-white font-bold rounded-full hover:shadow-lg hover:-translate-y-1 transition-all">
+        <span class="material-symbols-outlined text-lg">home</span>
+        Back to Homepage
+    </a>
+</div>
+{% endblock %}

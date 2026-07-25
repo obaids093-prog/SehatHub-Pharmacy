@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found | SehatHub{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-margin-mobile md:px-margin-desktop py-24 text-center">
+    <div class="w-32 h-32 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-8 animate-[bounce_3s_infinite]">
+        <span class="material-symbols-outlined text-primary text-6xl">search_off</span>
+    </div>
+    <h1 class="text-[80px] font-black text-primary leading-none mb-2">404</h1>
+    <h2 class="text-headline-md font-headline-md text-on-surface mb-4">Oops! Page Not Found</h2>
+    <p class="text-body-md text-on-surface-variant mb-10 max-w-md mx-auto">
+        The page you're looking for doesn't exist, or may have moved. Let's get you back to health.
+    </p>
+    <a href="{{ url_for('home') }}"
+       class="inline-flex items-center gap-2 px-8 py-4 bg-primary text-white font-bold rounded-full hover:shadow-lg hover:-translate-y-1 transition-all">
+        <span class="material-symbols-outlined text-lg">home</span>
+        Back to Homepage
+    </a>
+</div>
+{% endblock %}

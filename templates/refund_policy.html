@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Refund Policy | SehatHub{% endblock %}
+
+{% block content %}
+
+<!-- ============================================================
+     REFUND POLICY PAGE
+     Dedicated page (replaces the old homepage popup banner).
+     Structure modeled on D.Watson's Refund Policy page, adapted
+     for a medicine-only e-commerce catalog (COD-only payments,
+     cold-chain items, pharmacy safety rules on opened medicines).
+     ============================================================ -->
+<div class="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop py-12">
+
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-body-sm text-on-surface-variant mb-6">
+        <a href="{{ url_for('home') }}" class="hover:text-primary transition-colors">Home</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="text-on-surface font-medium">Refund Policy</span>
+    </div>
+
+    <h1 class="text-headline-lg font-headline-lg text-on-surface mb-10">Refund Policy</h1>
+
+    <!-- Return Eligibility -->
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Return Eligibility</h2>
+        <p class="text-body-md text-on-surface-variant mb-3">You can request a return within <span class="font-bold text-on-surface">2 days</span> of receiving your order under the following conditions:</p>
+        <ul class="space-y-2 text-body-md text-on-surface-variant">
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">check_circle</span>
+                Product is unopened, unused, and in its original sealed packaging
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">check_circle</span>
+                Product has a manufacturing defect (photo/video evidence required)
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">check_circle</span>
+                Wrong product was shipped by us
+            </li>
+        </ul>
+    </section>
+
+    <!-- Non-Returnable Items -->
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Non-Returnable Items</h2>
+        <ul class="space-y-2 text-body-md text-on-surface-variant">
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-error text-lg mt-0.5">cancel</span>
+                Cold-chain items requiring refrigeration (e.g. insulin, vaccines)
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-error text-lg mt-0.5">cancel</span>
+                Any medicine that has been opened, unsealed, or partially used, for safety reasons
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-error text-lg mt-0.5">cancel</span>
+                Prescription medicines once dispensed against a verified prescription
+            </li>
+        </ul>
+    </section>
+
+    <!-- Return Process -->
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">How to Request a Return</h2>
+        <ol class="space-y-3 text-body-md text-on-surface-variant list-decimal list-inside">
+            <li>Contact us via phone or email within 2 days of delivery</li>
+            <li>Provide your order number and the reason for return</li>
+            <li>We will review and approve or reject your request within 1-2 business days</li>
+            <li>If approved, we'll send instructions for returning the item</li>
+        </ol>
+    </section>
+
+    <!-- Return Shipping Cost -->
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Return Shipping Cost</h2>
+        <ul class="space-y-2 text-body-md text-on-surface-variant">
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">local_shipping</span>
+                If the return is due to our error (defect or wrong product): <span class="font-bold text-on-surface">we cover return shipping</span>
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">local_shipping</span>
+                If the return is due to a change of mind: <span class="font-bold text-on-surface">the customer covers return shipping</span>
+            </li>
+        </ul>
+    </section>
+
+    <!-- Refund Method -->
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Refund Method</h2>
+        <p class="text-body-md text-on-surface-variant mb-3">Once we receive and inspect the returned product:</p>
+        <ul class="space-y-2 text-body-md text-on-surface-variant">
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">payments</span>
+                Refund is processed within 5-7 business days
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">payments</span>
+                Since orders are Cash on Delivery, refunds are sent via bank transfer or JazzCash/EasyPaisa to the account you provide
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">payments</span>
+                You'll receive confirmation once the refund has been sent
+            </li>
+        </ul>
+    </section>
+
+    <!-- Contact Us -->
+    <section class="bg-surface-container rounded-2xl p-6">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Contact Us</h2>
+        <ul class="space-y-2 text-body-md text-on-surface-variant">
+            <li class="flex items-center gap-2"><span class="material-symbols-outlined text-lg text-secondary">call</span> 0800-SEHAT-HUB</li>
+            <li class="flex items-center gap-2"><span class="material-symbols-outlined text-lg text-secondary">mail</span> care@sehathub.pk</li>
+            <li class="flex items-center gap-2"><span class="material-symbols-outlined text-lg text-secondary">location_on</span> Islamabad, Pakistan</li>
+        </ul>
+    </section>
+
+</div>
+
+{% endblock %}

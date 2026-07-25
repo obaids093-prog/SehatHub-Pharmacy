@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<!-- CSRF token for AJAX/fetch calls (cart add/update/remove etc.) - JS reads
+     this via getCsrfToken() below since those calls don't submit a normal
+     <form>, so they can't carry a hidden input field like other forms do. -->
+<meta name="csrf-token" content="{{ csrf_token }}"/>
+<!-- Logged-in user's role, so the notification-polling JS below knows
+     which API endpoint to check (customer/pharmacist/delivery each
+     have their own - see the "REAL-TIME NOTIFICATIONS" polling
+     script further down this file). Empty if not logged in. -->
+<meta name="user-role" content="{{ session.role or '' }}"/>
+<title>{% block title %}SehatHub | Reliable Healthcare Delivered with Care{% endblock %}</title>
+
+<!-- Tailwind CSS (CDN) - gives us utility classes like "flex", "text-primary" etc. -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+<!-- Google Fonts: Hanken Grotesk for headings, Inter for body text -->
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+<style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3, .headline { font-family: 'Hanken Grotesk', sans-serif; }
+
+    .blob-animation { filter: blur(80px); animation: float 20s infinite alternate; }
+    @keyframes float {
+        0% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(10%, 20%) scale(1.1); }
+        100% { transform: translate(-5%, -10%) scale(0.9); }
+    }
+
+    .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
+    .glass-dark { background: rgba(11, 20, 38, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .pulse-soft { animation: pulse-soft 2s infinite; }
+    @keyframes pulse-soft { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
+
+    .gradient-text { background: linear-gradient(135deg, #fff 0%, #a9c6f0 40%, #F5A623 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .glow-pulse { box-shadow: 0 0 20px rgba(0, 61, 155,0.4), 0 0 60px rgba(0, 61, 155,0.1); animation: glowPulse 2s ease-in-out infinite; }
+    @keyframes glowPulse { 0%,100% { box-shadow: 0 0 20px rgba(0, 61, 155,0.4), 0 0 60px rgba(0, 61, 155,0.1); } 50% { box-shadow: 0 0 30px rgba(0, 61, 155,0.6), 0 0 80px rgba(0, 61, 155,0.2); } }
+    .glow-gold { box-shadow: 0 0 20px rgba(245,166,35,0.3), 0 0 60px rgba(245,166,35,0.1); }
+
+    .float-shape { animation: floatShape 6s ease-in-out infinite; }
+    .float-shape-delay { animation-delay: 2s; }
+    .float-shape-delay-2 { animation-delay: 4s; }
+    @keyframes floatShape { 0%,100% { transform: translateY(0) rotate(0deg); } 33% { transform: translateY(-15px) rotate(5deg); } 66% { transform: translateY(10px) rotate(-3deg); } }
+
+    /* Same gentle bob as float-shape, but WITHOUT rotation - used for cards
+       that contain a real product photo + readable text, where tilting
+       looks like a rendering glitch rather than a nice floating effect. */
+    .float-card { animation: floatCard 6s ease-in-out infinite; }
+    .float-card-d1 { animation: floatCard 6s ease-in-out infinite; animation-delay: 1.5s; }
+    .float-card-d2 { animation: floatCard 6s ease-in-out infinite; animation-delay: 3s; }
+    @keyframes floatCard { 0%,100% { transform: translateY(0); } 33% { transform: translateY(-12px); } 66% { transform: translateY(8px); } }
+
+    /* ============================================================
+       HERO 3D SHOWCASE — Cinematic orbiting product cards
+       ============================================================ */
+    /* --- Stage & wrapper --- */
+    #heroCarouselWrapper {
+        perspective: 1000px;
+        transform-style: preserve-3d;
+        width: 100%;
+        height: 450px;
+    }
+    
+    .hero3d-orbit-ring {
+        position: absolute;
+        top: 50%; left: 50%;
+        width: 380px; height: 380px;
+        transform: translate(-50%, -50%) rotateX(75deg);
+        border-radius: 50%;
+        border: 2px dashed rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 40px rgba(0, 194, 255, 0.2), inset 0 0 40px rgba(0, 61, 155, 0.2);
+        pointer-events: none;
+        z-index: 1;
+        animation: spinRing 20s linear infinite;
+    }
+    @keyframes spinRing { 100% { transform: translate(-50%, -50%) rotateX(75deg) rotateZ(360deg); } }
+
+    .hero3d-scene {
+        position: relative;
+        width: 100%; height: 100%;
+        transform-style: preserve-3d;
+        z-index: 10;
+        transition: transform 0.1s ease-out; /* smooth parallax */
+    }
+
+    .hero3d-carousel {
+        position: absolute;
+        top: 50%; left: 50%;
+        width: 0; height: 0;
+        transform-style: preserve-3d;
+        z-index: 10;
+    }
+
+    .hero3d-card {
+        position: absolute;
+        top: -110px; /* half of card height */
+        left: -80px; /* half of card width */
+        width: 160px;
+        height: 220px;
+        transform-style: preserve-3d;
+        cursor: pointer;
+        display: block;
+        /* The JS sets transform: rotateY(angle) translateZ(radius) */
+    }
+
+    .hero3d-card-face {
+        position: relative;
+        width: 100%; height: 100%;
+        background: rgba(11, 20, 38, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 20px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), inset 0 0 20px rgba(255,255,255,0.05);
+        transform-style: preserve-3d;
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.4s, box-shadow 0.4s;
+    }
+
+    .hero3d-card:hover .hero3d-card-face {
+        transform: translateY(-15px) translateZ(20px) scale(1.1);
+        border-color: rgba(0, 194, 255, 0.5);
+        box-shadow: 0 25px 50px rgba(0, 194, 255, 0.3), inset 0 0 30px rgba(255,255,255,0.1);
+    }
+
+    .hero3d-card-glow {
+        position: absolute;
+        inset: 0;
+        border-radius: 20px;
+        background: radial-gradient(circle at 50% -20%, rgba(255,255,255,0.15), transparent 60%);
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .hero3d-img-wrap {
+        width: 100%;
+        height: 120px;
+        background: #ffffff;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+        overflow: hidden;
+        position: relative;
+        z-index: 2;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .hero3d-img-wrap img {
+        width: 80%;
+        height: 80%;
+        object-fit: contain;
+        transition: transform 0.5s ease;
+    }
+    .hero3d-card:hover .hero3d-img-wrap img {
+        transform: scale(1.15) rotate(5deg);
+    }
+
+    .hero3d-card-info {
+        text-align: center;
+        width: 100%;
+        z-index: 2;
+    }
+
+    .hero3d-card-name {
+        color: #ffffff;
+        font-size: 13px;
+        font-weight: 700;
+        margin-bottom: 4px;
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .hero3d-card-price {
+        color: #F5A623;
+        font-size: 15px;
+        font-weight: 800;
+    }
+    .hero3d-price-alt { color: #00c2ff; }
+
+    .hero3d-card-badge {
+        position: absolute;
+        top: -12px; right: -12px;
+        width: 34px; height: 34px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center; justify-content: center;
+        background: linear-gradient(135deg, #ef4444, #f97316);
+        color: white;
+        box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+        z-index: 5;
+        transform: translateZ(10px);
+        animation: pulseBadge 2s infinite;
+    }
+    .hero3d-badge-blue { background: linear-gradient(135deg, #003d9b, #00c2ff); box-shadow: 0 5px 15px rgba(0, 194, 255, 0.4); }
+    .hero3d-badge-gold { background: linear-gradient(135deg, #F5A623, #ef6c00); box-shadow: 0 5px 15px rgba(245, 166, 35, 0.4); }
+    
+    @keyframes pulseBadge {
+        0%, 100% { transform: translateZ(10px) scale(1); }
+        50% { transform: translateZ(10px) scale(1.1); }
+    }
+
+    .hero3d-trending-label {
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.2);
+        padding: 8px 20px;
+        border-radius: 30px;
+        color: white;
+        font-size: 14px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 20;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+    
+    .hero3d-trending-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: #4ade80;
+        box-shadow: 0 0 10px #4ade80;
+        animation: blinkDot 1.5s infinite;
+    }
+    @keyframes blinkDot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.4; transform: scale(0.8); }
+    }
+    
+    .marquee-track { display: flex; width: max-content; animation: marqueeScroll 30s linear infinite; }
+    .marquee-track:hover { animation-play-state: paused; }
+    .marquee-track-reverse { display: flex; width: max-content; animation: marqueeScroll 35s linear infinite reverse; }
+    .marquee-track-reverse:hover { animation-play-state: paused; }
+    @keyframes marqueeScroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+    .gradient-border { position: relative; }
+    .gradient-border::before { content: ''; position: absolute; inset: -2px; border-radius: inherit; background: linear-gradient(135deg, #003d9b, #F5A623, #003d9b); z-index: -1; opacity: 0.5; transition: opacity 0.3s; }
+    .gradient-border:hover::before { opacity: 1; }
+
+    .hover-lift-premium { transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease; }
+    .hover-lift-premium:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -12px rgba(0, 61, 155,0.25); }
+
+    /* ============================================================
+       SCROLL-REVEAL — sections fade + slide up as they enter the
+       viewport, instead of just appearing instantly. Add the
+       "reveal-on-scroll" class to any section; a small IntersectionObserver
+       script (see the bottom of base.html) adds "revealed" once it's
+       visible, which triggers this transition.
+       Respects prefers-reduced-motion for accessibility.
+       ============================================================ */
+    .reveal-on-scroll {
+        opacity: 0;
+        transform: translateY(28px);
+        transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal-on-scroll.revealed {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    @media (prefers-reduced-motion: reduce) {
+        .reveal-on-scroll { opacity: 1; transform: none; transition: none; }
+    }
+
+    /* Category Spotlight cross-fade (homepage) - smooth opacity
+       transition instead of an instant hidden/shown swap */
+    .spot-panel { transition: opacity 0.25s ease; }
+    .spot-panel.fade-out { opacity: 0; }
+
+    .typing-cursor::after { content: '|'; animation: cursorBlink 1s infinite; color: #F5A623; }
+    @keyframes cursorBlink { 0%,50% { opacity: 1; } 51%,100% { opacity: 0; } }
+
+    .snap-x-mandatory { scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+    .snap-start { scroll-snap-align: start; }
+
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    /* ============================================================
+       ANIMATIONS (adapted from Obaid's Stitch design #28)
+       - fade-up: hero text enters with a slight upward fade
+       - reveal-on-scroll / stagger-reveal: sections fade+slide in
+         as the user scrolls to them (via IntersectionObserver in
+         the script at the bottom of this file)
+       - nav-scrolled: navbar gets a bit more shadow once scrolled
+       ============================================================ */
+    .fade-up { opacity: 0; animation: fadeUp 0.8s forwards; }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal-on-scroll {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    }
+    .reveal-on-scroll.visible { opacity: 1; transform: translateY(0); }
+
+    .stagger-reveal > * { opacity: 0; transform: translateY(24px); }
+    .stagger-reveal.visible > *:nth-child(1) { transition: all 0.6s ease 0.05s; opacity: 1; transform: translateY(0); }
+    .stagger-reveal.visible > *:nth-child(2) { transition: all 0.6s ease 0.1s; opacity: 1; transform: translateY(0); }
+    .stagger-reveal.visible > *:nth-child(3) { transition: all 0.6s ease 0.15s; opacity: 1; transform: translateY(0); }
+    .stagger-reveal.visible > *:nth-child(4) { transition: all 0.6s ease 0.2s; opacity: 1; transform: translateY(0); }
+    .stagger-reveal.visible > *:nth-child(5) { transition: all 0.6s ease 0.25s; opacity: 1; transform: translateY(0); }
+    .stagger-reveal.visible > *:nth-child(6) { transition: all 0.6s ease 0.3s; opacity: 1; transform: translateY(0); }
+    .stagger-reveal.visible > *:nth-child(7) { transition: all 0.6s ease 0.35s; opacity: 1; transform: translateY(0); }
+    .stagger-reveal.visible > *:nth-child(8) { transition: all 0.6s ease 0.4s; opacity: 1; transform: translateY(0); }
+
+    #main-nav.nav-scrolled { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+
+    /* ============================================================
+       TOAST NOTIFICATIONS
+       One consistent, professional toast style for every flash
+       message site-wide (replaces the old per-page colored banner
+       blocks). Slides in from the right, auto-dismisses, and can
+       be closed manually.
+       ============================================================ */
+    #toastContainer {
+        position: fixed;
+        top: 88px;
+        right: 20px;
+        z-index: 200;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-width: 380px;
+        width: calc(100% - 40px);
+    }
+    .toast {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        background: white;
+        border-radius: 14px;
+        padding: 14px 16px;
+        box-shadow: 0 10px 30px -8px rgba(5, 31, 30, 0.25);
+        border: 1px solid rgba(0,0,0,0.06);
+        animation: toastIn 0.35s ease forwards;
+    }
+    .toast.toast-hide { animation: toastOut 0.3s ease forwards; }
+    @keyframes toastIn {
+        from { opacity: 0; transform: translateX(40px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes toastOut {
+        from { opacity: 1; transform: translateX(0); }
+        to { opacity: 0; transform: translateX(40px); }
+    }
+</style>
+
+<!--
+    ============================================================
+    SEHATHUB COLOR SYSTEM
+    ============================================================
+    Updated per Obaid's new design reference: navy blue + orange,
+    replacing the teal/mint palette (teal felt too "common" for
+    healthcare sites lately). Layout and structure stay exactly as
+    designed - only the color values changed.
+-->
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                "colors": {
+                    "on-primary-fixed": "#001233",
+                    "outline-variant": "#c3c6d6",
+                    "error-container": "#ffdad6",
+                    "surface-tint": "#003d9b",
+                    "primary-container": "#0b4fc4",
+                    "on-secondary-fixed-variant": "#5c2e00",
+                    "secondary-fixed-dim": "#ffb366",
+                    "surface-container-high": "#dbe6fb",
+                    "surface-container": "#eef3fc",
+                    "inverse-on-surface": "#edf0ff",
+                    "on-surface": "#0a1930",
+                    "primary-fixed-dim": "#a9c6f0",
+                    "on-primary-container": "#cfe0fb",
+                    "tertiary": "#5e3c00",
+                    "on-primary-fixed-variant": "#0a2f6f",
+                    "inverse-primary": "#a9c6f0",
+                    "outline": "#737685",
+                    "tertiary-fixed-dim": "#ffb950",
+                    "surface-variant": "#dce8fb",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary-container": "#8a3d00",
+                    "surface-dim": "#cfe0f7",
+                    "navbar-dark": "#0a2a5e",
+                    "footer-dark": "#071b3d",
+                    "tertiary-fixed": "#ffddb3",
+                    "on-tertiary": "#ffffff",
+                    "surface-bright": "#f8fafe",
+                    "tertiary-container": "#7d5200",
+                    "on-primary": "#ffffff",
+                    "background": "#f8fafe",
+                    "on-surface-variant": "#434654",
+                    "on-background": "#0a1930",
+                    "secondary-fixed": "#ffd8a8",
+                    "on-secondary": "#ffffff",
+                    "primary": "#003d9b",
+                    "on-tertiary-fixed-variant": "#624000",
+                    "on-secondary-fixed": "#3d1f00",
+                    "surface-container-highest": "#dce8fb",
+                    "secondary-container": "#ffd8a8",
+                    "on-tertiary-container": "#ffca81",
+                    "on-tertiary-fixed": "#291800",
+                    "secondary": "#ef6c00",
+                    "surface-container-low": "#f2f6fd",
+                    "primary-fixed": "#cfe0fb",
+                    "on-error-container": "#93000a",
+                    "on-error": "#ffffff",
+                    "surface": "#f8fafe",
+                    "error": "#ba1a1a",
+                    "inverse-surface": "#1a2b4d"
+                },
+                "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+                },
+                "spacing": {
+                    "unit": "8px",
+                    "stack-lg": "32px",
+                    "margin-mobile": "20px",
+                    "gutter": "24px",
+                    "container-max": "1280px",
+                    "margin-desktop": "64px",
+                    "stack-sm": "8px",
+                    "stack-md": "16px"
+                },
+                "fontFamily": {
+                    "body-sm": ["Inter"],
+                    "headline-lg": ["Hanken Grotesk"],
+                    "headline-md": ["Hanken Grotesk"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"]
+                },
+                "fontSize": {
+                    "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "500"}]
+                }
+            }
+        }
+    }
+</script>
+
+{% block extra_head %}{% endblock %}
+</head>
+<body class="bg-background text-on-surface">
+
+{% block header %}
+<!-- ============================================================
+     SHARED HEADER / NAVIGATION (default version) - 2-row layout
+     Row 1: Logo | Search bar | Upload Prescription | Cart | Account
+     Row 2: Scrollable category tabs (real categories from the database)
+     This lives in base.html (not individual pages) so every page
+     automatically gets the same navbar without repeating code.
+     It checks session.user_id to know if someone is logged in.
+     ============================================================ -->
+<header class="sticky top-0 z-50 shadow-lg relative" id="main-nav" style="background: linear-gradient(120deg, #0B1426 0%, #0a2a5e 100%);">
+
+    <!-- Subtle ambient glow, matching the hero section's aesthetic -->
+    <!-- Wrapped in its own overflow-hidden container (not the whole
+         header) so it doesn't clip the account/notification dropdowns,
+         which need to overflow below the header to be visible -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[80px]"></div>
+        <div class="absolute top-0 left-1/3 w-40 h-40 bg-[#F5A623]/10 rounded-full blur-[60px]"></div>
+    </div>
+
+    <!-- ROW 1 & 2: Logo, search, account (Wraps on mobile) -->
+    <div class="relative flex flex-wrap md:flex-nowrap items-center justify-between md:justify-start gap-y-3 gap-x-4 md:gap-8 px-margin-mobile md:px-margin-desktop w-full py-3 md:py-0 md:h-20">
+        
+        <!-- Logo -->
+        <a href="/" class="flex items-center gap-2 flex-shrink-0 group">
+            <span class="material-symbols-outlined text-secondary text-3xl group-hover:scale-110 transition-transform" style="font-variation-settings: 'FILL' 1;">health_and_safety</span>
+            <span class="font-headline-md text-headline-md font-bold text-white">SehatHub</span>
+        </a>
+
+        <!-- Search Bar (Wraps to row 2 on mobile) -->
+        <form action="{{ url_for('customer.medicine_catalog') }}" method="GET" class="w-full md:flex-1 md:w-auto order-last md:order-none relative mt-2 md:mt-0" id="navSearchForm" autocomplete="off">
+            <input name="search" id="navSearchInput" class="w-full bg-white/10 backdrop-blur-sm text-white placeholder-primary-fixed-dim border border-white/10 rounded-full px-6 py-2.5 focus:ring-2 focus:ring-secondary/50 focus:border-secondary/30 focus:bg-white/15 outline-none transition-all" placeholder="Search medicines..." type="text" autocomplete="off"/>
+            <button type="submit" class="material-symbols-outlined absolute right-4 top-2.5 text-primary-fixed-dim bg-transparent border-none cursor-pointer hover:text-secondary transition-colors">search</button>
+            <div id="navSearchSuggestions" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-lg border border-outline-variant/10 overflow-hidden z-50 text-on-surface"></div>
+        </form>
+
+        <!-- Account / Icons (Pushed to the right on mobile, stays on right on desktop) -->
+        <div class="flex items-center gap-3 md:gap-4 flex-shrink-0 md:order-last">
+            <a href="{{ url_for('customer.upload_prescription') }}" class="group relative bg-secondary text-on-secondary px-6 py-2.5 rounded-full font-label-md text-label-md active:scale-95 transition-all hidden sm:flex items-center gap-1.5 whitespace-nowrap hover:shadow-[0_0_20px_rgba(130,249,190,0.4)] overflow-hidden">
+                <span class="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.2s_infinite]"></span>
+                <span class="material-symbols-outlined text-lg relative z-10">upload_file</span>
+                <span class="relative z-10">Upload Prescription</span>
+                {% if prescription_notification_count and prescription_notification_count > 0 %}
+                    <span class="absolute -top-1.5 -right-1.5 bg-error text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center z-20">{{ prescription_notification_count }}</span>
+                {% endif %}
+            </a>
+            <div class="flex items-center gap-2">
+                {% if session.user_id %}
+                    <!-- NOTIFICATION BELL (logged in only) -->
+                    <div class="relative group" id="navNotificationContainer">
+                        <button id="navNotificationBtn" class="relative material-symbols-outlined text-white p-2 hover:bg-white/10 rounded-full cursor-pointer transition-all hover:scale-110">
+                            notifications
+                            <span id="navbarNotificationBadge" class="absolute -top-1 -right-1 bg-error text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center {% if not unread_notification_count or unread_notification_count == 0 %}hidden{% endif %}">{{ unread_notification_count or 0 }}</span>
+                        </button>
+                        <div class="absolute -right-12 sm:right-0 mt-2 w-[300px] sm:w-80 max-h-[70vh] sm:max-h-96 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-outline-variant/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 custom-scrollbar">
+                            <div class="px-4 py-3 border-b border-outline-variant/10 font-bold text-sm bg-surface-container-lowest sticky top-0 flex justify-between items-center z-10">
+                                <span>Notifications</span>
+                            </div>
+                            <div id="navbarNotificationBody">
+                                {% if notifications and notifications|length > 0 %}
+                                    {% for n in notifications %}
+                                        <a href="{{ n.link }}" class="block px-4 py-3 hover:bg-surface-container transition-colors border-b border-outline-variant/10 last:border-0 {% if not n.is_read %}bg-surface-container-low{% else %}opacity-75{% endif %} relative">
+                                            {% if not n.is_read %}
+                                                <div class="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-primary rounded-full"></div>
+                                            {% endif %}
+                                            <div class="flex items-start gap-3 {% if not n.is_read %}pl-2{% endif %}">
+                                                <span class="material-symbols-outlined text-lg {% if n.type == 'prescription_rejected' %}text-error{% elif n.type == 'prescription_approved' %}text-secondary{% else %}text-primary{% endif %}">{{ n.icon }}</span>
+                                                <div>
+                                                    <p class="text-sm font-medium {% if not n.is_read %}text-on-surface{% else %}text-on-surface-variant{% endif %}">{{ n.title }}</p>
+                                                    <p class="text-xs text-on-surface-variant mt-0.5 leading-snug">{{ n.message }}</p>
+                                                    <p class="text-[10px] text-outline mt-1">{{ n.created_at.strftime('%b %d, %I:%M %p') }}</p>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class="px-4 py-6 text-sm text-on-surface-variant text-center">No new notifications.</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <a href="{{ url_for('customer.view_cart') }}" class="relative material-symbols-outlined text-white p-2 hover:bg-white/10 rounded-full cursor-pointer transition-all hover:scale-110">
+                    shopping_cart
+                    <span id="navbarCartBadge" class="absolute -top-1 -right-1 bg-error text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center {% if not cart_item_count or cart_item_count == 0 %}hidden{% endif %}">{{ cart_item_count or 0 }}</span>
+                </a>
+
+                {% if session.user_id %}
+                    <!-- LOGGED IN: show a dropdown with the user's name -->
+                    <div class="relative group">
+                        <button class="flex items-center gap-2 px-3 py-2 rounded-full hover:bg-white/10 transition-all">
+                            <span class="material-symbols-outlined text-white">account_circle</span>
+                            <span class="text-body-sm font-medium text-white hidden lg:inline">Hi, {{ session.full_name.split(' ')[0] if session.full_name else 'User' }}</span>
+                        </button>
+                        <!-- Dropdown menu - hidden by default, shows on hover via group-hover -->
+                        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-2xl border border-outline-variant/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                            {% if session.role == 'admin' %}
+                                <a href="{{ url_for('admin.dashboard') }}" class="block px-4 py-3 text-body-sm text-on-surface hover:bg-surface-container rounded-t-lg">Admin Dashboard</a>
+                            {% elif session.role == 'pharmacist' %}
+                                <a href="{{ url_for('pharmacist.dashboard') }}" class="block px-4 py-3 text-body-sm text-on-surface hover:bg-surface-container rounded-t-lg">Pharmacist Dashboard</a>
+                            {% elif session.role == 'delivery' %}
+                                <a href="{{ url_for('delivery.dashboard') }}" class="block px-4 py-3 text-body-sm text-on-surface hover:bg-surface-container rounded-t-lg">Delivery Dashboard</a>
+                            {% else %}
+                                <a href="{{ url_for('customer.profile') }}" class="block px-4 py-3 text-body-sm text-on-surface hover:bg-surface-container rounded-t-lg">My Profile</a>
+                                <a href="{{ url_for('customer.order_history') }}" class="block px-4 py-3 text-body-sm text-on-surface hover:bg-surface-container">My Orders</a>
+                            {% endif %}
+                            <a href="{{ url_for('auth.logout') }}" class="block px-4 py-3 text-body-sm text-error hover:bg-surface-container rounded-b-lg border-t border-outline-variant/20">Log Out</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- NOT LOGGED IN: dropdown with Log In / Sign Up choices -->
+                    <div class="relative group">
+                        <button class="material-symbols-outlined text-white p-2 hover:bg-white/10 rounded-full cursor-pointer transition-all hover:scale-110">account_circle</button>
+                        <div class="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-2xl border border-outline-variant/20 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
+                            <a href="{{ url_for('auth.login') }}" class="flex items-center gap-2 px-4 py-3 text-body-sm text-on-surface hover:bg-surface-container">
+                                <span class="material-symbols-outlined text-lg text-primary">login</span> Log In
+                            </a>
+                            <a href="{{ url_for('auth.signup') }}" class="flex items-center gap-2 px-4 py-3 text-body-sm text-on-surface hover:bg-surface-container border-t border-outline-variant/10">
+                                <span class="material-symbols-outlined text-lg text-primary">person_add</span> Sign Up
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ROW 2: Category tabs - horizontally scrollable on mobile, wrapping on desktop -->
+    <div class="relative border-t border-white/10" style="border-image: linear-gradient(90deg, transparent, rgba(130,249,190,0.15), transparent) 1;">
+        <nav class="flex flex-nowrap md:flex-wrap items-center md:justify-center gap-1.5 md:gap-2 px-margin-mobile md:px-margin-desktop py-3 overflow-x-auto md:overflow-x-visible hide-scrollbar w-full">
+            <a class="px-3 py-1.5 rounded-full text-body-sm font-medium transition-all whitespace-nowrap
+                {% if not request.args.get('category') and request.path == url_for('customer.medicine_catalog') %} bg-secondary text-on-secondary shadow-[0_0_12px_rgba(130,249,190,0.4)] {% else %} text-primary-fixed-dim hover:text-white hover:bg-white/10 {% endif %}"
+               href="{{ url_for('customer.medicine_catalog') }}">All Medicines</a>
+            {% for cat in navbar_categories %}
+            <a class="px-3 py-1.5 rounded-full text-body-sm font-medium transition-all whitespace-nowrap
+                {% if request.args.get('category')|int == cat.category_id %} bg-secondary text-on-secondary shadow-[0_0_12px_rgba(130,249,190,0.4)] {% else %} text-primary-fixed-dim hover:text-white hover:bg-white/10 {% endif %}"
+               href="{{ url_for('customer.medicine_catalog', category=cat.category_id) }}">{{ cat.name }}</a>
+            {% endfor %}
+        </nav>
+    </div>
+</header>
+{% endblock %}
+
+<!-- ============================================================
+     GLOBAL TOAST NOTIFICATIONS
+     Lives outside all blocks so it renders on EVERY page (customer,
+     pharmacist, admin, auth) with one consistent style - replaces
+     the old inline colored-banner flash blocks that used to look
+     different on every page.
+     ============================================================ -->
+<div id="toastContainer"></div>
+<script>
+    // Global helper for AJAX/fetch calls (cart add/update/remove, and any
+    // future JS-driven POST) to attach the CSRF token, since those calls
+    // don't submit a normal <form> and can't carry a hidden input field.
+    // Reads the <meta name="csrf-token"> tag set in <head>.
+    window.getCsrfToken = function () {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute('content') : '';
+    };
+
+    // Flask's flashed messages are only available at page-load time
+    // (server-rendered), so we grab them once here as JSON and hand
+    // them to the toast JS below.
+    window.__flashedMessages = [
+        {% for category, message in get_flashed_messages(with_categories=true) %}
+            { category: {{ category|tojson }}, message: {{ message|tojson }} },
+        {% endfor %}
+    ];
+
+    // ============================================================
+    // SEARCH AUTO-COMPLETE
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('navSearchInput');
+        const searchSuggestions = document.getElementById('navSearchSuggestions');
+        let searchTimeout;
+
+        if (searchInput && searchSuggestions) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const query = this.value.trim();
+                
+                if (query.length < 2) {
+                    searchSuggestions.classList.add('hidden');
+                    return;
+                }
+
+                searchTimeout = setTimeout(() => {
+                    fetch(`/customer/api/search?q=${encodeURIComponent(query)}`)
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.length === 0) {
+                                searchSuggestions.innerHTML = '<div class="p-4 text-sm text-on-surface-variant text-center">No medicines found.</div>';
+                            } else {
+                                let html = '';
+                                data.forEach(med => {
+                                    const imgPath = med.image_url ? `/static/${med.image_url}` : '';
+                                    const imgHtml = med.image_url 
+                                        ? `<img src="${imgPath}" class="w-10 h-10 object-contain rounded-md border border-outline-variant/20 p-1" alt="${med.name}">`
+                                        : `<div class="w-10 h-10 rounded-md border border-outline-variant/20 flex items-center justify-center bg-surface-container"><span class="material-symbols-outlined text-primary/30 text-[20px]">medication</span></div>`;
+                                    
+                                    html += `
+                                    <a href="/customer/medicines/${med.medicine_id}" class="flex items-center gap-3 p-3 hover:bg-surface-container border-b border-outline-variant/10 last:border-0 transition-colors">
+                                        ${imgHtml}
+                                        <div class="flex-1 min-w-0">
+                                            <h4 class="text-sm font-bold text-on-surface truncate">${med.name}</h4>
+                                            <p class="text-[10px] text-on-surface-variant uppercase tracking-wider truncate">${med.brand_name || 'Generic'}</p>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-sm font-extrabold text-primary">Rs. ${med.min_price || 'N/A'}</span>
+                                        </div>
+                                    </a>`;
+                                });
+                                searchSuggestions.innerHTML = html;
+                            }
+                            searchSuggestions.classList.remove('hidden');
+                        })
+                        .catch(err => console.error("Search error:", err));
+                }, 250); // 250ms debounce
+            });
+
+            // Hide when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
+                    searchSuggestions.classList.add('hidden');
+                }
+            });
+            
+            // Show again if clicking back into input with value
+            searchInput.addEventListener('focus', function() {
+                if (this.value.trim().length >= 2 && searchSuggestions.innerHTML !== '') {
+                    searchSuggestions.classList.remove('hidden');
+                }
+            });
+        }
+    });
+</script>
+
+{% block content %}{% endblock %}
+
+{% block footer %}
+<!-- ============================================================
+     SHARED FOOTER
+     Lives in base.html so every page gets it automatically.
+     ============================================================ -->
+<footer class="relative py-stack-lg px-margin-mobile md:px-margin-desktop overflow-hidden" style="background: linear-gradient(160deg, #071b3d 0%, #0B1426 100%);">
+
+    <!-- Ambient glow orbs, matching the hero/header aesthetic -->
+    <div class="absolute top-0 right-[10%] w-72 h-72 bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
+    <div class="absolute bottom-0 left-[5%] w-64 h-64 bg-[#F5A623]/8 rounded-full blur-[90px] pointer-events-none"></div>
+
+    <div class="relative max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-4 gap-gutter mb-12">
+        <div class="space-y-4">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-secondary text-2xl" style="font-variation-settings: 'FILL' 1;">health_and_safety</span>
+                <span class="font-headline-md text-headline-md font-bold text-white">SehatHub</span>
+            </div>
+            <p class="text-body-sm text-primary-fixed-dim leading-relaxed">Your trusted partner for all healthcare needs in Pakistan. Delivering authenticity, reliability, and speed.</p>
+            <div class="flex gap-3">
+                <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white cursor-pointer hover:bg-secondary hover:text-on-secondary hover:border-secondary transition-all hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(130,249,190,0.25)]"><span class="material-symbols-outlined text-lg">facebook</span></div>
+                <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white cursor-pointer hover:bg-secondary hover:text-on-secondary hover:border-secondary transition-all hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(130,249,190,0.25)]"><span class="material-symbols-outlined text-lg">alternate_email</span></div>
+                <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white cursor-pointer hover:bg-secondary hover:text-on-secondary hover:border-secondary transition-all hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(130,249,190,0.25)]"><span class="material-symbols-outlined text-lg">share</span></div>
+            </div>
+        </div>
+        <div>
+            <h4 class="font-bold mb-6 text-white flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Shop</h4>
+            <ul class="space-y-3 text-body-sm text-primary-fixed-dim">
+                <li><a class="hover:text-white hover:translate-x-1 inline-block transition-all" href="{{ url_for('customer.medicine_catalog') }}">All Medicines</a></li>
+                <li><a class="hover:text-white hover:translate-x-1 inline-block transition-all" href="{{ url_for('customer.medicine_catalog', category=7) }}">Skin Care</a></li>
+                {% set pc_cat = (navbar_categories | selectattr('name', 'equalto', 'Personal Care') | first) %}
+                {% if pc_cat %}
+                <li><a class="hover:text-white hover:translate-x-1 inline-block transition-all" href="{{ url_for('customer.medicine_catalog', category=pc_cat.category_id) }}">Personal Care</a></li>
+                {% else %}
+                <li><a class="hover:text-white hover:translate-x-1 inline-block transition-all" href="{{ url_for('coming_soon', page_slug='personal-care') }}">Personal Care</a></li>
+                {% endif %}
+                <li><a class="hover:text-white hover:translate-x-1 inline-block transition-all" href="{{ url_for('customer.medicine_catalog', category=8) }}">Baby Care</a></li>
+                <li><a class="hover:text-white hover:translate-x-1 inline-block transition-all" href="{{ url_for('customer.medicine_catalog', category=10) }}">Medical Devices</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4 class="font-bold mb-6 text-white flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Company</h4>
+            <ul class="space-y-3 text-body-sm text-primary-fixed-dim">
+                <li><a class="hover:text-white hover:translate-x-1 inline-block transition-all" href="{{ url_for('about_us') }}">About Us</a></li>
+                <li><a class="hover:text-white hover:translate-x-1 inline-block transition-all" href="{{ url_for('contact_us') }}">Contact Us</a></li>
+                <li><a class="hover:text-white hover:translate-x-1 inline-block transition-all" href="{{ url_for('refund_policy') }}">Refund Policy</a></li>
+                <li><a class="hover:text-white hover:translate-x-1 inline-block transition-all" href="{{ url_for('privacy_policy') }}">Privacy Policy</a></li>
+                <li><a class="hover:text-white hover:translate-x-1 inline-block transition-all" href="{{ url_for('terms_of_service') }}">Terms of Service</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4 class="font-bold mb-6 text-white flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Customer Support</h4>
+            <ul class="space-y-3 text-body-sm text-primary-fixed-dim">
+                <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-secondary">call</span> 0800-SEHAT-HUB</li>
+                <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-secondary">mail</span> care@sehathub.pk</li>
+                <li class="flex items-center gap-2"><span class="material-symbols-outlined text-sm text-secondary">location_on</span> Islamabad, Pakistan</li>
+            </ul>
+        </div>
+    </div>
+    <div class="relative max-w-container-max mx-auto border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-primary-fixed-dim">
+        <p class="text-body-sm">© 2026 SehatHub Online Pharmacy. All rights reserved.</p>
+        <div class="flex gap-2 text-xs">
+            <span class="bg-white/5 border border-white/10 rounded-md px-3 py-1.5 font-medium">Visa</span>
+            <span class="bg-white/5 border border-white/10 rounded-md px-3 py-1.5 font-medium">MasterCard</span>
+            <span class="bg-white/5 border border-white/10 rounded-md px-3 py-1.5 font-medium">JazzCash</span>
+            <span class="bg-white/5 border border-white/10 rounded-md px-3 py-1.5 font-medium">EasyPaisa</span>
+        </div>
+    </div>
+
+    <!-- Back to top button -->
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})"
+            class="absolute right-6 md:right-10 -top-6 w-12 h-12 rounded-full bg-secondary text-on-secondary flex items-center justify-center shadow-lg hover:shadow-[0_8px_24px_rgba(130,249,190,0.4)] hover:-translate-y-1 transition-all"
+            aria-label="Back to top">
+        <span class="material-symbols-outlined">arrow_upward</span>
+    </button>
+</footer>
+{% endblock %}
+
+<script>
+// ============================================================
+// Navbar live search suggestions
+// As the user types, this asks the server for matching medicine,
+// generic, and company names and shows them in a dropdown - so
+// typos get caught WHILE typing instead of after a dead-end search.
+// ============================================================
+(function () {
+    const input = document.getElementById('navSearchInput');
+    const box = document.getElementById('navSearchSuggestions');
+    const form = document.getElementById('navSearchForm');
+    if (!input || !box || !form) return;
+
+    let debounceTimer = null;
+
+    input.addEventListener('input', function () {
+        const query = input.value.trim();
+        clearTimeout(debounceTimer);
+
+        if (query.length < 2) {
+            box.classList.add('hidden');
+            box.innerHTML = '';
+            return;
+        }
+
+        // Wait 250ms after the user stops typing before calling the server,
+        // so we don't fire a request on every single keystroke.
+        debounceTimer = setTimeout(function () {
+            fetch('/customer/api/search-suggestions?q=' + encodeURIComponent(query))
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    const suggestions = data.suggestions || [];
+                    if (suggestions.length === 0) {
+                        box.classList.add('hidden');
+                        box.innerHTML = '';
+                        return;
+                    }
+                    const escapeHTML = (str) => {
+                        const div = document.createElement('div');
+                        div.textContent = str;
+                        return div.innerHTML;
+                    };
+                    box.innerHTML = suggestions.map(function (s) {
+                        const safeLabel = escapeHTML(s.label);
+                        return '<button type="button" class="suggestion-item w-full text-left px-5 py-3 hover:bg-surface-container flex items-center justify-between border-b border-outline-variant/10 last:border-0" data-value="' +
+                            safeLabel.replace(/"/g, '&quot;') + '">' +
+                            '<span class="font-medium">' + safeLabel + '</span>' +
+                            '<span class="text-xs text-on-surface-variant uppercase tracking-wide">' + escapeHTML(s.type) + '</span>' +
+                            '</button>';
+                    }).join('');
+                    box.classList.remove('hidden');
+                })
+                .catch(function () {
+                    box.classList.add('hidden');
+                });
+        }, 250);
+    });
+
+    // Clicking a suggestion fills the box and submits the search immediately
+    box.addEventListener('click', function (e) {
+        const item = e.target.closest('.suggestion-item');
+        if (!item) return;
+        input.value = item.getAttribute('data-value');
+        box.classList.add('hidden');
+        form.submit();
+    });
+
+    // Hide the dropdown when clicking anywhere else on the page
+    document.addEventListener('click', function (e) {
+        if (!form.contains(e.target)) {
+            box.classList.add('hidden');
+        }
+    });
+})();
+</script>
+
+<script>
+// ============================================================
+// Site-wide entrance animations (adapted from Obaid's Stitch
+// design #28 - kept as plain, reusable CSS classes so any page
+// can opt in by adding class="reveal-on-scroll" or
+// class="stagger-reveal" to a section, without needing new JS.
+// ============================================================
+(function () {
+    // Fades/slides an element in once it scrolls into view
+    const observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target); // only animate once
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    document.querySelectorAll('.reveal-on-scroll, .stagger-reveal').forEach(function (el) {
+        observer.observe(el);
+    });
+
+    // Navbar gains a stronger shadow once the page is scrolled
+    const nav = document.getElementById('main-nav');
+    if (nav) {
+        window.addEventListener('scroll', function () {
+            nav.classList.toggle('nav-scrolled', window.scrollY > 50);
+        });
+    }
+
+    // Small "press down" feedback on buttons/links styled as buttons
+    document.querySelectorAll('button, .btn-press').forEach(function (btn) {
+        btn.addEventListener('mousedown', function () { btn.classList.add('scale-95'); });
+        ['mouseup', 'mouseleave'].forEach(function (evt) {
+            btn.addEventListener(evt, function () { btn.classList.remove('scale-95'); });
+        });
+    });
+})();
+</script>
+
+<script>
+// ============================================================
+// Toast notification rendering
+// Turns window.__flashedMessages (set by the inline script right
+// after the header) into stacked toast cards, each auto-dismissing
+// after 5 seconds, with a manual close (x) button too.
+// ============================================================
+(function () {
+    const container = document.getElementById('toastContainer');
+    if (!container || !window.__flashedMessages) return;
+
+    const ICONS = {
+        success: { name: 'check_circle', color: '#003d9b', bg: '#e8f0fb' },
+        error:   { name: 'error', color: '#ba1a1a', bg: '#ffdad6' },
+    };
+
+    function showToast(category, message) {
+        const cfg = ICONS[category] || ICONS.success;
+
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = `
+            <span class="material-symbols-outlined" style="color:${cfg.color}; background:${cfg.bg}; border-radius:9999px; padding:4px; font-size:20px; flex-shrink:0;">${cfg.name}</span>
+            <span class="toast-msg-text" style="flex:1; font-size:14px; color:#1d3d3a; line-height:1.4; padding-top:2px;"></span>
+            <button type="button" aria-label="Dismiss" style="background:none; border:none; cursor:pointer; color:#737685; padding:2px; flex-shrink:0;">
+                <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+            </button>
+        `;
+        toast.querySelector('.toast-msg-text').textContent = message;
+
+        function dismiss() {
+            toast.classList.add('toast-hide');
+            setTimeout(function () { toast.remove(); }, 300);
+        }
+
+        toast.querySelector('button').addEventListener('click', dismiss);
+        container.appendChild(toast);
+        setTimeout(dismiss, 5000);
+    }
+
+    // Exposed globally so other scripts (e.g. the notification-polling
+    // script below) can show a toast without duplicating this markup/logic
+    window.showToast = showToast;
+
+    window.__flashedMessages.forEach(function (item) {
+        showToast(item.category, item.message);
+    });
+})();
+</script>
+
+<script>
+// ============================================================
+// SCROLL-REVEAL OBSERVER
+// Finds every element with class "reveal-on-scroll" on the page and
+// adds "revealed" to it once it's scrolled into view (see the CSS
+// for this class in the <style> block above). Runs globally so any
+// page/template can opt individual sections into this effect just by
+// adding the class - no extra JS needed per page.
+// ============================================================
+(function () {
+    const revealEls = document.querySelectorAll('.reveal-on-scroll');
+    if (!revealEls.length) return;
+
+    const revealObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('revealed');
+                revealObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+
+    revealEls.forEach(function (el) { revealObserver.observe(el); });
+})();
+</script>
+
+<script>
+// ============================================================
+// REAL-TIME NOTIFICATIONS (polling)
+// Runs on every page for logged-in customers/pharmacists/delivery
+// managers. Every 30 seconds, asks the backend "anything new?" and:
+//   - updates the navbar bell's badge count
+//   - shows a toast for whatever changed (new prescription update,
+//     new order to pack, order status change, etc.)
+// The FIRST poll after a page load only records a baseline silently
+// (no toast) - otherwise we'd toast about things the person already
+// knows about (e.g. 3 pending prescriptions that were already there
+// before this page even loaded).
+// ============================================================
+(function () {
+    const roleMeta = document.querySelector('meta[name="user-role"]');
+    const role = roleMeta ? roleMeta.getAttribute('content') : '';
+    if (!role) return; // not logged in - nothing to poll
+
+    const ENDPOINTS = {
+        customer: '/customer/api/notifications',
+        pharmacist: '/pharmacist/api/notifications',
+        delivery: '/delivery/api/notifications',
+        admin: '/admin/api/notifications'
+    };
+    const endpoint = ENDPOINTS[role];
+    if (!endpoint) return; // unknown role - not polled
+
+    const POLL_INTERVAL_MS = 5000; // 5 seconds
+    let primed = false; // true once we've captured an initial baseline
+    let lastPrescriptionCount = 0;
+    let lastPrescriptions = [];  // [{prescription_id, status}, ...] from the previous poll
+    let lastOrderStatuses = {};   // customer: { order_id: status }
+    let lastPharmacistCounts = { pending_prescriptions: 0, orders_to_pack: 0 };
+    let lastDeliveryCount = 0;
+    let lastAdminCounts = { total_users: 0, total_orders: 0 };
+
+    const badge = document.getElementById('navbarNotificationBadge');
+    const body = document.getElementById('navbarNotificationBody');
+
+    function updateBadge(count) {
+        if (!badge) return;
+        badge.textContent = count;
+        badge.classList.toggle('hidden', count <= 0);
+    }
+
+    function setDropdownMessage(html) {
+        if (body) body.innerHTML = html;
+    }
+
+    function pollCustomer() {
+        fetch(endpoint).then(r => r.json()).then(function (data) {
+            const newCount = data.unread_count || 0;
+            const newNotifications = data.notifications || [];
+            const newOrders = {};
+            (data.orders || []).forEach(function (o) { newOrders[o.order_id] = o.status; });
+
+            if (primed) {
+                // Toast for newly arriving unread notifications
+                const oldIds = new Set(lastPrescriptions.map(p => p.notification_id));
+                newNotifications.forEach(function (n) {
+                    if (!n.is_read && !oldIds.has(n.notification_id)) {
+                        const type = n.type === 'prescription_rejected' ? 'error' : 'success';
+                        window.showToast(type, n.title + " - " + n.message);
+                    }
+                });
+                
+                // Toast for order updates (still useful to keep alive)
+                Object.keys(newOrders).forEach(function (orderId) {
+                    const oldStatus = lastOrderStatuses[orderId];
+                    if (oldStatus && oldStatus !== newOrders[orderId]) {
+                        if (newOrders[orderId] === 'cancelled') {
+                            window.showToast('error', `Order #SH-${String(orderId).padStart(4, '0')} was cancelled - tap to see why.`);
+                        } else {
+                            window.showToast('success', `Order #SH-${String(orderId).padStart(4, '0')} is now ${newOrders[orderId]}!`);
+                        }
+                    }
+                });
+            }
+
+            let html = '';
+            if (newNotifications.length > 0) {
+                newNotifications.forEach(function (n) {
+                    const bgClass = !n.is_read ? 'bg-surface-container-low' : 'opacity-75';
+                    const dotHtml = !n.is_read ? '<div class="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-primary rounded-full"></div>' : '';
+                    const plClass = !n.is_read ? 'pl-2' : '';
+                    let iconColor = 'text-primary';
+                    if (n.type === 'prescription_rejected') iconColor = 'text-error';
+                    else if (n.type === 'prescription_approved') iconColor = 'text-secondary';
+                    const textClass = !n.is_read ? 'text-on-surface' : 'text-on-surface-variant';
+                    
+                    const d = new Date(n.created_at);
+                    const timeStr = isNaN(d) ? n.created_at : d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true });
+
+                    html += `<a href="${n.link}" class="block px-4 py-3 hover:bg-surface-container transition-colors border-b border-outline-variant/10 last:border-0 ${bgClass} relative">
+                        ${dotHtml}
+                        <div class="flex items-start gap-3 ${plClass}">
+                            <span class="material-symbols-outlined text-lg ${iconColor}">${n.icon}</span>
+                            <div>
+                                <p class="text-sm font-medium ${textClass}">${n.title}</p>
+                                <p class="text-xs text-on-surface-variant mt-0.5 leading-snug">${n.message}</p>
+                                <p class="text-[10px] text-outline mt-1">${timeStr}</p>
+                            </div>
+                        </div>
+                    </a>`;
+                });
+            }
+
+            updateBadge(newCount);
+            
+            if (html !== '') {
+                setDropdownMessage(html);
+            } else if (primed) {
+                setDropdownMessage('<p class="px-4 py-6 text-sm text-on-surface-variant text-center">No new notifications.</p>');
+            }
+
+            lastPrescriptionCount = newCount;
+            lastPrescriptions = newNotifications; // Reusing variable name to avoid refactoring whole script
+            lastOrderStatuses = newOrders;
+            primed = true;
+        }).catch(function (e) { console.error(e); /* silently skip a failed poll */ });
+    }
+
+    // Add click listener for marking notifications read
+    const navBtn = document.getElementById('navNotificationBtn');
+    if (navBtn) {
+        // We use mouseenter so it triggers as soon as they hover over the bell or dropdown opens
+        navBtn.parentElement.addEventListener('mouseenter', function() {
+            if (badge && !badge.classList.contains('hidden')) {
+                badge.classList.add('hidden');
+                badge.textContent = '0';
+                
+                fetch('/api/notifications/mark-read', {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': window.getCsrfToken() }
+                }).catch(e => console.error("Failed to mark notifications read", e));
+                
+                // Immediately update styling of current dropdown items to avoid waiting for next poll
+                document.querySelectorAll('#navbarNotificationBody a').forEach(el => {
+                    el.classList.remove('bg-surface-container-low');
+                    el.classList.add('opacity-75');
+                    const dot = el.querySelector('.absolute.left-1\\.5');
+                    if(dot) dot.remove();
+                    const textP = el.querySelector('.text-on-surface');
+                    if(textP) { textP.classList.remove('text-on-surface'); textP.classList.add('text-on-surface-variant'); }
+                    const contentDiv = el.querySelector('.pl-2');
+                    if(contentDiv) contentDiv.classList.remove('pl-2');
+                });
+            }
+        });
+    }
+
+    function pollPharmacist() {
+        fetch(endpoint).then(r => r.json()).then(function (data) {
+            const counts = { pending_prescriptions: data.pending_prescriptions || 0, orders_to_pack: data.orders_to_pack || 0 };
+            const total = counts.pending_prescriptions + counts.orders_to_pack;
+
+            if (primed) {
+                if (counts.pending_prescriptions > lastPharmacistCounts.pending_prescriptions) {
+                    const diff = counts.pending_prescriptions - lastPharmacistCounts.pending_prescriptions;
+                    window.showToast('success', `${diff} new prescription${diff > 1 ? 's' : ''} to review!`);
+                }
+                if (counts.orders_to_pack > lastPharmacistCounts.orders_to_pack) {
+                    const diff = counts.orders_to_pack - lastPharmacistCounts.orders_to_pack;
+                    window.showToast('success', `${diff} new order${diff > 1 ? 's' : ''} in your queue!`);
+                }
+            }
+
+            updateBadge(total);
+            setDropdownMessage(total > 0
+                ? `<a href="/pharmacist/dashboard" class="block px-4 py-3 hover:bg-surface-container transition-colors">
+                    <p class="text-sm font-medium">Pending work</p>
+                    <p class="text-xs text-on-surface-variant">${counts.pending_prescriptions} prescription(s) to review, ${counts.orders_to_pack} order(s) to pack.</p>
+                   </a>`
+                : '<p class="px-4 py-6 text-sm text-on-surface-variant text-center">No new notifications.</p>');
+
+            lastPharmacistCounts = counts;
+            primed = true;
+        }).catch(function () { /* silently skip a failed poll - will retry next interval */ });
+    }
+
+    function pollDelivery() {
+        fetch(endpoint).then(r => r.json()).then(function (data) {
+            const count = data.ready_to_ship || 0;
+
+            if (primed && count > lastDeliveryCount) {
+                const diff = count - lastDeliveryCount;
+                window.showToast('success', `${diff} new order${diff > 1 ? 's' : ''} ready to ship!`);
+            }
+
+            updateBadge(count);
+            setDropdownMessage(count > 0
+                ? `<a href="/delivery/dashboard" class="block px-4 py-3 hover:bg-surface-container transition-colors">
+                    <p class="text-sm font-medium">Ready to ship</p>
+                    <p class="text-xs text-on-surface-variant">${count} order(s) waiting to be shipped.</p>
+                   </a>`
+                : '<p class="px-4 py-6 text-sm text-on-surface-variant text-center">No new notifications.</p>');
+
+            lastDeliveryCount = count;
+            primed = true;
+        }).catch(function () { /* silently skip a failed poll - will retry next interval */ });
+    }
+
+    function pollAdmin() {
+        fetch(endpoint).then(r => r.json()).then(function (data) {
+            const counts = { total_users: data.total_users || 0, total_orders: data.total_orders || 0 };
+
+            if (primed) {
+                if (counts.total_users > lastAdminCounts.total_users) {
+                    const diff = counts.total_users - lastAdminCounts.total_users;
+                    window.showToast('success', `🎉 ${diff} new user${diff > 1 ? 's' : ''} just registered!`);
+                }
+                if (counts.total_orders > lastAdminCounts.total_orders) {
+                    const diff = counts.total_orders - lastAdminCounts.total_orders;
+                    window.showToast('success', `📦 ${diff} new order${diff > 1 ? 's' : ''} just placed!`);
+                }
+            }
+
+            // We only show toast, no dropdown badge update for admin right now
+            lastAdminCounts = counts;
+            primed = true;
+        }).catch(function () { /* silently skip a failed poll - will retry next interval */ });
+    }
+
+    let pollFn;
+    if (role === 'customer') pollFn = pollCustomer;
+    else if (role === 'pharmacist') pollFn = pollPharmacist;
+    else if (role === 'delivery') pollFn = pollDelivery;
+    else if (role === 'admin') pollFn = pollAdmin;
+    else return;
+
+    pollFn(); // capture baseline shortly after load (silent, since primed starts false)
+    setInterval(pollFn, POLL_INTERVAL_MS);
+})();
+</script>
+
+</body>
+</html>

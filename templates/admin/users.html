@@ -1,0 +1,241 @@
+{% extends "admin_base.html" %}
+
+{% block title %}User Management | SehatHub{% endblock %}
+
+{% block admin_content %}
+
+<div class="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-6">
+    <div>
+        <h1 class="text-headline-lg font-headline-lg text-on-surface mb-1">User Management</h1>
+        <p class="text-body-sm text-on-surface-variant">Oversee platform users, roles, and account permissions.</p>
+    </div>
+    <button type="button" onclick="document.getElementById('addUserModal').showModal()"
+            class="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-full font-bold hover:bg-primary-container transition-all whitespace-nowrap">
+        <span class="material-symbols-outlined text-lg">person_add</span> Add New User
+    </button>
+</div>
+
+<!-- ============================================================
+     FILTERS + SEARCH
+     ============================================================ -->
+<div class="bg-white rounded-2xl border border-outline-variant/10 p-4 mb-6">
+    <div class="flex flex-col md:flex-row gap-4 md:items-center justify-between">
+        <div class="flex flex-wrap gap-2">
+            {% for role_key, role_label in [('all','All'), ('customer','Customer'), ('pharmacist','Pharmacist'), ('delivery','Delivery'), ('admin','Admin')] %}
+            <a href="{{ url_for('admin.user_list', role=role_key, search=search_query) }}"
+               class="px-4 py-2 rounded-full text-sm font-bold transition-colors
+               {% if role_filter == role_key %} bg-primary text-white {% else %} bg-surface-container text-on-surface-variant hover:bg-surface-container-high {% endif %}">
+                {{ role_label }}
+            </a>
+            {% endfor %}
+        </div>
+        <form method="GET" class="flex-shrink-0">
+            <input type="hidden" name="role" value="{{ role_filter }}">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Search by name or email..."
+                   class="px-4 py-2 rounded-full border border-outline-variant text-sm w-full md:w-64 focus:ring-2 focus:ring-primary/30 outline-none">
+        </form>
+    </div>
+</div>
+
+<!-- ============================================================
+     USERS TABLE
+     ============================================================ -->
+<div class="bg-white rounded-2xl border border-outline-variant/10 overflow-hidden mb-6">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-xs text-on-surface-variant uppercase border-b border-outline-variant/10">
+                    <th class="px-6 py-3 font-medium">User Profile</th>
+                    <th class="px-6 py-3 font-medium">Role</th>
+                    <th class="px-6 py-3 font-medium">Status</th>
+                    <th class="px-6 py-3 font-medium">Joined Date</th>
+                    <th class="px-6 py-3 font-medium text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr class="border-b border-outline-variant/10 last:border-0">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs flex-shrink-0">
+                                {{ u.full_name[:2].upper() }}
+                            </div>
+                            <div>
+                                <p class="font-bold">{{ u.full_name }}</p>
+                                <p class="text-xs text-on-surface-variant">{{ u.email }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs px-3 py-1 rounded-full font-bold uppercase
+                            {% if u.role == 'admin' %} bg-tertiary-fixed text-on-tertiary-fixed
+                            {% elif u.role == 'pharmacist' %} bg-primary/10 text-primary
+                            {% elif u.role == 'delivery' %} bg-secondary-container text-on-secondary-container
+                            {% else %} bg-surface-container-high text-on-surface-variant {% endif %}">
+                            {{ u.role }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="flex items-center gap-1.5 text-xs font-medium {% if u.is_active %} text-secondary {% else %} text-on-surface-variant {% endif %}">
+                            <span class="w-1.5 h-1.5 rounded-full {% if u.is_active %} bg-secondary {% else %} bg-on-surface-variant {% endif %}"></span>
+                            {{ 'Active' if u.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-on-surface-variant whitespace-nowrap">{{ u.created_at.strftime('%b %d, %Y') }}</td>
+                    <td class="px-6 py-4 text-right">
+                        {% if u.user_id != session.user_id %}
+                        <div class="flex items-center justify-end gap-1">
+                            <form method="POST" action="{{ url_for('admin.toggle_user_status', user_id=u.user_id) }}" class="inline"
+                                  onsubmit="return confirm('{{ 'Deactivate' if u.is_active else 'Activate' }} {{ u.full_name }}?');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <button type="submit" class="p-2 rounded-full hover:bg-surface-container transition-colors"
+                                        title="{{ 'Deactivate' if u.is_active else 'Activate' }}">
+                                    <span class="material-symbols-outlined text-lg {% if u.is_active %} text-error {% else %} text-secondary {% endif %}">
+                                        {{ 'block' if u.is_active else 'check_circle' }}
+                                    </span>
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('admin.reset_user_password', user_id=u.user_id) }}" class="inline"
+                                  onsubmit="return confirm('Generate a new random password for {{ u.full_name }}? The user will be locked out of their old password immediately.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <button type="submit" class="p-2 rounded-full hover:bg-surface-container transition-colors" title="Reset Password">
+                                    <span class="material-symbols-outlined text-lg text-primary">key</span>
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('admin.delete_user', user_id=u.user_id) }}" class="inline"
+                                  onsubmit="return confirm('Permanently delete {{ u.full_name }}\'s account? This cannot be undone. (Customers with order history can\'t be deleted - only deactivated.)');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                                <button type="submit" class="p-2 rounded-full hover:bg-error/10 transition-colors" title="Delete permanently">
+                                    <span class="material-symbols-outlined text-lg text-error">delete_forever</span>
+                                </button>
+                            </form>
+                        </div>
+                        {% else %}
+                        <span class="text-xs text-on-surface-variant italic">You</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="px-6 py-8 text-center text-on-surface-variant">No users found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if total_pages > 1 %}
+<nav class="mt-8 mb-8 flex justify-center items-center gap-2" aria-label="Pagination">
+    {% if page > 1 %}
+    <a href="{{ url_for('admin.user_list', search=search_query, role=role_filter, page=page-1) }}" class="px-3 py-1.5 rounded-lg border border-outline-variant/30 text-sm font-medium hover:bg-surface-container transition-all">Previous</a>
+    {% endif %}
+    
+    <span class="px-4 py-1.5 rounded-lg bg-primary/10 text-primary font-bold text-sm">Page {{ page }} of {{ total_pages }}</span>
+    
+    {% if page < total_pages %}
+    <a href="{{ url_for('admin.user_list', search=search_query, role=role_filter, page=page+1) }}" class="px-3 py-1.5 rounded-lg border border-outline-variant/30 text-sm font-medium hover:bg-surface-container transition-all">Next</a>
+    {% endif %}
+</nav>
+{% endif %}
+
+<!-- ============================================================
+     BOTTOM STAT CARDS
+     ============================================================ -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl border border-outline-variant/10 p-5">
+        <span class="material-symbols-outlined text-primary mb-2 block">group</span>
+        <p class="text-xs text-on-surface-variant uppercase font-bold">Total Users</p>
+        <p class="text-2xl font-bold">{{ stats.total_users or 0 }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-outline-variant/10 p-5">
+        <span class="material-symbols-outlined text-primary mb-2 block">medical_information</span>
+        <p class="text-xs text-on-surface-variant uppercase font-bold">Pharmacists</p>
+        <p class="text-2xl font-bold">{{ stats.total_pharmacists or 0 }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-outline-variant/10 p-5">
+        <span class="material-symbols-outlined text-primary mb-2 block">local_shipping</span>
+        <p class="text-xs text-on-surface-variant uppercase font-bold">Delivery Fleet</p>
+        <p class="text-2xl font-bold">{{ stats.total_delivery or 0 }}</p>
+    </div>
+    <div class="bg-white rounded-2xl border border-outline-variant/10 p-5">
+        <span class="material-symbols-outlined text-error mb-2 block">warning</span>
+        <p class="text-xs text-on-surface-variant uppercase font-bold">Inactive Accounts</p>
+        <p class="text-2xl font-bold">{{ stats.total_inactive or 0 }}</p>
+    </div>
+</div>
+
+<!-- ============================================================
+     ADD NEW USER MODAL
+     ============================================================ -->
+<dialog id="addUserModal" class="rounded-2xl p-0 backdrop:bg-black/40 w-full max-w-lg">
+    <form method="POST" action="{{ url_for('admin.create_user') }}" class="p-6">
+        <h3 class="font-headline-md text-lg mb-4">Add New Staff Account</h3>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <div class="space-y-3 mb-4">
+            <div>
+                <label class="block text-xs font-bold text-on-surface-variant mb-1">Full Name</label>
+                <input type="text" name="full_name" required class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Email <span class="font-normal text-on-surface-variant">(any unique username also works)</span></label>
+                    <input type="text" name="email" required class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Phone <span id="phoneHint" class="font-normal text-on-surface-variant">(optional)</span></label>
+                    <input type="text" name="phone" id="phoneInput" class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-on-surface-variant mb-1">Temporary Password (min. 8 characters)</label>
+                <input type="password" name="password" required minlength="8" class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-on-surface-variant mb-1">Role</label>
+                <select name="role" id="roleSelect" required onchange="toggleRoleFields()" class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+                    <option value="">Select a role...</option>
+                    <option value="pharmacist">Pharmacist</option>
+                    <option value="delivery">Delivery Manager</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+
+            <div id="pharmacistFields" class="hidden grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">License Number</label>
+                    <input type="text" name="license_number" class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-on-surface-variant mb-1">Branch</label>
+                    <input type="text" name="branch" class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+                </div>
+            </div>
+
+            <div id="deliveryFields" class="hidden">
+                <label class="block text-xs font-bold text-on-surface-variant mb-1">Delivery Zone</label>
+                <input type="text" name="zone" class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-2">
+            <button type="button" onclick="document.getElementById('addUserModal').close()" class="px-4 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container rounded-lg transition-all">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg hover:bg-primary-container transition-all">Create Account</button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+    function toggleRoleFields() {
+        const role = document.getElementById('roleSelect').value;
+        document.getElementById('pharmacistFields').classList.toggle('hidden', role !== 'pharmacist');
+        document.getElementById('deliveryFields').classList.toggle('hidden', role !== 'delivery');
+
+        const phoneInput = document.getElementById('phoneInput');
+        const phoneHint = document.getElementById('phoneHint');
+        const needsPhone = (role === 'pharmacist' || role === 'delivery');
+        phoneInput.required = needsPhone;
+        phoneHint.textContent = needsPhone ? '(required for this role)' : '(optional)';
+    }
+</script>
+
+{% endblock %}

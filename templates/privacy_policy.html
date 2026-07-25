@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy | SehatHub{% endblock %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto px-margin-mobile md:px-margin-desktop py-12">
+
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-body-sm text-on-surface-variant mb-6">
+        <a href="{{ url_for('home') }}" class="hover:text-primary transition-colors">Home</a>
+        <span class="material-symbols-outlined text-sm">chevron_right</span>
+        <span class="text-on-surface font-medium">Privacy Policy</span>
+    </div>
+
+    <h1 class="text-headline-lg font-headline-lg text-on-surface mb-10">Privacy Policy</h1>
+
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Information We Collect</h2>
+        <ul class="space-y-2 text-body-md text-on-surface-variant">
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">person</span>
+                Account details: full name, email, phone number, and delivery address
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">description</span>
+                Prescription images you upload for medicine verification
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">shopping_bag</span>
+                Order history and items purchased
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">devices</span>
+                Basic technical data (like browser/device info) to keep the site working securely
+            </li>
+        </ul>
+    </section>
+
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">How We Use It</h2>
+        <ul class="space-y-2 text-body-md text-on-surface-variant">
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">check_circle</span>
+                To process and deliver your orders
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">check_circle</span>
+                To have a licensed pharmacist verify prescription medicines before dispensing
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">check_circle</span>
+                To send you order and account-related notifications
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">check_circle</span>
+                To keep your account and our platform secure
+            </li>
+        </ul>
+        <p class="text-body-md text-on-surface-variant mt-3">We do not sell your personal information to third parties.</p>
+    </section>
+
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Who Can See Your Prescription</h2>
+        <p class="text-body-md text-on-surface-variant">
+            Prescription images are only visible to our licensed pharmacist staff for verification purposes,
+            and to you in your own account. They are not shared publicly or with any party outside the order
+            fulfillment process.
+        </p>
+    </section>
+
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Data Security</h2>
+        <p class="text-body-md text-on-surface-variant">
+            Your password is never stored in plain text - it's protected using industry-standard hashing.
+            Account access is protected against common attacks, and sensitive actions on your account require
+            you to be logged in.
+        </p>
+    </section>
+
+    <section class="mb-10">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Your Choices</h2>
+        <ul class="space-y-2 text-body-md text-on-surface-variant">
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">edit</span>
+                You can update your account details anytime from your Profile page
+            </li>
+            <li class="flex items-start gap-2">
+                <span class="material-symbols-outlined text-secondary text-lg mt-0.5">delete</span>
+                You can contact us to request deletion of your account and associated data
+            </li>
+        </ul>
+    </section>
+
+    <section class="bg-surface-container rounded-2xl p-6">
+        <h2 class="text-xl font-headline-md font-bold text-primary mb-4">Questions?</h2>
+        <p class="text-body-md text-on-surface-variant">
+            Reach out anytime at <a href="{{ url_for('contact_us') }}" class="text-primary font-semibold hover:underline">our Contact page</a>,
+            or email care@sehathub.pk.
+        </p>
+    </section>
+
+</div>
+
+{% endblock %}

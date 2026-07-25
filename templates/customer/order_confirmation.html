@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Order Confirmed | SehatHub{% endblock %}
+
+{% block content %}
+
+<div class="max-w-3xl mx-auto px-margin-mobile py-12">
+    <!-- Success Header -->
+    <div class="text-center mb-10">
+        <div class="w-20 h-20 bg-secondary-container rounded-full mx-auto flex items-center justify-center mb-4 pulse-soft">
+            <span class="material-symbols-outlined text-4xl text-secondary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+        </div>
+        <h1 class="text-headline-lg font-headline-lg text-on-surface mb-2">Order Confirmed!</h1>
+        <p class="text-body-md text-on-surface-variant">
+            Thank you for shopping with SehatHub. Your order <span class="font-bold text-on-surface">#SH-{{ "%04d"|format(order.order_id) }}</span> has been placed.
+        </p>
+    </div>
+
+    <!-- Conditional Prescription Notice -->
+    {% if has_prescription %}
+    <div class="bg-primary-container/30 border border-primary/20 rounded-2xl p-5 mb-8 flex items-start gap-4">
+        <span class="material-symbols-outlined text-primary text-2xl mt-0.5">verified_user</span>
+        <div>
+            <h3 class="font-bold text-primary mb-1">Prescription Verification Pending</h3>
+            <p class="text-sm text-on-surface-variant">Your order contains prescription medicines. Our certified pharmacist is reviewing your uploaded prescription. You will receive an update shortly, and your order will be dispatched once verified.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Delivery Information -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <!-- Address Box -->
+        <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 shadow-sm">
+            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-outline-variant/20">
+                <span class="material-symbols-outlined text-on-surface-variant text-sm">location_on</span>
+                <h3 class="font-headline-md text-sm">Delivery Details</h3>
+            </div>
+            <p class="text-sm text-on-surface-variant leading-relaxed">
+                {% set address_parts = order.delivery_address.split('|') %}
+                <span class="font-bold block text-on-surface mb-1">{{ address_parts[0].split(',')[0] }}</span>
+                {{ address_parts[0].split(',')[1:] | join(',') }}<br/>
+                {% if address_parts|length > 1 %}
+                <span class="block mt-2">{{ address_parts[1] }}</span>
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- ETA & Status Box -->
+        <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 shadow-sm">
+            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-outline-variant/20">
+                <span class="material-symbols-outlined text-on-surface-variant text-sm">schedule</span>
+                <h3 class="font-headline-md text-sm">Estimated Delivery</h3>
+            </div>
+            {% if "Islamabad" in order.delivery_address %}
+            <div class="text-2xl font-bold text-primary mb-1">Same-Day</div>
+            <p class="text-sm text-on-surface-variant mb-4">Your order will arrive today.</p>
+            {% else %}
+            <div class="text-2xl font-bold text-primary mb-1">2-3 Days</div>
+            <p class="text-sm text-on-surface-variant mb-4">Nationwide delivery timeframe.</p>
+            {% endif %}
+            
+            <div class="flex items-center gap-2">
+                <span class="bg-secondary-container text-on-secondary-container text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">{{ order.status }}</span>
+                <span class="text-xs text-on-surface-variant border-l border-outline-variant/30 pl-2">Payment: {{ 'COD' if order.payment_method == 'cash_on_delivery' else order.payment_method }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items Ordered -->
+    <div class="bg-white rounded-2xl border border-outline-variant/10 overflow-hidden shadow-sm mb-8">
+        <div class="bg-surface-container-low px-6 py-4 border-b border-outline-variant/10">
+            <h3 class="font-headline-md text-sm">Order Summary</h3>
+        </div>
+        <div class="divide-y divide-outline-variant/10">
+            {% for item in order_items %}
+            <div class="p-6 flex items-center gap-4">
+                <div class="w-16 h-16 bg-surface-bright rounded-lg flex items-center justify-center p-2 flex-shrink-0">
+                    {% if item.image_url %}
+                        <img src="{{ url_for('static', filename=item.image_url) }}?v=2" alt="{{ item.name }}" class="w-full h-full object-contain mix-blend-multiply">
+                    {% else %}
+                        <span class="material-symbols-outlined text-primary/30">medication</span>
+                    {% endif %}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-bold text-sm truncate">{{ item.name }}</h4>
+                    <p class="text-xs text-on-surface-variant">{{ item.pack_size }}</p>
+                    <p class="text-xs text-on-surface-variant mt-1">Qty: {{ item.quantity }}</p>
+                </div>
+                <div class="text-right flex-shrink-0">
+                    <div class="font-bold">Rs. {{ "%.2f"|format(item.price_at_purchase * item.quantity) }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="bg-surface-container-low px-6 py-4 flex justify-between items-center border-t border-outline-variant/10">
+            {% if order.payment_method == 'cash_on_delivery' %}
+            <span class="font-bold">Amount Due on Delivery</span>
+            {% else %}
+            <span class="font-bold">Total Paid</span>
+            {% endif %}
+            <span class="font-bold text-primary text-xl">Rs. {{ "%.2f"|format(order.total_amount) }}</span>
+        </div>
+    </div>
+
+    <!-- Primary Actions -->
+    <div class="flex flex-col sm:flex-row gap-4 justify-center mb-4">
+        <a href="{{ url_for('customer.order_detail', order_id=order.order_id) }}" class="px-8 py-4 border border-primary text-primary rounded-xl font-bold hover:bg-primary/5 transition-all text-center flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">local_shipping</span> Track Order
+        </a>
+        <a href="{{ url_for('home') }}" class="px-8 py-4 bg-primary text-white rounded-xl font-bold hover:bg-primary-container transition-all text-center flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">storefront</span> Continue Shopping
+        </a>
+    </div>
+
+    <!-- Secondary Actions -->
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <!-- Share with Family (WhatsApp) -->
+        <a href="https://wa.me/?text={{ 'I just ordered medicines from SehatHub! Order #SH-' ~ '%04d'|format(order.order_id) ~ ' — Rs. ' ~ '%.0f'|format(order.total_amount) ~ '. Track it here: ' ~ url_for('customer.order_detail', order_id=order.order_id, _external=True) | urlencode }}"
+           target="_blank" rel="noopener"
+           class="px-6 py-3 rounded-xl text-sm font-semibold border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container transition-all text-center flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">share</span> Share with Family
+        </a>
+        <!-- Reorder -->
+        <a href="{{ url_for('customer.order_detail', order_id=order.order_id) }}"
+           class="px-6 py-3 rounded-xl text-sm font-semibold border border-outline-variant/30 text-on-surface-variant hover:bg-surface-container transition-all text-center flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">replay</span> Reorder Later
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

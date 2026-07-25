@@ -1,0 +1,110 @@
+{% extends "pharmacist_base.html" %}
+
+{% block title %}Prescription Verification | SehatHub{% endblock %}
+
+{% block pharmacist_content %}
+
+<h1 class="text-headline-lg font-headline-lg text-on-surface mb-6">Prescription Verification</h1>
+
+{% if prescriptions|length == 0 %}
+    <p class="text-on-surface-variant text-sm py-10 text-center">No prescriptions uploaded yet.</p>
+{% else %}
+<div class="space-y-4">
+    {% for p in prescriptions %}
+    <div class="bg-white rounded-2xl border border-outline-variant/10 p-5 flex flex-col md:flex-row md:items-center gap-4">
+
+        <a href="{{ url_for('pharmacist.serve_prescription_image', filename=p.image_path.split('/')[-1]) }}" target="_blank"
+           class="w-20 h-20 rounded-xl bg-surface-bright flex items-center justify-center flex-shrink-0 overflow-hidden border border-outline-variant/10 hover:border-primary transition-colors">
+            {% if p.image_path.lower().endswith('.pdf') %}
+                <span class="material-symbols-outlined text-3xl text-primary/40">picture_as_pdf</span>
+            {% else %}
+                <img src="{{ url_for('pharmacist.serve_prescription_image', filename=p.image_path.split('/')[-1]) }}" alt="Prescription #{{ p.prescription_id }}" class="w-full h-full object-cover">
+            {% endif %}
+        </a>
+
+        <div class="flex-1">
+            <p class="font-bold">{{ p.patient_name }}</p>
+            <p class="text-xs text-on-surface-variant mb-1">{{ p.patient_phone or 'No phone on file' }} &middot; Uploaded {{ p.uploaded_at.strftime('%d %b %Y, %I:%M %p') }}</p>
+            {% if p.requested_medicines %}
+                <div class="bg-primary/5 border border-primary/20 rounded-lg p-3 mt-2 inline-block">
+                    <p class="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Medicines Requested in Order</p>
+                    <p class="text-sm font-medium text-on-surface">{{ p.requested_medicines }}</p>
+                </div>
+            {% else %}
+                <span class="inline-block bg-surface-container-high text-on-surface-variant text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded mt-2">General Upload (No order linked)</span>
+            {% endif %}
+        </div>
+
+        <div class="flex flex-col items-end gap-1">
+            <span class="text-xs px-3 py-1.5 rounded-full font-bold uppercase
+                {% if p.status == 'approved' %} bg-secondary-container text-on-secondary-container
+                {% elif p.status == 'rejected' %} bg-error-container text-on-error-container
+                {% else %} bg-tertiary-fixed text-on-tertiary-fixed {% endif %}">
+                {{ p.status }}
+            </span>
+            {% if p.status == 'rejected' and p.rejection_reason %}
+                <p class="text-xs text-error max-w-[220px] text-right">{{ p.rejection_reason }}</p>
+            {% endif %}
+        </div>
+
+        {% if p.status == 'pending' %}
+        <div class="flex gap-2">
+            <form method="POST" action="{{ url_for('pharmacist.verify_prescription', prescription_id=p.prescription_id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                <input type="hidden" name="decision" value="approved">
+                <button type="submit" class="px-4 py-2 bg-secondary text-on-secondary text-xs font-bold rounded-lg hover:bg-secondary/90 transition-all">Approve</button>
+            </form>
+            <button type="button" onclick="openRejectModal({{ p.prescription_id }})" class="px-4 py-2 border-2 border-error text-error text-xs font-bold rounded-lg hover:bg-error/5 transition-all">Reject</button>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if total_pages > 1 %}
+<nav class="mt-8 mb-8 flex justify-center items-center gap-2" aria-label="Pagination">
+    {% if page > 1 %}
+    <a href="{{ url_for('pharmacist.prescription_list', page=page-1) }}" class="px-3 py-1.5 rounded-lg border border-outline-variant/30 text-sm font-medium hover:bg-surface-container transition-all">Previous</a>
+    {% endif %}
+    
+    <span class="px-4 py-1.5 rounded-lg bg-primary/10 text-primary font-bold text-sm">Page {{ page }} of {{ total_pages }}</span>
+    
+    {% if page < total_pages %}
+    <a href="{{ url_for('pharmacist.prescription_list', page=page+1) }}" class="px-3 py-1.5 rounded-lg border border-outline-variant/30 text-sm font-medium hover:bg-surface-container transition-all">Next</a>
+    {% endif %}
+</nav>
+{% endif %}
+
+<!-- ============================================================
+     REJECT REASON MODAL
+     A single shared modal (native <dialog>) reused for whichever
+     prescription's Reject button was clicked - openRejectModal()
+     sets the form's action URL to the right prescription just
+     before showing it.
+     ============================================================ -->
+<dialog id="rejectModal" class="rounded-2xl p-0 backdrop:bg-black/40 w-full max-w-md">
+    <form method="POST" id="rejectForm" class="p-6">
+        <h3 class="font-headline-md text-lg mb-2">Reject Prescription</h3>
+        <p class="text-body-sm text-on-surface-variant mb-4">Please explain why - the customer will see this reason.</p>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="decision" value="rejected">
+        <textarea name="reason" required rows="3" placeholder="e.g. Image is unclear, please re-upload. / This prescription doesn't match the medicine ordered."
+                  class="w-full px-4 py-3 rounded-lg border border-outline-variant bg-surface-bright text-sm focus:ring-2 focus:ring-primary/30 outline-none mb-4"></textarea>
+        <div class="flex justify-end gap-2">
+            <button type="button" onclick="document.getElementById('rejectModal').close()" class="px-4 py-2 text-sm font-bold text-on-surface-variant hover:bg-surface-container rounded-lg transition-all">Cancel</button>
+            <button type="submit" class="px-4 py-2 bg-error text-white text-sm font-bold rounded-lg hover:bg-error/90 transition-all">Confirm Reject</button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+    function openRejectModal(prescriptionId) {
+        const modal = document.getElementById('rejectModal');
+        const form = document.getElementById('rejectForm');
+        form.action = "{{ url_for('pharmacist.verify_prescription', prescription_id=0) }}".replace('0', prescriptionId);
+        modal.showModal();
+    }
+</script>
+
+{% endblock %}
