@@ -2,12 +2,214 @@
 
 {% block title %}Order Confirmed | SehatHub{% endblock %}
 
+{% block extra_head %}
+<style>
+    /* ============================================================
+       ORDER CELEBRATION ANIMATIONS
+       Cinematic sequence: checkmark draws → burst → confetti →
+       content reveals. All pure CSS + vanilla JS, no libraries.
+       ============================================================ */
+
+    /* --- Full-screen celebration overlay --- */
+    #celebrationOverlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        background: #0B1426;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    #celebrationOverlay.hide-celebration {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    /* Ambient glows behind the checkmark */
+    .celeb-glow-1 { position: absolute; width: 400px; height: 400px; background: rgba(0,61,155,0.2); border-radius: 50%; filter: blur(120px); top: 15%; right: 10%; }
+    .celeb-glow-2 { position: absolute; width: 350px; height: 350px; background: rgba(245,166,35,0.12); border-radius: 50%; filter: blur(100px); bottom: 10%; left: 10%; }
+
+    /* --- SVG Checkmark that draws itself --- */
+    .checkmark-circle {
+        stroke: #ef6c00;
+        stroke-width: 3;
+        fill: none;
+        stroke-dasharray: 320;
+        stroke-dashoffset: 320;
+        animation: checkCircleDraw 0.8s cubic-bezier(0.65, 0, 0.45, 1) 0.3s forwards;
+    }
+    .checkmark-check {
+        stroke: #ffffff;
+        stroke-width: 4;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 80;
+        stroke-dashoffset: 80;
+        animation: checkDraw 0.5s cubic-bezier(0.65, 0, 0.45, 1) 1s forwards;
+    }
+    @keyframes checkCircleDraw {
+        to { stroke-dashoffset: 0; }
+    }
+    @keyframes checkDraw {
+        to { stroke-dashoffset: 0; }
+    }
+
+    /* --- Burst ring behind the checkmark --- */
+    .burst-ring {
+        position: absolute;
+        width: 120px; height: 120px;
+        border-radius: 50%;
+        border: 3px solid rgba(245,166,35,0.4);
+        opacity: 0;
+        animation: burstExpand 0.8s ease-out 1.3s forwards;
+    }
+    .burst-ring-2 {
+        animation-delay: 1.45s;
+        border-color: rgba(0,61,155,0.3);
+    }
+    @keyframes burstExpand {
+        0% { transform: scale(0.5); opacity: 0.8; }
+        100% { transform: scale(3.5); opacity: 0; }
+    }
+
+    /* --- Celebration text --- */
+    .celeb-title {
+        opacity: 0;
+        transform: translateY(20px);
+        animation: celebTextIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.4s forwards;
+    }
+    .celeb-subtitle {
+        opacity: 0;
+        transform: translateY(15px);
+        animation: celebTextIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.7s forwards;
+    }
+    .celeb-order-id {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+        animation: celebTextIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) 2s forwards;
+    }
+    @keyframes celebTextIn {
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* --- Confetti particles --- */
+    .confetti-piece {
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        border-radius: 2px;
+        opacity: 0;
+    }
+    .confetti-piece.active {
+        animation: confettiFall var(--fall-duration, 3s) cubic-bezier(0.25, 0.46, 0.45, 0.94) var(--delay, 0s) forwards;
+    }
+    @keyframes confettiFall {
+        0% {
+            opacity: 1;
+            transform: translate(0, 0) rotate(0deg) scale(1);
+        }
+        15% {
+            opacity: 1;
+        }
+        100% {
+            opacity: 0;
+            transform: translate(var(--drift-x, 50px), var(--drift-y, 600px)) rotate(var(--spin, 720deg)) scale(0.3);
+        }
+    }
+
+    /* --- Sparkle dots around the checkmark --- */
+    .sparkle {
+        position: absolute;
+        width: 4px; height: 4px;
+        border-radius: 50%;
+        opacity: 0;
+    }
+    .sparkle.active {
+        animation: sparkleOut 0.8s ease-out var(--spark-delay, 1.3s) forwards;
+    }
+    @keyframes sparkleOut {
+        0% { opacity: 1; transform: translate(0,0) scale(1); }
+        100% { opacity: 0; transform: translate(var(--sx), var(--sy)) scale(0); }
+    }
+
+    /* --- Page content reveal (after overlay fades) --- */
+    .order-content {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .order-content.revealed {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Stagger each card in the content */
+    .order-stagger-1 { transition-delay: 0.05s; }
+    .order-stagger-2 { transition-delay: 0.15s; }
+    .order-stagger-3 { transition-delay: 0.25s; }
+    .order-stagger-4 { transition-delay: 0.35s; }
+</style>
+{% endblock %}
+
 {% block content %}
 
+<!-- ============================================================
+     CELEBRATION OVERLAY
+     Plays once on page load, then fades out to reveal the actual
+     order confirmation content underneath.
+     ============================================================ -->
+<div id="celebrationOverlay">
+    <!-- Ambient glows -->
+    <div class="celeb-glow-1"></div>
+    <div class="celeb-glow-2"></div>
+
+    <!-- Confetti container (particles injected by JS) -->
+    <div id="confettiContainer" style="position:absolute; inset:0; overflow:hidden; pointer-events:none;"></div>
+
+    <!-- Sparkle container -->
+    <div id="sparkleContainer" style="position:absolute; inset:0; overflow:hidden; pointer-events:none;"></div>
+
+    <!-- Center content -->
+    <div class="relative flex flex-col items-center z-10">
+        <!-- Burst rings -->
+        <div class="relative flex items-center justify-center" style="width:120px;height:120px;">
+            <div class="burst-ring"></div>
+            <div class="burst-ring burst-ring-2"></div>
+
+            <!-- SVG Checkmark -->
+            <svg width="120" height="120" viewBox="0 0 120 120" style="position:relative;z-index:2;">
+                <circle class="checkmark-circle" cx="60" cy="60" r="50" />
+                <polyline class="checkmark-check" points="38,62 52,76 82,46" />
+            </svg>
+        </div>
+
+        <!-- Celebration Text -->
+        <h1 class="celeb-title text-3xl md:text-5xl font-extrabold font-headline-lg text-white mt-8 text-center px-4">
+            Order <span style="background: linear-gradient(135deg, #F5A623 0%, #ff8c2b 50%, #ef6c00 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Confirmed!</span>
+        </h1>
+        <p class="celeb-subtitle text-white/50 text-sm md:text-base mt-3 text-center px-4">
+            Thank you for shopping with SehatHub 💊
+        </p>
+        <div class="celeb-order-id mt-5 inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/10 rounded-full px-5 py-2.5">
+            <span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings: 'FILL' 1;">receipt_long</span>
+            <span class="text-white font-bold text-sm">Order #SH-{{ "%04d"|format(order.order_id) }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================
+     ACTUAL ORDER CONFIRMATION CONTENT
+     Same data/layout as before — wrapped in staggered reveal
+     classes that trigger after the celebration overlay fades out.
+     ============================================================ -->
 <div class="max-w-3xl mx-auto px-margin-mobile py-12">
-    <!-- Success Header -->
-    <div class="text-center mb-10">
-        <div class="w-20 h-20 bg-secondary-container rounded-full mx-auto flex items-center justify-center mb-4 pulse-soft">
+    <!-- Success Header (visible after overlay) -->
+    <div class="text-center mb-10 order-content order-stagger-1">
+        <div class="w-20 h-20 bg-secondary-container rounded-full mx-auto flex items-center justify-center mb-4">
             <span class="material-symbols-outlined text-4xl text-secondary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
         </div>
         <h1 class="text-headline-lg font-headline-lg text-on-surface mb-2">Order Confirmed!</h1>
@@ -18,7 +220,7 @@
 
     <!-- Conditional Prescription Notice -->
     {% if has_prescription %}
-    <div class="bg-primary-container/30 border border-primary/20 rounded-2xl p-5 mb-8 flex items-start gap-4">
+    <div class="bg-primary-container/30 border border-primary/20 rounded-2xl p-5 mb-8 flex items-start gap-4 order-content order-stagger-1">
         <span class="material-symbols-outlined text-primary text-2xl mt-0.5">verified_user</span>
         <div>
             <h3 class="font-bold text-primary mb-1">Prescription Verification Pending</h3>
@@ -30,7 +232,7 @@
     <!-- Delivery Information -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         <!-- Address Box -->
-        <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 shadow-sm">
+        <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 shadow-sm order-content order-stagger-2">
             <div class="flex items-center gap-2 mb-4 pb-3 border-b border-outline-variant/20">
                 <span class="material-symbols-outlined text-on-surface-variant text-sm">location_on</span>
                 <h3 class="font-headline-md text-sm">Delivery Details</h3>
@@ -46,7 +248,7 @@
         </div>
 
         <!-- ETA & Status Box -->
-        <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 shadow-sm">
+        <div class="bg-white rounded-2xl border border-outline-variant/10 p-6 shadow-sm order-content order-stagger-2">
             <div class="flex items-center gap-2 mb-4 pb-3 border-b border-outline-variant/20">
                 <span class="material-symbols-outlined text-on-surface-variant text-sm">schedule</span>
                 <h3 class="font-headline-md text-sm">Estimated Delivery</h3>
@@ -67,7 +269,7 @@
     </div>
 
     <!-- Items Ordered -->
-    <div class="bg-white rounded-2xl border border-outline-variant/10 overflow-hidden shadow-sm mb-8">
+    <div class="bg-white rounded-2xl border border-outline-variant/10 overflow-hidden shadow-sm mb-8 order-content order-stagger-3">
         <div class="bg-surface-container-low px-6 py-4 border-b border-outline-variant/10">
             <h3 class="font-headline-md text-sm">Order Summary</h3>
         </div>
@@ -103,7 +305,7 @@
     </div>
 
     <!-- Primary Actions -->
-    <div class="flex flex-col sm:flex-row gap-4 justify-center mb-4">
+    <div class="flex flex-col sm:flex-row gap-4 justify-center mb-4 order-content order-stagger-4">
         <a href="{{ url_for('customer.order_detail', order_id=order.order_id) }}" class="px-8 py-4 border border-primary text-primary rounded-xl font-bold hover:bg-primary/5 transition-all text-center flex items-center justify-center gap-2">
             <span class="material-symbols-outlined text-sm">local_shipping</span> Track Order
         </a>
@@ -113,7 +315,7 @@
     </div>
 
     <!-- Secondary Actions -->
-    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+    <div class="flex flex-col sm:flex-row gap-3 justify-center order-content order-stagger-4">
         <!-- Share with Family (WhatsApp) -->
         <a href="https://wa.me/?text={{ 'I just ordered medicines from SehatHub! Order #SH-' ~ '%04d'|format(order.order_id) ~ ' — Rs. ' ~ '%.0f'|format(order.total_amount) ~ '. Track it here: ' ~ url_for('customer.order_detail', order_id=order.order_id, _external=True) | urlencode }}"
            target="_blank" rel="noopener"
@@ -128,5 +330,132 @@
     </div>
 
 </div>
+
+<!-- ============================================================
+     CELEBRATION ENGINE (JS)
+     Drives the confetti, sparkles, and timed overlay dismiss.
+     Runs once on page load, then cleans up after itself.
+     ============================================================ -->
+<script>
+(function () {
+    var overlay = document.getElementById('celebrationOverlay');
+    if (!overlay) return;
+
+    var confettiContainer = document.getElementById('confettiContainer');
+    var sparkleContainer = document.getElementById('sparkleContainer');
+
+    // --- CONFETTI ---
+    var CONFETTI_COLORS = ['#F5A623', '#ef6c00', '#003d9b', '#00c2ff', '#ffffff', '#a9c6f0', '#ff8c2b'];
+    var CONFETTI_COUNT = 60;
+
+    function launchConfetti() {
+        var centerX = window.innerWidth / 2;
+        var centerY = window.innerHeight * 0.35;
+
+        for (var i = 0; i < CONFETTI_COUNT; i++) {
+            var piece = document.createElement('div');
+            piece.className = 'confetti-piece';
+
+            // Random properties
+            var color = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+            var size = Math.random() * 8 + 4;
+            var isCircle = Math.random() > 0.5;
+            var driftX = (Math.random() - 0.5) * window.innerWidth * 0.8;
+            var driftY = Math.random() * window.innerHeight * 0.7 + 200;
+            var spin = (Math.random() - 0.5) * 1440;
+            var duration = Math.random() * 2 + 2;
+            var delay = Math.random() * 0.6;
+
+            piece.style.cssText = 
+                'left:' + centerX + 'px;' +
+                'top:' + centerY + 'px;' +
+                'width:' + size + 'px;' +
+                'height:' + (isCircle ? size : size * 2.5) + 'px;' +
+                'background:' + color + ';' +
+                'border-radius:' + (isCircle ? '50%' : '2px') + ';' +
+                '--drift-x:' + driftX + 'px;' +
+                '--drift-y:' + driftY + 'px;' +
+                '--spin:' + spin + 'deg;' +
+                '--fall-duration:' + duration + 's;' +
+                '--delay:' + delay + 's;';
+
+            confettiContainer.appendChild(piece);
+
+            // Trigger animation after append (avoid layout batch skip)
+            (function(p) {
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        p.classList.add('active');
+                    });
+                });
+            })(piece);
+        }
+    }
+
+    // --- SPARKLES ---
+    var SPARKLE_COLORS = ['#F5A623', '#ffffff', '#00c2ff', '#ef6c00'];
+    var SPARKLE_COUNT = 16;
+
+    function launchSparkles() {
+        var centerX = window.innerWidth / 2;
+        var centerY = window.innerHeight * 0.35;
+
+        for (var i = 0; i < SPARKLE_COUNT; i++) {
+            var spark = document.createElement('div');
+            spark.className = 'sparkle';
+
+            var angle = (i / SPARKLE_COUNT) * Math.PI * 2;
+            var dist = Math.random() * 80 + 60;
+            var sx = Math.cos(angle) * dist;
+            var sy = Math.sin(angle) * dist;
+            var color = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
+            var sparkDelay = 1.3 + Math.random() * 0.3;
+            var sparkSize = Math.random() * 4 + 3;
+
+            spark.style.cssText =
+                'left:' + centerX + 'px;' +
+                'top:' + centerY + 'px;' +
+                'width:' + sparkSize + 'px;' +
+                'height:' + sparkSize + 'px;' +
+                'background:' + color + ';' +
+                '--sx:' + sx + 'px;' +
+                '--sy:' + sy + 'px;' +
+                '--spark-delay:' + sparkDelay + 's;';
+
+            sparkleContainer.appendChild(spark);
+
+            (function(s) {
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        s.classList.add('active');
+                    });
+                });
+            })(spark);
+        }
+    }
+
+    // --- TIMELINE ---
+    // 1.3s: confetti + sparkles launch (right when checkmark finishes drawing)
+    setTimeout(function() {
+        launchConfetti();
+        launchSparkles();
+    }, 1300);
+
+    // 3.8s: fade out overlay, reveal page content
+    setTimeout(function() {
+        overlay.classList.add('hide-celebration');
+
+        // Reveal all content cards with stagger
+        document.querySelectorAll('.order-content').forEach(function(el) {
+            el.classList.add('revealed');
+        });
+    }, 3800);
+
+    // 4.5s: remove overlay from DOM entirely (clean up)
+    setTimeout(function() {
+        overlay.remove();
+    }, 4500);
+})();
+</script>
 
 {% endblock %}

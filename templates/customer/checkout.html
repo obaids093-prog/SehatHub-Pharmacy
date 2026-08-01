@@ -467,25 +467,91 @@
     })();
 </script>
 
+<!-- ============================================================
+     ORDER PLACEMENT CINEMATIC OVERLAY
+     Shows a premium full-screen animation while the form submits
+     and the server processes the order. The form submission itself
+     is untouched — this is purely visual, layered on top.
+     ============================================================ -->
+<div id="orderPlacingOverlay" class="fixed inset-0 z-[9999] pointer-events-none opacity-0" style="transition: opacity 0.4s ease;">
+    <div class="absolute inset-0 bg-[#0B1426]"></div>
+    <!-- Ambient glow orbs -->
+    <div class="absolute top-[20%] right-[15%] w-[400px] h-[400px] bg-primary/20 rounded-full blur-[120px]"></div>
+    <div class="absolute bottom-[10%] left-[10%] w-[350px] h-[350px] bg-[#F5A623]/15 rounded-full blur-[100px]"></div>
+
+    <div class="absolute inset-0 flex flex-col items-center justify-center">
+        <!-- Animated rings -->
+        <div class="relative w-36 h-36 mb-8">
+            <div class="absolute inset-0 rounded-full border-2 border-white/10" style="animation: orderRingSpin 3s linear infinite;"></div>
+            <div class="absolute inset-3 rounded-full border-2 border-dashed border-primary/30" style="animation: orderRingSpin 4s linear infinite reverse;"></div>
+            <div class="absolute inset-6 rounded-full border border-[#F5A623]/20" style="animation: orderRingSpin 2.5s linear infinite;"></div>
+            <!-- Center icon -->
+            <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-16 h-16 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center" style="animation: orderIconPulse 1.5s ease-in-out infinite;">
+                    <span class="material-symbols-outlined text-4xl text-white" style="font-variation-settings: 'FILL' 1;">package_2</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress text -->
+        <h2 class="text-2xl md:text-3xl font-extrabold text-white font-headline-lg mb-3" style="animation: orderTextFade 0.6s ease 0.3s both;">Placing Your Order</h2>
+        <p class="text-white/50 text-sm mb-6" style="animation: orderTextFade 0.6s ease 0.5s both;">Securing your medicines...</p>
+
+        <!-- Animated dots -->
+        <div class="flex gap-2" style="animation: orderTextFade 0.6s ease 0.7s both;">
+            <div class="w-2 h-2 rounded-full bg-[#F5A623]" style="animation: orderDotBounce 1.2s ease-in-out infinite;"></div>
+            <div class="w-2 h-2 rounded-full bg-primary-fixed-dim" style="animation: orderDotBounce 1.2s ease-in-out 0.2s infinite;"></div>
+            <div class="w-2 h-2 rounded-full bg-secondary" style="animation: orderDotBounce 1.2s ease-in-out 0.4s infinite;"></div>
+        </div>
+
+        <!-- Trust badge -->
+        <div class="flex items-center gap-2 mt-10 text-white/30 text-xs" style="animation: orderTextFade 0.6s ease 0.9s both;">
+            <span class="material-symbols-outlined text-sm text-secondary/60">lock</span>
+            <span>Encrypted & Secure Transaction</span>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes orderRingSpin { 100% { transform: rotate(360deg); } }
+    @keyframes orderIconPulse {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 61, 155, 0.3); }
+        50% { transform: scale(1.08); box-shadow: 0 0 30px 10px rgba(0, 61, 155, 0.15); }
+    }
+    @keyframes orderTextFade {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes orderDotBounce {
+        0%, 100% { transform: translateY(0); opacity: 0.4; }
+        50% { transform: translateY(-8px); opacity: 1; }
+    }
+</style>
+
 <script>
 // ============================================================
-// PREVENT DOUBLE-SUBMIT
-// On a slow connection, a customer might tap "Place Your Order"
-// more than once before the page navigates away, creating two
-// separate orders for the same cart. This disables both submit
-// buttons (mobile + desktop) the moment the form is submitted, so
-// a second tap does nothing.
+// PREVENT DOUBLE-SUBMIT + CINEMATIC OVERLAY
+// Same double-submit prevention as before, but now also shows
+// a full-screen cinematic overlay while the server processes.
+// The form submission itself is completely untouched.
 // ============================================================
 (function () {
-    const form = document.getElementById('checkoutForm');
+    var form = document.getElementById('checkoutForm');
     if (!form) return;
 
     form.addEventListener('submit', function () {
+        // 1. Disable buttons (same as before - prevents double submit)
         document.querySelectorAll('.checkoutSubmitBtn').forEach(function (btn) {
             btn.disabled = true;
             btn.classList.add('opacity-60', 'cursor-not-allowed');
-            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> Placing Order...';
         });
+
+        // 2. Show cinematic overlay
+        var overlay = document.getElementById('orderPlacingOverlay');
+        if (overlay) {
+            overlay.style.pointerEvents = 'auto';
+            overlay.style.opacity = '1';
+        }
     });
 })();
 </script>
