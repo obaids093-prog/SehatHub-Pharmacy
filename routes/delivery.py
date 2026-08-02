@@ -54,14 +54,14 @@ def dashboard():
         cursor.execute("""
             SELECT
                 o.order_id, o.status, o.total_amount, o.delivery_address, o.created_at,
-                u.full_name AS customer_name, u.phone AS customer_phone,
+                SUBSTRING_INDEX(o.delivery_address, ',', 1) AS customer_name, SUBSTRING_INDEX(o.delivery_address, '| Phone: ', -1) AS customer_phone,
                 COUNT(oi.order_item_id) AS item_count
             FROM orders o
             JOIN customers c ON o.customer_id = c.customer_id
             JOIN users u ON c.user_id = u.user_id
             LEFT JOIN order_items oi ON o.order_id = oi.order_id
             WHERE o.status = 'packed'
-            GROUP BY o.order_id, o.status, o.total_amount, o.delivery_address, o.created_at, u.full_name, u.phone
+            GROUP BY o.order_id, o.status, o.total_amount, o.delivery_address, o.created_at, customer_name, customer_phone
             ORDER BY o.created_at ASC
         """)
         ready_to_ship = cursor.fetchall()
@@ -70,14 +70,14 @@ def dashboard():
         cursor.execute("""
             SELECT
                 o.order_id, o.status, o.total_amount, o.delivery_address, o.created_at,
-                u.full_name AS customer_name, u.phone AS customer_phone,
+                SUBSTRING_INDEX(o.delivery_address, ',', 1) AS customer_name, SUBSTRING_INDEX(o.delivery_address, '| Phone: ', -1) AS customer_phone,
                 COUNT(oi.order_item_id) AS item_count
             FROM orders o
             JOIN customers c ON o.customer_id = c.customer_id
             JOIN users u ON c.user_id = u.user_id
             LEFT JOIN order_items oi ON o.order_id = oi.order_id
             WHERE o.status = 'shipped'
-            GROUP BY o.order_id, o.status, o.total_amount, o.delivery_address, o.created_at, u.full_name, u.phone
+            GROUP BY o.order_id, o.status, o.total_amount, o.delivery_address, o.created_at, customer_name, customer_phone
             ORDER BY o.created_at ASC
         """)
         out_for_delivery = cursor.fetchall()

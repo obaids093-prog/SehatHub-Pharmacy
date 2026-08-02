@@ -121,7 +121,7 @@ def dashboard():
 
         # ---- Recent activity feed (real data: newest orders + newest signups) ----
         cursor.execute("""
-            SELECT 'order' AS event_type, o.order_id AS ref_id, u.full_name AS person,
+            SELECT 'order' AS event_type, o.order_id AS ref_id, SUBSTRING_INDEX(o.delivery_address, ',', 1) AS person,
                    o.total_amount AS amount, o.status, o.created_at
             FROM orders o
             JOIN customers c ON o.customer_id = c.customer_id
@@ -577,7 +577,7 @@ def sales_reports():
 
         # ---- Detailed transaction log (most recent 20 orders) ----
         cursor.execute("""
-            SELECT o.order_id, o.created_at, u.full_name AS customer_name,
+            SELECT o.order_id, o.created_at, SUBSTRING_INDEX(o.delivery_address, ',', 1) AS customer_name,
                    o.total_amount, o.status
             FROM orders o
             JOIN customers c ON o.customer_id = c.customer_id
@@ -621,7 +621,7 @@ def export_sales_csv():
     try:
         cursor = connection.cursor(dictionary=True)
         cursor.execute("""
-            SELECT o.order_id, o.created_at, u.full_name AS customer_name,
+            SELECT o.order_id, o.created_at, SUBSTRING_INDEX(o.delivery_address, ',', 1) AS customer_name,
                    o.total_amount, o.status, o.payment_method, o.delivery_address,
                    GROUP_CONCAT(CONCAT(m.name, ' x', oi.quantity) SEPARATOR ' | ') AS items
             FROM orders o
@@ -630,7 +630,7 @@ def export_sales_csv():
             LEFT JOIN order_items oi ON o.order_id = oi.order_id
             LEFT JOIN medicine_variants mv ON oi.variant_id = mv.variant_id
             LEFT JOIN medicines m ON mv.medicine_id = m.medicine_id
-            GROUP BY o.order_id, o.created_at, u.full_name, o.total_amount, o.status, o.payment_method, o.delivery_address
+            GROUP BY o.order_id, o.created_at, customer_name, o.total_amount, o.status, o.payment_method, o.delivery_address
             ORDER BY o.created_at DESC
         """)
         rows = cursor.fetchall()

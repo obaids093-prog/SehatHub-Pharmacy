@@ -979,6 +979,7 @@ def checkout():
                 SELECT prescription_id, image_path, status, uploaded_at
                 FROM prescriptions
                 WHERE customer_id = %s AND status != 'rejected' AND order_id IS NULL
+                AND uploaded_at >= NOW() - INTERVAL 1 HOUR
                 ORDER BY uploaded_at DESC
             """, (customer_id,))
             available_prescriptions = cursor.fetchall()

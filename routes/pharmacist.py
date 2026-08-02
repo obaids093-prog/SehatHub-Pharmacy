@@ -121,7 +121,7 @@ def dashboard():
         cursor.execute("""
             SELECT
                 o.order_id, o.status, o.total_amount, o.created_at,
-                u.full_name AS customer_name,
+                SUBSTRING_INDEX(o.delivery_address, ',', 1) AS customer_name,
                 COUNT(oi.order_item_id) AS item_count,
                 GROUP_CONCAT(CONCAT(m.name, ' (x', oi.quantity, ')') SEPARATOR ', ') AS item_names
             FROM orders o
@@ -131,7 +131,7 @@ def dashboard():
             LEFT JOIN medicine_variants mv ON oi.variant_id = mv.variant_id
             LEFT JOIN medicines m ON mv.medicine_id = m.medicine_id
             WHERE o.status IN ('placed', 'confirmed')
-            GROUP BY o.order_id, o.status, o.total_amount, o.created_at, u.full_name
+            GROUP BY o.order_id, o.status, o.total_amount, o.created_at, customer_name
             ORDER BY o.created_at ASC
             LIMIT 6
         """)
