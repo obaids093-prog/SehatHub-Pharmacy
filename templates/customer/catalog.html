@@ -90,7 +90,7 @@
                     <h4 class="text-label-md font-bold text-on-surface-variant uppercase tracking-wide mb-3">Categories</h4>
                     <div class="space-y-2">
                         {% for category in categories %}
-                        <a href="{{ url_for('customer.medicine_catalog', category=category.category_id, brand=selected_brand, sort=sort_option, search=search_query, price_range=price_range, in_stock=in_stock_only) }}"
+                        <a href="{{ url_for('customer.medicine_catalog', category=category.category_id if selected_category != category.category_id else '', sort=sort_option, search=search_query, in_stock=in_stock_only) }}"
                            class="flex items-center justify-between px-3 py-2 rounded-lg text-body-sm transition-colors
                                {% if selected_category == category.category_id %} bg-primary-container/10 text-primary font-bold {% else %} text-on-surface hover:bg-surface-container {% endif %}">
                             {{ category.name }}
@@ -104,7 +104,7 @@
                     <h4 class="text-label-md font-bold text-on-surface-variant uppercase tracking-wide mb-3">Brands</h4>
                     <div class="space-y-2 max-h-64 overflow-y-auto">
                         {% for brand in brands %}
-                        <a href="{{ url_for('customer.medicine_catalog', category=selected_category, brand=brand.brand_id, sort=sort_option, search=search_query, price_range=price_range, in_stock=in_stock_only) }}"
+                        <a href="{{ url_for('customer.medicine_catalog', brand=brand.brand_id if selected_brand != brand.brand_id else '', sort=sort_option, search=search_query, in_stock=in_stock_only) }}"
                            class="flex items-center justify-between px-3 py-2 rounded-lg text-body-sm transition-colors
                                {% if selected_brand == brand.brand_id %} bg-primary-container/10 text-primary font-bold {% else %} text-on-surface hover:bg-surface-container {% endif %}">
                             {{ brand.name }}
@@ -143,6 +143,59 @@
                     </select>
                 </form>
             </div>
+
+            <!-- Active Filters Chips -->
+            {% set ns = namespace(cat_name='', brand_name='') %}
+            {% for c in categories %}
+                {% if c.category_id == selected_category %}
+                    {% set ns.cat_name = c.name %}
+                {% endif %}
+            {% endfor %}
+            {% for b in brands %}
+                {% if b.brand_id == selected_brand %}
+                    {% set ns.brand_name = b.name %}
+                {% endif %}
+            {% endfor %}
+
+            {% if selected_category or selected_brand or price_range or in_stock_only == '1' %}
+            <div class="flex flex-wrap items-center gap-2 mb-6">
+                <span class="text-sm text-on-surface-variant font-medium mr-2">Active Filters:</span>
+                
+                {% if selected_category and ns.cat_name %}
+                <a href="{{ url_for('customer.medicine_catalog', brand=selected_brand, sort=sort_option, search=search_query, price_range=price_range, in_stock=in_stock_only) }}" 
+                   class="flex items-center gap-1 px-3 py-1 bg-primary-container/20 text-primary rounded-full text-xs font-bold hover:bg-error-container hover:text-on-error-container transition-colors group border border-primary/20">
+                    {{ ns.cat_name }} 
+                    <span class="material-symbols-outlined text-[14px] group-hover:text-error transition-colors">close</span>
+                </a>
+                {% endif %}
+
+                {% if selected_brand and ns.brand_name %}
+                <a href="{{ url_for('customer.medicine_catalog', category=selected_category, sort=sort_option, search=search_query, price_range=price_range, in_stock=in_stock_only) }}" 
+                   class="flex items-center gap-1 px-3 py-1 bg-primary-container/20 text-primary rounded-full text-xs font-bold hover:bg-error-container hover:text-on-error-container transition-colors group border border-primary/20">
+                    {{ ns.brand_name }} 
+                    <span class="material-symbols-outlined text-[14px] group-hover:text-error transition-colors">close</span>
+                </a>
+                {% endif %}
+
+                {% if price_range %}
+                <a href="{{ url_for('customer.medicine_catalog', category=selected_category, brand=selected_brand, sort=sort_option, search=search_query, in_stock=in_stock_only) }}" 
+                   class="flex items-center gap-1 px-3 py-1 bg-primary-container/20 text-primary rounded-full text-xs font-bold hover:bg-error-container hover:text-on-error-container transition-colors group border border-primary/20">
+                    {% if price_range == 'under_100' %}Under Rs. 100{% elif price_range == '100_500' %}Rs. 100 - 500{% elif price_range == '500_plus' %}Rs. 500+{% endif %} 
+                    <span class="material-symbols-outlined text-[14px] group-hover:text-error transition-colors">close</span>
+                </a>
+                {% endif %}
+
+                {% if in_stock_only == '1' %}
+                <a href="{{ url_for('customer.medicine_catalog', category=selected_category, brand=selected_brand, sort=sort_option, search=search_query, price_range=price_range) }}" 
+                   class="flex items-center gap-1 px-3 py-1 bg-primary-container/20 text-primary rounded-full text-xs font-bold hover:bg-error-container hover:text-on-error-container transition-colors group border border-primary/20">
+                    In Stock 
+                    <span class="material-symbols-outlined text-[14px] group-hover:text-error transition-colors">close</span>
+                </a>
+                {% endif %}
+
+                <a href="{{ url_for('customer.medicine_catalog', search=search_query) }}" class="text-xs text-error hover:underline ml-2 font-medium">Clear All</a>
+            </div>
+            {% endif %}
 
             {% if error %}
                 <div class="bg-error-container text-on-error-container px-4 py-3 rounded-lg mb-6">{{ error }}</div>
