@@ -35,7 +35,7 @@
      STATS CARDS
      ============================================================ -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-tertiary-fixed-dim/30 hover:shadow-xl transition-all">
+    <a href="{{ url_for('pharmacist.prescription_list', status='pending') }}" class="glass-dark !bg-white block rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-tertiary-fixed-dim/30 hover:shadow-xl transition-all">
         <div class="absolute inset-0 bg-tertiary-fixed-dim/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
@@ -52,9 +52,9 @@
             <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Pending Verifications</p>
             <p class="text-3xl font-extrabold text-on-surface group-hover:text-tertiary-fixed-dim transition-colors">{{ stats.pending_verifications or 0 }}</p>
         </div>
-    </div>
+    </a>
     
-    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-primary/30 hover:shadow-xl transition-all">
+    <a href="#orders" class="glass-dark !bg-white block rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-primary/30 hover:shadow-xl transition-all">
         <div class="absolute inset-0 bg-primary/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
@@ -65,9 +65,9 @@
             <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">New Orders Today</p>
             <p class="text-3xl font-extrabold text-on-surface group-hover:text-primary transition-colors">{{ stats.new_orders_today or 0 }}</p>
         </div>
-    </div>
+    </a>
 
-    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-error/30 hover:shadow-xl transition-all">
+    <a href="{{ url_for('pharmacist.inventory', filter='low_stock') }}" class="glass-dark !bg-white block rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-error/30 hover:shadow-xl transition-all">
         <div class="absolute inset-0 bg-error/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
@@ -78,9 +78,9 @@
             <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Low Stock Alerts</p>
             <p class="text-3xl font-extrabold text-on-surface group-hover:text-error transition-colors">{{ stats.low_stock_count or 0 }}</p>
         </div>
-    </div>
+    </a>
 
-    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-secondary/30 hover:shadow-xl transition-all">
+    <a href="{{ url_for('pharmacist.prescription_list', status='approved') }}" class="glass-dark !bg-white block rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-secondary/30 hover:shadow-xl transition-all">
         <div class="absolute inset-0 bg-secondary/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
@@ -91,7 +91,7 @@
             <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Completed Reviews</p>
             <p class="text-3xl font-extrabold text-on-surface group-hover:text-secondary transition-colors">{{ stats.completed_reviews or 0 }}</p>
         </div>
-    </div>
+    </a>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -191,7 +191,7 @@
 <!-- ============================================================
      ORDER FULFILLMENT
      ============================================================ -->
-<div class="bg-white rounded-3xl border border-outline-variant/15 p-6 md:p-8 shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden mb-8">
+<div id="orders" class="bg-white rounded-3xl border border-outline-variant/15 p-6 md:p-8 shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden mb-8">
     <div class="absolute -left-20 top-1/2 w-64 h-64 bg-secondary/5 rounded-full blur-[60px] pointer-events-none"></div>
     
     <div class="flex items-center gap-3 mb-6 relative z-10 border-b border-outline-variant/10 pb-4">

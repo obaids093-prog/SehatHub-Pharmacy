@@ -34,7 +34,7 @@
 
 <!-- STAT CARDS -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-primary/30 hover:shadow-xl transition-all">
+    <a href="{{ url_for('admin.sales_reports') }}" class="glass-dark !bg-white block rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-primary/30 hover:shadow-xl transition-all">
         <div class="absolute inset-0 bg-primary/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
@@ -46,9 +46,9 @@
             <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Total Sales</p>
             <p class="text-3xl font-extrabold text-on-surface group-hover:text-primary transition-colors">Rs. {{ "{:,.0f}".format(stats.total_sales or 0) }}</p>
         </div>
-    </div>
+    </a>
     
-    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-secondary/30 hover:shadow-xl transition-all">
+    <a href="{{ url_for('admin.user_list') }}" class="glass-dark !bg-white block rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-secondary/30 hover:shadow-xl transition-all">
         <div class="absolute inset-0 bg-secondary/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
@@ -59,9 +59,9 @@
             <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Active Users</p>
             <p class="text-3xl font-extrabold text-on-surface group-hover:text-secondary transition-colors">{{ stats.active_users or 0 }}</p>
         </div>
-    </div>
+    </a>
     
-    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-[#F5A623]/30 hover:shadow-xl transition-all">
+    <a href="{{ url_for('admin.sales_reports') }}" class="glass-dark !bg-white block rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-[#F5A623]/30 hover:shadow-xl transition-all">
         <div class="absolute inset-0 bg-[#F5A623]/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
@@ -79,9 +79,9 @@
             <p class="text-3xl font-extrabold text-on-surface group-hover:text-[#F5A623] transition-colors">{{ stats.pending_orders or 0 }}</p>
             {% if stats.pending_orders %}<p class="text-[10px] text-error font-bold mt-2 uppercase flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">warning</span> Requires attention</p>{% endif %}
         </div>
-    </div>
+    </a>
     
-    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-error/30 hover:shadow-xl transition-all">
+    <a href="{{ url_for('admin.medicine_list', filter='low_stock') }}" class="glass-dark !bg-white block rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-error/30 hover:shadow-xl transition-all">
         <div class="absolute inset-0 bg-error/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
@@ -92,7 +92,7 @@
             <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Low Stock Alerts</p>
             <p class="text-3xl font-extrabold text-on-surface group-hover:text-error transition-colors">{{ stats.low_stock_count or 0 }}</p>
         </div>
-    </div>
+    </a>
 </div>
 
 <!-- ============================================================

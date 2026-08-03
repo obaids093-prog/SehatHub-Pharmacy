@@ -11,6 +11,7 @@ from utils.auth_helpers import role_required
 from utils.csrf import generate_csrf_token, validate_csrf_token
 import utils.medicine_helpers as med
 import os
+from utils.audit import log_audit_action
 
 pharmacist_bp = Blueprint('pharmacist', __name__, url_prefix='/pharmacist')
 
@@ -66,7 +67,17 @@ def dashboard():
         cursor.execute("SELECT COUNT(*) AS count FROM orders WHERE DATE(created_at) = CURDATE()")
         new_orders_today = cursor.fetchone()['count']
 
-        cursor.execute("SELECT COUNT(*) AS count FROM medicine_variants WHERE stock_qty <= %s", (LOW_STOCK_THRESHOLD,))
+        cursor.execute("""
+            SELECT COUNT(*) AS count 
+            FROM medicine_variants mv
+            JOIN medicines m ON mv.medicine_id = m.medicine_id
+            LEFT JOIN categories c ON m.category_id = c.category_id
+            WHERE mv.stock_qty <= CASE 
+                WHEN LOWER(c.name) LIKE %s THEN 5
+                WHEN LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s THEN 10
+                ELSE 20
+            END
+        """, ('%device%', '%perfume%', '%fragrance%', '%personal%', '%skin%', '%beauty%'))
         low_stock_count = cursor.fetchone()['count']
 
         cursor.execute("SELECT COUNT(*) AS count FROM prescriptions WHERE status IN ('approved', 'rejected')")
@@ -105,10 +116,15 @@ def dashboard():
             SELECT mv.variant_id, mv.pack_size, mv.stock_qty, m.name AS medicine_name
             FROM medicine_variants mv
             JOIN medicines m ON mv.medicine_id = m.medicine_id
-            WHERE mv.stock_qty <= %s
+            LEFT JOIN categories c ON m.category_id = c.category_id
+            WHERE mv.stock_qty <= CASE 
+                WHEN LOWER(c.name) LIKE %s THEN 5
+                WHEN LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s THEN 10
+                ELSE 20
+            END
             ORDER BY mv.stock_qty ASC
             LIMIT 5
-        """, (LOW_STOCK_THRESHOLD,))
+        """, ('%device%', '%perfume%', '%fragrance%', '%personal%', '%skin%', '%beauty%'))
         low_stock_items = cursor.fetchall()
 
         # ----------------------------------------------------------
@@ -166,17 +182,25 @@ def prescription_list():
     try:
         cursor = connection.cursor(dictionary=True)
         page = request.args.get('page', 1, type=int)
+        status_filter = request.args.get('status', '').strip()
         per_page = 20
 
+        # Build WHERE clause for status filter
+        where_clause = ""
+        filter_params = []
+        if status_filter in ('pending', 'approved', 'rejected'):
+            where_clause = "WHERE p.status = %s"
+            filter_params = [status_filter]
+
         # Get total count for pagination
-        cursor.execute("SELECT COUNT(*) AS total FROM prescriptions")
+        cursor.execute(f"SELECT COUNT(*) AS total FROM prescriptions p {where_clause}", tuple(filter_params))
         total_count = cursor.fetchone()['total']
 
         total_pages = max(1, (total_count + per_page - 1) // per_page)
         page = max(1, min(page, total_pages))
         start_idx = (page - 1) * per_page
 
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT p.prescription_id, p.image_path, p.status, p.uploaded_at, p.rejection_reason,
                    u.full_name AS patient_name, u.phone AS patient_phone,
                    GROUP_CONCAT(CONCAT(m.name, ' (x', oi.quantity, ')') SEPARATOR ', ') AS requested_medicines
@@ -186,17 +210,18 @@ def prescription_list():
             LEFT JOIN order_items oi ON p.order_id = oi.order_id
             LEFT JOIN medicine_variants mv ON oi.variant_id = mv.variant_id
             LEFT JOIN medicines m ON mv.medicine_id = m.medicine_id
+            {where_clause}
             GROUP BY p.prescription_id, p.image_path, p.status, p.uploaded_at, p.rejection_reason, u.full_name, u.phone
             ORDER BY
                 CASE p.status WHEN 'pending' THEN 0 ELSE 1 END,
                 p.uploaded_at ASC
             LIMIT %s OFFSET %s
-        """, (per_page, start_idx))
+        """, tuple(filter_params) + (per_page, start_idx))
         prescriptions = cursor.fetchall()
         cursor.close()
 
         return render_template('pharmacist/prescriptions.html', prescriptions=prescriptions,
-                               page=page, total_pages=total_pages)
+                               page=page, total_pages=total_pages, status_filter=status_filter)
 
     finally:
         connection.close()
@@ -268,6 +293,10 @@ def verify_prescription(prescription_id):
             """, (user_id, ntype, title, msg, icon))
 
         connection.commit()
+        
+        # Log Audit Action
+        log_audit_action(session['user_id'], f'PRESCRIPTION_{decision.upper()}', f'Pharmacist {decision} prescription #{prescription_id}')
+        
         cursor.close()
 
         flash(f'Prescription #{prescription_id} marked as {decision}.', 'success')
@@ -340,6 +369,10 @@ def pack_order(order_id):
             """, (user_row['user_id'], title, msg, icon))
 
         connection.commit()
+        
+        # Log Audit Action
+        log_audit_action(session['user_id'], f'ORDER_{next_status.upper()}', f'Pharmacist updated order #{order_id} status to {next_status}')
+        
         cursor.close()
 
         flash(f'Order #{order_id} marked as {next_status}.', 'success')
@@ -429,6 +462,10 @@ def cancel_order(order_id):
             """, (user_row['user_id'], title, msg))
 
         connection.commit()
+        
+        # Log Audit Action
+        log_audit_action(session['user_id'], 'ORDER_CANCELLED', f'Pharmacist cancelled order #{order_id}. Reason: {reason}')
+        
         cursor.close()
 
         flash(f'Order #{order_id} has been cancelled and stock restored.', 'success')
@@ -459,6 +496,7 @@ def inventory():
 
     try:
         search_query = request.args.get('search', '').strip()
+        stock_filter = request.args.get('filter', '').strip()
         page = request.args.get('page', 1, type=int)
         per_page = 20
         offset = (page - 1) * per_page
@@ -469,8 +507,16 @@ def inventory():
         where_clause = ""
         params = []
         
+        if stock_filter == 'low_stock':
+            where_clause = """WHERE mv.stock_qty <= CASE 
+                WHEN LOWER(c.name) LIKE %s THEN 5
+                WHEN LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s THEN 10
+                ELSE 20
+            END"""
+            params.extend(['%device%', '%perfume%', '%fragrance%', '%personal%', '%skin%', '%beauty%'])
+        
         if search_query:
-            where_clause = "WHERE m.name LIKE %s OR b.name LIKE %s"
+            where_clause += (" AND" if where_clause else "WHERE") + " (m.name LIKE %s OR b.name LIKE %s)"
             params.extend([f"%{search_query}%", f"%{search_query}%"])
             
         # Get total count for pagination
@@ -479,6 +525,7 @@ def inventory():
             FROM medicine_variants mv
             JOIN medicines m ON mv.medicine_id = m.medicine_id
             LEFT JOIN brands b ON m.brand_id = b.brand_id
+            LEFT JOIN categories c ON m.category_id = c.category_id
             {where_clause}
         """, tuple(params))
         total_items = cursor.fetchone()['total']
@@ -491,6 +538,7 @@ def inventory():
             FROM medicine_variants mv
             JOIN medicines m ON mv.medicine_id = m.medicine_id
             LEFT JOIN brands b ON m.brand_id = b.brand_id
+            LEFT JOIN categories c ON m.category_id = c.category_id
             {where_clause}
             ORDER BY mv.stock_qty ASC
             LIMIT %s OFFSET %s
@@ -534,12 +582,30 @@ def update_stock(variant_id):
         return redirect(url_for('pharmacist.inventory'))
 
     try:
-        cursor = connection.cursor()
+        cursor = connection.cursor(dictionary=True)
+
+        # Fetch old values BEFORE the update so we can log old vs new
+        cursor.execute("""
+            SELECT mv.stock_qty AS old_stock, m.name AS medicine_name, mv.pack_size
+            FROM medicine_variants mv
+            JOIN medicines m ON mv.medicine_id = m.medicine_id
+            WHERE mv.variant_id = %s
+        """, (variant_id,))
+        old_data = cursor.fetchone()
+        old_stock = old_data['old_stock'] if old_data else '?'
+        med_name = old_data['medicine_name'] if old_data else 'Unknown'
+        pack_size = old_data['pack_size'] if old_data else ''
+
         cursor.execute(
             "UPDATE medicine_variants SET stock_qty = %s WHERE variant_id = %s",
             (new_stock, variant_id)
         )
         connection.commit()
+        
+        # Log Audit Action with old vs new value
+        log_audit_action(session['user_id'], 'STOCK_UPDATE',
+            f'{med_name} ({pack_size}) — stock changed from {old_stock} to {new_stock}')
+        
         cursor.close()
 
         flash('Stock updated successfully.', 'success')
@@ -652,6 +718,7 @@ def medicine_edit(medicine_id):
             flash(error, 'error')
         else:
             flash(f"{data['name']} was updated.", 'success')
+            log_audit_action(session['user_id'], 'MEDICINE_EDIT', f'Pharmacist updated medicine #{medicine_id} ({data["name"]})')
 
         return redirect(url_for('pharmacist.medicine_edit', medicine_id=medicine_id))
 
@@ -707,6 +774,7 @@ def medicine_variant_add(medicine_id):
             flash(error, 'error')
         else:
             flash('Pack size added.', 'success')
+            log_audit_action(session['user_id'], 'VARIANT_ADD', f'Pharmacist added pack size {pack_size} at Rs. {price} to medicine #{medicine_id}')
 
     return redirect(url_for('pharmacist.medicine_edit', medicine_id=medicine_id))
 
@@ -723,8 +791,42 @@ def medicine_variant_update(variant_id):
     price = request.form.get('price', type=float)
     stock_qty = request.form.get('stock_qty', type=int, default=0)
 
+    # Fetch old values BEFORE the update for audit trail
+    old_price = None
+    old_stock = None
+    med_name = 'Unknown'
+    try:
+        conn_temp = get_db_connection()
+        if conn_temp:
+            cur_temp = conn_temp.cursor(dictionary=True)
+            cur_temp.execute("""
+                SELECT mv.price AS old_price, mv.stock_qty AS old_stock, m.name AS medicine_name
+                FROM medicine_variants mv
+                JOIN medicines m ON mv.medicine_id = m.medicine_id
+                WHERE mv.variant_id = %s
+            """, (variant_id,))
+            old = cur_temp.fetchone()
+            if old:
+                old_price = old['old_price']
+                old_stock = old['old_stock']
+                med_name = old['medicine_name']
+            cur_temp.close()
+            conn_temp.close()
+    except Exception:
+        pass
+
     error = med.update_variant(variant_id, pack_size, price, stock_qty)
     flash(error if error else 'Pack size updated.', 'error' if error else 'success')
+    if not error:
+        # Build a human-readable description of what changed
+        changes = []
+        if old_price is not None and float(old_price) != float(price):
+            changes.append(f'price Rs. {old_price} → Rs. {price}')
+        if old_stock is not None and int(old_stock) != int(stock_qty):
+            changes.append(f'stock {old_stock} → {stock_qty}')
+        change_text = ', '.join(changes) if changes else f'size={pack_size}, price={price}, stock={stock_qty}'
+        log_audit_action(session['user_id'], 'VARIANT_UPDATE',
+            f'{med_name} ({pack_size}) — {change_text}')
 
     return redirect(url_for('pharmacist.medicine_edit', medicine_id=medicine_id))
 
@@ -739,6 +841,8 @@ def medicine_variant_delete(variant_id):
     medicine_id = request.form.get('medicine_id', type=int)
     error = med.delete_variant(variant_id)
     flash(error if error else 'Pack size removed.', 'error' if error else 'success')
+    if not error:
+        log_audit_action(session['user_id'], 'VARIANT_DELETE', f'Pharmacist deleted variant #{variant_id} of medicine #{medicine_id}')
 
     return redirect(url_for('pharmacist.medicine_edit', medicine_id=medicine_id))
 

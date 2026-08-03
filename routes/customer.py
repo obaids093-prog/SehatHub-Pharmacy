@@ -1679,3 +1679,137 @@ def api_notifications():
 
     finally:
         connection.close()
+
+
+# ============================================================
+# AI CHATBOT API
+# ============================================================
+
+@customer_bp.route('/api/chat', methods=['POST'])
+def api_chat():
+    """
+    AI Chatbot endpoint - accepts a user message and returns an AI response.
+    Rate-limited to 15 messages per minute per session.
+    No login required so even guest visitors can use it.
+    """
+    import time
+    from utils.ai_chatbot import get_ai_response
+
+    data = request.get_json(silent=True) or {}
+    user_message = (data.get('message') or '').strip()
+    image_data = data.get('image_data')  # Base64 string
+    mime_type = data.get('mime_type', 'image/jpeg')
+
+    if not user_message and not image_data:
+        return jsonify({'error': 'Please type a message or upload an image.'}), 400
+
+    # ---- Input length guard ----
+    if len(user_message) > 300:
+        return jsonify({'reply': 'Please shorten your message (max 300 characters).'}), 200
+
+    # ---- Rate limiting: max 15 messages per minute per session ----
+    now = time.time()
+    if 'chat_timestamps' not in session:
+        session['chat_timestamps'] = []
+
+    session['chat_timestamps'] = [t for t in session['chat_timestamps'] if now - t < 60]
+
+    if len(session['chat_timestamps']) >= 15:
+        return jsonify({'reply': '⚠️ You are sending too many messages. Please wait a moment and try again.'}), 200
+
+    session['chat_timestamps'].append(now)
+    session.modified = True
+
+    # ---- Maintain chat history in session for AI context memory ----
+    if 'chat_history' not in session:
+        session['chat_history'] = []
+
+    chat_history = session['chat_history']
+
+    # ---- Get AI response ----
+    try:
+        reply = get_ai_response(
+            user_message,
+            image_data=image_data,
+            mime_type=mime_type,
+            session_history=chat_history
+        )
+
+        # Store turn in history
+        if user_message:
+            chat_history.append({'role': 'user', 'text': user_message})
+        chat_history.append({'role': 'model', 'text': reply})
+
+        # Keep history lightweight (max 6 items)
+        session['chat_history'] = chat_history[-6:]
+        session.modified = True
+
+        return jsonify({'reply': reply, 'has_image': bool(image_data)})
+    except Exception as e:
+        print(f"[AI Chat API Error] {e}")
+        return jsonify({'reply': 'Sorry, something went wrong processing your request.'}), 200
+
+
+
+@customer_bp.route('/api/chat/submit-prescription', methods=['POST'])
+def api_chat_submit_prescription():
+    """
+    Submits an uploaded prescription from the chatbot to the Pharmacist Verification Queue
+    only when the customer confirms they want to place an order!
+    """
+    import base64
+    import os
+    import time
+    from werkzeug.utils import secure_filename
+
+    data = request.get_json(silent=True) or {}
+    image_data = data.get('image_data')
+
+    if not image_data:
+        return jsonify({'error': 'No prescription image attached.'}), 400
+
+    if 'user_id' not in session:
+        return jsonify({'reply': '🔑 Please **Log In** to submit prescriptions for ordering.', 'require_login': True}), 200
+
+    connection = get_db_connection()
+    if connection is None:
+        return jsonify({'reply': 'Database error. Please try again.'}), 500
+
+    try:
+        customer_id = get_customer_id(connection, session['user_id'])
+        
+        # Save base64 image file to static/uploads/prescriptions/
+        upload_folder = os.path.join('static', 'uploads', 'prescriptions')
+        os.makedirs(upload_folder, exist_ok=True)
+
+        header, encoded = image_data.split(',', 1) if ',' in image_data else ('', image_data)
+        ext = 'png' if 'png' in header else ('pdf' if 'pdf' in header else 'jpg')
+        filename = f"chat_rx_{customer_id}_{int(time.time())}.{ext}"
+        filepath = os.path.join(upload_folder, filename)
+
+        with open(filepath, 'wb') as f:
+            f.write(base64.b64decode(encoded))
+
+        rel_path = f"uploads/prescriptions/{filename}"
+
+        cursor = connection.cursor()
+        cursor.execute(
+            """INSERT INTO prescriptions (customer_id, file_path, status, notes)
+               VALUES (%s, %s, 'pending', 'Uploaded via AI Support Chatbot')""",
+            (customer_id, rel_path)
+        )
+        connection.commit()
+        cursor.close()
+
+        return jsonify({
+            'reply': '✅ **Prescription Sent to Pharmacist!**\n\n'
+                     'Our licensed pharmacist has received your prescription and is reviewing it. '
+                     'You will receive a notification as soon as it is verified!'
+        })
+
+    except Exception as e:
+        print(f"[Submit Prescription Chat Error] {e}")
+        return jsonify({'reply': 'Failed to submit prescription. Please use the main Upload Prescription page.'}), 200
+
+    finally:
+        connection.close()

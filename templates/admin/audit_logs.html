@@ -1,0 +1,177 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Audit Logs | SehatHub{% endblock %}
+
+{% block admin_content %}
+
+<div class="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-6">
+    <div>
+        <h1 class="text-headline-lg font-headline-lg text-on-surface mb-1">Audit Logs</h1>
+        <p class="text-body-sm text-on-surface-variant">Track all critical actions performed by pharmacists — monitor price changes, stock updates, and deletions.</p>
+    </div>
+    <div class="flex items-center gap-2 bg-white border border-outline-variant/10 px-4 py-2.5 rounded-full">
+        <span class="material-symbols-outlined text-lg text-primary">shield</span>
+        <span class="text-sm font-bold text-on-surface">{{ total_count }} Total Logs</span>
+    </div>
+</div>
+
+<!-- ============================================================
+     FILTERS
+     ============================================================ -->
+<div class="bg-white rounded-2xl border border-outline-variant/10 p-4 mb-6">
+    <form method="GET" class="flex flex-col md:flex-row gap-4 md:items-end">
+        <!-- Filter by Pharmacist -->
+        <div class="flex-1">
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Filter by Staff</label>
+            <select name="user" onchange="this.form.submit()"
+                    class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+                <option value="all" {% if filter_user == 'all' %}selected{% endif %}>All Staff</option>
+                {% for p in pharmacists %}
+                <option value="{{ p.user_id }}" {% if filter_user|string == p.user_id|string %}selected{% endif %}>{{ p.full_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Filter by Action Type -->
+        <div class="flex-1">
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Action Type</label>
+            <select name="action" onchange="this.form.submit()"
+                    class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+                <option value="all" {% if filter_action == 'all' %}selected{% endif %}>All Actions</option>
+                {% for at in action_types %}
+                <option value="{{ at }}" {% if filter_action == at %}selected{% endif %}>{{ at.replace('_', ' ').title() }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Start Date -->
+        <div class="flex-1">
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">Start Date</label>
+            <input type="date" name="start_date" value="{{ start_date }}" onchange="this.form.submit()"
+                   class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+        </div>
+
+        <!-- End Date -->
+        <div class="flex-1">
+            <label class="block text-xs font-bold text-on-surface-variant uppercase mb-1.5">End Date</label>
+            <input type="date" name="end_date" value="{{ end_date }}" onchange="this.form.submit()"
+                   class="w-full px-4 py-2.5 rounded-lg border border-outline-variant text-sm focus:ring-2 focus:ring-primary/30 outline-none">
+        </div>
+
+        <!-- Clear Filters -->
+        {% if filter_user != 'all' or filter_action != 'all' or start_date or end_date %}
+        <a href="{{ url_for('admin.audit_logs') }}"
+           class="inline-flex items-center gap-1 px-4 py-2.5 rounded-lg text-sm font-bold text-error hover:bg-error/10 transition-colors whitespace-nowrap">
+            <span class="material-symbols-outlined text-base">close</span> Clear
+        </a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- ============================================================
+     AUDIT LOG TABLE
+     ============================================================ -->
+<div class="bg-white rounded-2xl border border-outline-variant/10 overflow-hidden mb-6">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-xs text-on-surface-variant uppercase border-b border-outline-variant/10">
+                    <th class="px-6 py-3 font-medium">Time</th>
+                    <th class="px-6 py-3 font-medium">Staff Member</th>
+                    <th class="px-6 py-3 font-medium">Action</th>
+                    <th class="px-6 py-3 font-medium">Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr class="border-b border-outline-variant/10 last:border-0 hover:bg-surface-container-low/50 transition-colors">
+                    <!-- Time -->
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-xs text-on-surface font-medium">{{ log.created_at.strftime('%b %d, %Y') }}</div>
+                        <div class="text-xs text-on-surface-variant">{{ log.created_at.strftime('%I:%M %p') }}</div>
+                    </td>
+
+                    <!-- Staff Member -->
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs flex-shrink-0">
+                                {{ log.full_name[0] }}
+                            </div>
+                            <div>
+                                <p class="font-medium text-on-surface">{{ log.full_name }}</p>
+                                <p class="text-xs text-on-surface-variant capitalize">{{ log.role }}</p>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Action Type (Color-coded) -->
+                    <td class="px-6 py-4">
+                        {% set action = log.action_type %}
+                        {% if 'DELETE' in action or 'CANCEL' in action %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-error/10 text-error">
+                                <span class="material-symbols-outlined text-sm">delete</span>
+                                {{ action.replace('_', ' ').title() }}
+                            </span>
+                        {% elif 'UPDATE' in action or 'EDIT' in action %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">
+                                <span class="material-symbols-outlined text-sm">edit</span>
+                                {{ action.replace('_', ' ').title() }}
+                            </span>
+                        {% elif 'ADD' in action or 'APPROVED' in action or 'CONFIRMED' in action or 'PACKED' in action %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                                <span class="material-symbols-outlined text-sm">check_circle</span>
+                                {{ action.replace('_', ' ').title() }}
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-surface-container text-on-surface-variant">
+                                <span class="material-symbols-outlined text-sm">info</span>
+                                {{ action.replace('_', ' ').title() }}
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Description -->
+                    <td class="px-6 py-4 text-on-surface-variant max-w-md">
+                        {{ log.description }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="px-6 py-12 text-center">
+                        <span class="material-symbols-outlined text-4xl text-on-surface-variant/30 mb-2">shield</span>
+                        <p class="text-on-surface-variant font-medium">No audit logs found.</p>
+                        <p class="text-xs text-on-surface-variant mt-1">Actions performed by pharmacists will appear here automatically.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ============================================================
+     PAGINATION
+     ============================================================ -->
+{% if total_pages > 1 %}
+<div class="flex justify-center gap-2">
+    {% if page > 1 %}
+    <a href="{{ url_for('admin.audit_logs', page=page-1, user=filter_user, action=filter_action, start_date=start_date, end_date=end_date) }}"
+       class="px-4 py-2 rounded-lg bg-white border border-outline-variant/10 text-sm font-medium hover:bg-surface-container transition-colors">
+        ← Previous
+    </a>
+    {% endif %}
+    
+    <span class="px-4 py-2 rounded-lg bg-primary/10 text-primary text-sm font-bold">
+        Page {{ page }} of {{ total_pages }}
+    </span>
+    
+    {% if page < total_pages %}
+    <a href="{{ url_for('admin.audit_logs', page=page+1, user=filter_user, action=filter_action, start_date=start_date, end_date=end_date) }}"
+       class="px-4 py-2 rounded-lg bg-white border border-outline-variant/10 text-sm font-medium hover:bg-surface-container transition-colors">
+        Next →
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

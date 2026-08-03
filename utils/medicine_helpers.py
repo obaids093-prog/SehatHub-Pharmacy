@@ -103,13 +103,14 @@ def get_or_create_brand(brand_name):
         connection.close()
 
 
-def get_medicines_list(search='', category_id=None, status='active', page=1, per_page=20):
+def get_medicines_list(search='', category_id=None, status='active', low_stock=False, page=1, per_page=20):
     """
     Returns medicines for the management list page, with brand/category
     names, price range, and total stock across all pack-size variants.
 
     status: 'active' (default - hides soft-deleted medicines),
             'inactive' (only soft-deleted ones), or 'all'.
+    low_stock: if True, filters only medicines with stock <= 20.
     
     Returns a tuple: (medicines_list, total_pages).
     """
@@ -127,6 +128,20 @@ def get_medicines_list(search='', category_id=None, status='active', page=1, per
             where_clause += " AND m.is_active = TRUE"
         elif status == 'inactive':
             where_clause += " AND m.is_active = FALSE"
+
+        if low_stock:
+            where_clause += """ AND m.medicine_id IN (
+                SELECT mv.medicine_id 
+                FROM medicine_variants mv
+                JOIN medicines m2 ON mv.medicine_id = m2.medicine_id
+                LEFT JOIN categories c ON m2.category_id = c.category_id
+                WHERE mv.stock_qty <= CASE 
+                    WHEN LOWER(c.name) LIKE %s THEN 5
+                    WHEN LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s THEN 10
+                    ELSE 20
+                END
+            )"""
+            params.extend(['%device%', '%perfume%', '%fragrance%', '%personal%', '%skin%', '%beauty%'])
 
         if search:
             where_clause += " AND (m.name LIKE %s OR m.generic_name LIKE %s)"

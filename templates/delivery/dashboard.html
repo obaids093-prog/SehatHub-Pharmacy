@@ -35,7 +35,7 @@
      STAT CARDS
      ============================================================ -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-tertiary-container/50 hover:shadow-xl transition-all">
+    <a href="#ready-to-ship" class="glass-dark !bg-white block rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-tertiary-container/50 hover:shadow-xl transition-all">
         <div class="absolute inset-0 bg-tertiary-container/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
@@ -46,9 +46,9 @@
             <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Ready to Ship</p>
             <p class="text-3xl font-extrabold text-on-surface group-hover:text-tertiary-container transition-colors">{{ stats.ready_count or 0 }}</p>
         </div>
-    </div>
+    </a>
     
-    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-primary/30 hover:shadow-xl transition-all">
+    <a href="#out-for-delivery" class="glass-dark !bg-white block rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-primary/30 hover:shadow-xl transition-all">
         <div class="absolute inset-0 bg-primary/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
@@ -59,9 +59,9 @@
             <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Out for Delivery</p>
             <p class="text-3xl font-extrabold text-on-surface group-hover:text-primary transition-colors">{{ stats.shipped_count or 0 }}</p>
         </div>
-    </div>
+    </a>
     
-    <div class="glass-dark !bg-white rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-secondary/30 hover:shadow-xl transition-all">
+    <a href="{{ url_for('delivery.dashboard') }}" class="glass-dark !bg-white block rounded-3xl p-6 hover-lift-premium relative overflow-hidden group shadow-sm border border-outline-variant/15 hover:border-secondary/30 hover:shadow-xl transition-all">
         <div class="absolute inset-0 bg-secondary/5 scale-0 group-hover:scale-100 rounded-full blur-2xl transition-transform duration-500 origin-bottom-right"></div>
         <div class="relative z-10">
             <div class="flex justify-between items-start mb-4">
@@ -72,13 +72,13 @@
             <p class="text-xs text-on-surface-variant font-bold uppercase tracking-wider mb-1">Delivered Today</p>
             <p class="text-3xl font-extrabold text-on-surface group-hover:text-secondary transition-colors">{{ stats.delivered_today or 0 }}</p>
         </div>
-    </div>
+    </a>
 </div>
 
 <!-- ============================================================
      READY TO SHIP (status = packed)
      ============================================================ -->
-<div class="bg-white rounded-3xl border border-outline-variant/15 p-6 md:p-8 shadow-sm relative overflow-hidden mb-8">
+<div id="ready-to-ship" class="bg-white rounded-3xl border border-outline-variant/15 p-6 md:p-8 shadow-sm relative overflow-hidden mb-8">
     <div class="absolute -right-20 top-0 w-64 h-64 bg-tertiary-container/5 rounded-full blur-[60px] pointer-events-none"></div>
     
     <div class="flex items-center gap-3 mb-6 relative z-10 border-b border-outline-variant/10 pb-4">
@@ -146,7 +146,7 @@
 <!-- ============================================================
      OUT FOR DELIVERY (status = shipped)
      ============================================================ -->
-<div class="bg-white rounded-3xl border border-outline-variant/15 p-6 md:p-8 shadow-sm relative overflow-hidden mb-8">
+<div id="out-for-delivery" class="bg-white rounded-3xl border border-outline-variant/15 p-6 md:p-8 shadow-sm relative overflow-hidden mb-8">
     <div class="absolute -left-20 top-0 w-64 h-64 bg-primary/5 rounded-full blur-[60px] pointer-events-none"></div>
     
     <div class="flex items-center gap-3 mb-6 relative z-10 border-b border-outline-variant/10 pb-4">

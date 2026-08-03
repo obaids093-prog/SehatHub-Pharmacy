@@ -52,6 +52,11 @@
                {% if request.endpoint == 'admin.sales_reports' %} bg-primary/10 text-primary {% else %} text-on-surface-variant bg-surface-container-low hover:bg-surface-container md:bg-transparent md:hover:bg-surface-container {% endif %}">
                 <span class="material-symbols-outlined text-base md:text-lg">bar_chart</span> Reports
             </a>
+            <a href="{{ url_for('admin.audit_logs') }}"
+               class="whitespace-nowrap flex items-center gap-2 md:gap-3 px-4 py-2 md:px-3 md:py-2.5 rounded-full md:rounded-lg text-sm font-medium transition-colors
+               {% if request.endpoint == 'admin.audit_logs' %} bg-primary/10 text-primary {% else %} text-on-surface-variant bg-surface-container-low hover:bg-surface-container md:bg-transparent md:hover:bg-surface-container {% endif %}">
+                <span class="material-symbols-outlined text-base md:text-lg">shield</span> Audit Logs
+            </a>
         </nav>
     </aside>
 

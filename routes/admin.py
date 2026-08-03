@@ -74,8 +74,16 @@ def dashboard():
         pending_orders = cursor.fetchone()['total']
 
         cursor.execute("""
-            SELECT COUNT(*) AS total FROM medicine_variants WHERE stock_qty <= 20
-        """)
+            SELECT COUNT(*) AS total 
+            FROM medicine_variants mv
+            JOIN medicines m ON mv.medicine_id = m.medicine_id
+            LEFT JOIN categories c ON m.category_id = c.category_id
+            WHERE mv.stock_qty <= CASE 
+                WHEN LOWER(c.name) LIKE %s THEN 5
+                WHEN LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s OR LOWER(c.name) LIKE %s THEN 10
+                ELSE 20
+            END
+        """, ('%device%', '%perfume%', '%fragrance%', '%personal%', '%skin%', '%beauty%'))
         low_stock_count = cursor.fetchone()['total']
 
         stats = {
@@ -685,13 +693,15 @@ def medicine_list():
     search = request.args.get('search', default='', type=str).strip()
     category_id = request.args.get('category', type=int)
     status = request.args.get('status', default='active')
+    stock_filter = request.args.get('filter', default='', type=str).strip()
     page = request.args.get('page', 1, type=int)
 
-    medicines, total_pages = med.get_medicines_list(search=search, category_id=category_id, status=status, page=page)
+    is_low_stock = (stock_filter == 'low_stock')
+    medicines, total_pages = med.get_medicines_list(search=search, category_id=category_id, status=status, low_stock=is_low_stock, page=page)
     categories = med.get_categories()
 
     return render_template('admin/medicines.html', medicines=medicines, categories=categories,
-                            search=search, category_id=category_id, status=status,
+                            search=search, category_id=category_id, status=status, stock_filter=stock_filter,
                             page=page, total_pages=total_pages,
                             csrf_token=generate_csrf_token())
 
@@ -901,5 +911,121 @@ def api_notifications():
     except Exception as e:
         print(f"Admin notifications API error: {e}")
         return jsonify({'error': 'Server error'}), 500
+    finally:
+        connection.close()
+
+
+# ============================================================
+# AUDIT LOGS
+# Shows a log of all critical actions performed by Pharmacists
+# (and other staff) so the Admin can monitor for suspicious
+# activity like unauthorized price changes or stock manipulation.
+# ============================================================
+@admin_bp.route('/audit-logs')
+@role_required('admin')
+def audit_logs():
+    """
+    Audit Logs page - shows all tracked actions performed by staff
+    (primarily pharmacists). Admin can filter by user, action type,
+    and date range.
+    """
+    connection = get_db_connection()
+    if connection is None:
+        flash('Could not connect to the database.', 'error')
+        return render_template('admin/audit_logs.html', logs=[], pharmacists=[],
+                               filter_user='all', filter_action='all', 
+                               start_date='', end_date='',
+                               page=1, total_pages=1)
+
+    try:
+        from datetime import datetime, timedelta
+        cursor = connection.cursor(dictionary=True)
+
+        # Get filter parameters
+        filter_user = request.args.get('user', 'all')
+        filter_action = request.args.get('action', 'all')
+        
+        # If 'start_date' is completely missing from URL (initial page load), default to 30 days ago
+        # If it's present but empty (user cleared it), keep it empty to show all records
+        start_date = request.args.get('start_date')
+        if start_date is None:
+            start_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+            
+        end_date = request.args.get('end_date', '')
+        page = request.args.get('page', 1, type=int)
+        per_page = 25
+
+        # Build WHERE clause dynamically
+        where_conditions = []
+        params = []
+
+        if filter_user != 'all':
+            where_conditions.append("al.user_id = %s")
+            params.append(int(filter_user))
+
+        if filter_action != 'all':
+            where_conditions.append("al.action_type = %s")
+            params.append(filter_action)
+
+        if start_date:
+            where_conditions.append("DATE(al.created_at) >= %s")
+            params.append(start_date)
+            
+        if end_date:
+            where_conditions.append("DATE(al.created_at) <= %s")
+            params.append(end_date)
+
+        where_clause = ""
+        if where_conditions:
+            where_clause = "WHERE " + " AND ".join(where_conditions)
+
+        # Get total count for pagination
+        cursor.execute(f"SELECT COUNT(*) AS total FROM audit_logs al {where_clause}", tuple(params))
+        total_count = cursor.fetchone()['total']
+        total_pages = max(1, (total_count + per_page - 1) // per_page)
+        page = max(1, min(page, total_pages))
+        offset = (page - 1) * per_page
+
+        # Fetch logs with user info
+        cursor.execute(f"""
+            SELECT al.log_id, al.action_type, al.description, al.created_at,
+                   u.full_name, u.role
+            FROM audit_logs al
+            JOIN users u ON al.user_id = u.user_id
+            {where_clause}
+            ORDER BY al.created_at DESC
+            LIMIT %s OFFSET %s
+        """, tuple(params) + (per_page, offset))
+        logs = cursor.fetchall()
+
+        # Get list of pharmacists (for the filter dropdown)
+        cursor.execute("""
+            SELECT DISTINCT u.user_id, u.full_name
+            FROM users u
+            WHERE u.role = 'pharmacist'
+            ORDER BY u.full_name
+        """)
+        pharmacists = cursor.fetchall()
+
+        # Get distinct action types (for the filter dropdown)
+        cursor.execute("SELECT DISTINCT action_type FROM audit_logs ORDER BY action_type")
+        action_types = [row['action_type'] for row in cursor.fetchall()]
+
+        cursor.close()
+        return render_template('admin/audit_logs.html', logs=logs, pharmacists=pharmacists,
+                               action_types=action_types,
+                               filter_user=filter_user, filter_action=filter_action,
+                               start_date=start_date, end_date=end_date,
+                               page=page, total_pages=total_pages, total_count=total_count)
+
+    except Exception as e:
+        print(f"Audit logs error: {e}")
+        flash('Something went wrong loading audit logs.', 'error')
+        return render_template('admin/audit_logs.html', logs=[], pharmacists=[],
+                               action_types=[],
+                               filter_user='all', filter_action='all', 
+                               start_date='', end_date='',
+                               page=1, total_pages=1, total_count=0)
+
     finally:
         connection.close()
