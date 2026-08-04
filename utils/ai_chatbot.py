@@ -1,8 +1,9 @@
 """
 SehatHub - AI Health & Pharmacy Assistant Utility
-Powered by Google Gemini API (Free Tier)
+Powered by Groq Cloud AI Engine (Llama 3.1 / 3.3)
 Includes strict domain boundaries, controlled medicine refusal, and medical disclaimers.
 """
+
 
 import os
 import json
@@ -11,113 +12,130 @@ import urllib.error
 
 # System Prompt defining AI behavior, safety boundaries, and persona
 SYSTEM_PROMPT = """
-You are "SehatHub AI Assistant", an expert virtual pharmacy & health assistant for SehatHub (Pakistan).
+You are "SehatHub AI Support Assistant", a pharmacy & health information assistant for SehatHub (Pakistan's online pharmacy).
 
-CRITICAL RESPONSE RULES:
-1. DOMAIN & ACCURACY: Answer health, medicine, symptom, and SehatHub pharmacy questions accurately in clear Roman Urdu or English.
-2. COMPLETE RESPONSES: ALWAYS finish your sentences completely. Never cut off mid-sentence. Keep answers concise (3-5 bullet points max).
-3. CONTROLLED MEDICATIONS (Xanax, Lexotanil, Tramadol, Sleeping pills): Explain what the medicine is briefly, but ALWAYS remind the user: "⚠️ Note: This is a prescription-only controlled medicine. SehatHub requires a doctor's prescription to order."
-4. DISCLAIMER: End with 1 short line: "Note: Consult a certified doctor for persistent health issues."
+RESPONSE FORMAT (MANDATORY — follow this EXACT structure for medicine queries):
+When user asks about ANY medicine, respond in this format:
+
+💊 [Medicine Name] ([Generic Name]) Details:
+
+• Uses: [2-3 specific medical conditions this medicine treats]
+• Dosage: [Standard adult dosage with timing]
+• Side Effects: [2-3 common side effects]
+• Precautions: [1-2 key warnings]
+
+Note: Consult a certified doctor for persistent health issues.
+
+STRICT RULES:
+1. ONLY answer health, medicine, symptom, disease, and SehatHub platform questions.
+2. For non-health topics (sports, movies, politics, coding, games): Reply ONLY with "I am SehatHub's AI Health Assistant. I can only assist you with health, medicines, and SehatHub pharmacy services."
+3. You do NOT place orders. For ordering guide: "SehatHub par medicine search karein aur cart mein add karein."
+4. For controlled drugs (Xanax, Lexotanil, Tramadol): Add "⚠️ Prescription-only controlled medicine."
+5. Keep answers SHORT (max 8-10 lines). DO NOT repeat sentences. DO NOT use filler text.
+6. Use simple English or Roman Urdu matching user's language.
 """
+
+
+def _call_groq_api(user_msg_clean, session_history=None):
+    """
+    Calls Groq Cloud API (Llama 3.3 70B primary, 8B fallback).
+    Ultra-fast free AI response.
+    """
+    q_lower = user_msg_clean.lower()
+
+    # Pre-filter for non-health/out-of-context topics
+    non_health_words = ['cricket', 'psl', 'ipl', 'match', 'score', 'football', 'soccer', 'movie', 'cinema', 'film', 'song', 'music', 'python', 'java', 'programming', 'coding', 'weather', 'politics', 'election', 'game', 'pubg']
+    if any(w in q_lower for w in non_health_words):
+        return "I am SehatHub's AI Health Assistant. I can only assist you with health, medicines, and SehatHub pharmacy services."
+
+    groq_key = os.getenv('GROQ_API_KEY', '').strip()
+    if not groq_key or not groq_key.startswith('gsk_'):
+        return None
+
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+
+    if session_history and isinstance(session_history, list):
+        for item in session_history[-4:]:
+            if item.get('role') in ['user', 'assistant', 'model'] and item.get('text'):
+                role = "assistant" if item['role'] in ['model', 'assistant'] else "user"
+                messages.append({"role": role, "content": item['text']})
+
+    messages.append({"role": "user", "content": user_msg_clean})
+
+    # 70B first (smarter, accurate), 8B fallback (faster but lower quality)
+    models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+
+    for model in models:
+        try:
+            url = "https://api.groq.com/openai/v1/chat/completions"
+            payload = {
+                "model": model,
+                "messages": messages,
+                "temperature": 0.2,
+                "max_tokens": 600
+            }
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode('utf-8'),
+                headers={
+                    'Content-Type': 'application/json',
+                    'Authorization': f'Bearer {groq_key}',
+                    'User-Agent': 'Mozilla/5.0'
+                }
+            )
+            with urllib.request.urlopen(req, timeout=10) as response:
+                body = json.loads(response.read().decode('utf-8'))
+                choices = body.get('choices', [])
+                if choices and 'message' in choices[0]:
+                    text = choices[0]['message']['content'].strip()
+                    # Quality filter: reject repetitive/garbage responses
+                    if text and len(text) > 20:
+                        words = text.split()
+                        # Check for excessive word repetition (sign of bad output)
+                        if len(words) > 10:
+                            unique_ratio = len(set(words)) / len(words)
+                            if unique_ratio < 0.25:
+                                continue  # Skip this garbage response, try next model
+                        return text
+        except Exception:
+            continue
+
+    return None
+
+
 
 def get_ai_response(user_message, image_data=None, mime_type="image/jpeg", session_history=None):
     """
-    Calls Google Gemini API using urllib.request.
-    Permanent fix: 700 maxOutputTokens & 10s timeout to guarantee complete non-truncated answers.
+    Primary AI Engine: Groq Cloud API (Llama 3.1 8B / Llama 3.3 70B).
+    Fallback Engine: SehatHub Database + Local Health Assistant.
     """
     if not user_message and not image_data:
         return "Please type a message or upload a prescription image to start."
 
     user_msg_clean = (user_message or "").strip()
-    
+
     if len(user_msg_clean) > 300:
         return "Please shorten your query (maximum 300 characters allowed per message)."
 
-    api_key = os.getenv('GEMINI_API_KEY', '').strip()
-
-    if not api_key or not api_key.startswith('AIzaSy'):
-        return _get_local_smart_fallback(user_msg_clean, has_image=bool(image_data))
-
-
-    # Build Contents list with history if available
-    contents = []
-
-    if session_history and isinstance(session_history, list):
-        for item in session_history[-4:]:  # Keep last 2 turns
-            if item.get('role') in ['user', 'model'] and item.get('text'):
-                contents.append({
-                    "role": item['role'],
-                    "parts": [{"text": item['text']}]
-                })
-
-    # Current user turn
-    current_parts = []
-    if user_msg_clean:
-        if not contents:
-            current_parts.append({"text": f"{SYSTEM_PROMPT}\n\nUser Question: {user_msg_clean}"})
-        else:
-            current_parts.append({"text": user_msg_clean})
-    else:
-        current_parts.append({"text": f"{SYSTEM_PROMPT}\n\nThe user uploaded a doctor's prescription image. List medicines clearly."})
-
+    # 1. Image Upload Handling
     if image_data:
-        clean_b64 = image_data.split(',')[-1] if ',' in image_data else image_data
-        current_parts.append({
-            "inlineData": {
-                "mimeType": mime_type,
-                "data": clean_b64
-            }
-        })
+        base_reply = _get_local_smart_fallback(user_msg_clean, has_image=True)
+        if user_msg_clean:
+            groq_reply = _call_groq_api(user_msg_clean, session_history)
+            if groq_reply:
+                return f"{groq_reply}\n\n---\n{base_reply}"
+        return base_reply
 
-    contents.append({
-        "role": "user",
-        "parts": current_parts
-    })
+    # 2. Try Groq Cloud API (Ultra-fast free Llama 3 AI)
+    if user_msg_clean:
+        groq_reply = _call_groq_api(user_msg_clean, session_history)
+        if groq_reply:
+            return groq_reply
 
-    # Inject system instruction prompt if history was present
-    if len(contents) > 1:
-        contents[0]['parts'][0]['text'] = f"{SYSTEM_PROMPT}\n\nUser Question: {contents[0]['parts'][0]['text']}"
-
-    models_to_try = [
-        "gemini-2.0-flash",
-        "gemini-1.5-flash",
-        "gemini-2.0-flash-lite"
-    ]
-
-    for model in models_to_try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-
-        payload = {
-            "contents": contents,
-            "generationConfig": {
-                "temperature": 0.3,
-                "maxOutputTokens": 1000
-            }
-        }
+    # 3. Local Database & Smart Health Assistant Fallback
+    return _get_local_smart_fallback(user_msg_clean, has_image=False)
 
 
-        try:
-            req = urllib.request.Request(
-                url,
-                data=json.dumps(payload).encode('utf-8'),
-                headers={'Content-Type': 'application/json'}
-            )
-
-            with urllib.request.urlopen(req, timeout=12) as response:
-                res_body = json.loads(response.read().decode('utf-8'))
-                candidates = res_body.get('candidates', [])
-                if candidates and 'content' in candidates[0]:
-                    parts = candidates[0]['content'].get('parts', [])
-                    # Find part with text (skipping thinking parts)
-                    text_parts = [p['text'] for p in parts if 'text' in p and p['text'].strip()]
-                    if text_parts:
-                        return text_parts[-1].strip()
-
-        except Exception:
-            continue
-
-
-    return _get_local_smart_fallback(user_msg_clean, has_image=bool(image_data))
 
 
 
@@ -127,11 +145,15 @@ def _get_local_smart_fallback(query, has_image=False):
     Guarantees rich, informative, structured medicine details for EVERY user query.
     """
     if has_image:
-        return ("📄 **Prescription Image Received!**\n\n"
-                "I have safely processed your uploaded prescription image.\n\n"
-                "Would you like to:\n"
-                "• 🛒 **Order these medicines** (Send to our certified Pharmacist)\n"
-                "• 💬 **Just ask a question** about usage or side effects")
+        base_reply = ("📷 **Medicine Photo / Document Received!**\n\n"
+                      "Main aap ki uploaded image dekh chuka hoon.\n\n"
+                      "💬 **Aap mujh se pooch sakte hain:**\n"
+                      "• Medicine ka naam type karein aur main bataunga — Uses, Side Effects, Dosage & Availability on SehatHub!\n"
+                      "• Ya koi bhi health related sawal poochein.\n\n"
+                      "🛒 **Order Place Karne Ke Liye:** SehatHub homepage par jaayein aur medicine search karein ya 'Upload Prescription' option use karein.")
+        return base_reply
+
+
 
     q = (query or "").lower().strip()
 
@@ -267,8 +289,25 @@ def _get_local_smart_fallback(query, has_image=False):
                 "• **Disadvantages (Nuksanat):** Drowsiness (halki neend) ya dry mouth ho sakta hai.\n"
                 "• **Dosage:** 1 tablet (10mg) raat ko sone se pehle lein.")
 
+    # Prescription upload instructions
+    if any(word in q for word in ['nuskha', 'parchi']) or (any(word in q for word in ['prescription']) and any(word in q for word in ['upload', 'karo', 'kaise', 'how'])):
+        return ("📋 **How to Upload Prescription on SehatHub:**\n\n"
+                "1. Click **'Upload Prescription'** in the top navigation bar or on homepage.\n"
+                "2. Select a clear picture or PDF of your doctor's prescription.\n"
+                "3. Click **'Submit Prescription'**!\n"
+                "4. Our certified pharmacist will verify your prescription and confirm your order within minutes.")
+
+    # How to place order instructions
+    if (any(word in q for word in ['order', 'buy', 'purchase']) and any(word in q for word in ['place', 'kaise', 'how', 'karein', 'khareedein', 'khareedna'])) or 'how to order' in q:
+        return ("🛒 **How to Order Medicines on SehatHub:**\n\n"
+                "1. **Search Medicine:** Type medicine name in the top search bar.\n"
+                "2. **Add to Cart:** Click **'Add to Cart'**.\n"
+                "3. **Upload Prescription:** For prescription medicines, attach doctor's note during checkout or via 'Upload Prescription' menu.\n"
+                "4. **Checkout:** Enter delivery address & select Payment method (Cash on Delivery / Card).\n"
+                "5. **Fast Delivery:** Order delivered to your doorstep within 30 to 60 minutes!")
+
     # Order Tracking / Order Status / Delivery tracking questions
-    if any(word in q for word in ['track', 'tracking', 'status', 'kahan', 'kab aayega', 'kab tak', 'order']):
+    if any(word in q for word in ['track', 'tracking', 'status', 'kahan', 'kab aayega', 'kab tak']) or 'track order' in q:
         return ("🚚 **How to Track Your Order on SehatHub:**\n\n"
                 "1. Click **'Orders'** (or **'My Orders'**) in the top menu or profile.\n"
                 "2. Click on your Order ID to check live status:\n"
@@ -279,11 +318,13 @@ def _get_local_smart_fallback(query, has_image=False):
 
     # Greeting / Help queries
     if any(word in q for word in ['hi', 'hello', 'salam', 'assalam', 'hey', 'kaise ho', 'help']):
-        return ("👋 **Wa Alaikum Assalam! Welcome to SehatHub AI Assistant.**\n\n"
+        return ("👋 **Wa Alaikum Assalam! Welcome to SehatHub AI Support Assistant.**\n\n"
                 "How can I assist you today?\n"
                 "• 💊 Ask about any medicine (e.g. Panadol, Brufen, Pregabalin, Laxoberon, Nexum)\n"
-                "• 🚚 Track your Order status\n"
-                "• 📋 Help with Prescription Upload")
+                "• 🚚 How to Track your Order status\n"
+                "• 🛒 How to place an Order on SehatHub\n"
+                "• 📋 How to Upload Prescription on SehatHub")
+
 
     # Smart Pattern & Direct Medicine Extractor (Handles 'metrozine tab', 'flagyl 400', 'use of X', or any medicine query)
     import re

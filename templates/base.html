@@ -1401,30 +1401,30 @@
     <!-- Messages -->
     <div class="chat-messages" id="chatMessages">
         <div class="chat-msg bot">
-            Assalamu Alaikum! 👋 I'm your <strong>SehatHub AI Health Assistant</strong>. Ask me about medicines, symptoms, prescriptions, or orders!
+            Assalamu Alaikum! 👋 I'm your <strong>SehatHub AI Support Assistant</strong>. Ask me about medicine usage, side effects, order tracking, or delivery information!
         </div>
     </div>
 
     <!-- Quick Suggestions -->
     <div class="chat-suggestions" id="chatSuggestions">
-        <span class="chat-chip" onclick="sendChip(this)">💊 Headache medicine?</span>
+        <span class="chat-chip" onclick="sendChip(this)">💊 Panadol dosage</span>
         <span class="chat-chip" onclick="sendChip(this)">📦 Track my order</span>
-        <span class="chat-chip" onclick="sendChip(this)">📋 Upload prescription</span>
-        <span class="chat-chip" onclick="sendChip(this)">🤒 Fever remedy</span>
+        <span class="chat-chip" onclick="sendChip(this)">📋 How to upload prescription</span>
+        <span class="chat-chip" onclick="sendChip(this)">⏱️ Delivery time</span>
     </div>
 
     <!-- Input -->
     <div id="chatFilePreviewBar" style="display:none; padding:6px 16px; background:#fff3e0; border-top:1px dashed #ffcc80; align-items:center; justify-content:space-between; font-size:11px; color:#e65100;">
-        <span id="chatFilePreviewText" class="truncate max-w-[200px] font-semibold">📄 prescription.jpg</span>
+        <span id="chatFilePreviewText" class="truncate max-w-[200px] font-semibold">📄 medicine_photo.jpg</span>
         <button type="button" onclick="clearChatFile()" style="background:none; border:none; color:#e53935; cursor:pointer; font-weight:bold;">✕ Remove</button>
     </div>
     <div class="chat-input-area" style="position:relative;">
         <input type="file" id="chatFileInput" accept="image/*,application/pdf" style="display:none;" onchange="handleChatFileSelect(this)">
-        <button type="button" class="chat-attach-btn" onclick="document.getElementById('chatFileInput').click()" title="Attach Prescription (Photo or PDF)"
+        <button type="button" class="chat-attach-btn" onclick="document.getElementById('chatFileInput').click()" title="Attach Photo or PDF"
                 style="width:36px; height:36px; border-radius:50%; border:none; background:#f0f4f8; color:#0a2a5e; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s;">
             <span class="material-symbols-outlined" style="font-size:20px;">attach_file</span>
         </button>
-        <input type="text" id="chatInput" placeholder="Ask question or upload parchi..." maxlength="300" autocomplete="off"
+        <input type="text" id="chatInput" placeholder="Ask question or attach medicine photo..." maxlength="300" autocomplete="off"
                onkeydown="if(event.key==='Enter')sendChat()" oninput="updateCharCount()">
         <span class="chat-char-count" id="chatCharCount"></span>
         <button class="chat-send-btn" id="chatSendBtn" onclick="sendChat()" aria-label="Send message">
@@ -1432,6 +1432,8 @@
         </button>
     </div>
 </div>
+
+
 
 <script>
 // ============================================================
@@ -1561,26 +1563,11 @@ async function sendChat() {
 
         const botBubble = document.createElement('div');
         botBubble.className = 'chat-msg bot';
-        
         let reply = (data.reply || 'Sorry, something went wrong.').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-        
-        // If an image was attached, append interactive user prompt buttons
-        if (hasFile && uploadedBase64ForPrompt) {
-            reply += `<div style="margin-top:12px; padding-top:10px; border-top:1px solid rgba(0,0,0,0.08); display:flex; flex-direction:column; gap:6px;">
-                <div style="font-size:11px; font-weight:bold; color:#0a2a5e;">Aap kya karna chahte hain?</div>
-                <button type="button" onclick="confirmOrderPrescription(this)" data-b64="${encodeURIComponent(uploadedBase64ForPrompt)}"
-                        style="background:linear-gradient(135deg,#ef6c00,#e65100); color:white; border:none; padding:8px 12px; border-radius:14px; font-size:11px; font-weight:bold; cursor:pointer; text-align:left; display:flex; align-items:center; gap:6px; transition:transform 0.2s;">
-                    🛒 Order these medicines (Send to Pharmacist)
-                </button>
-                <button type="button" onclick="confirmInfoOnly(this)"
-                        style="background:#e0e0e0; color:#333; border:none; padding:6px 12px; border-radius:14px; font-size:11px; font-weight:600; cursor:pointer; text-align:left; display:flex; align-items:center; gap:6px;">
-                    💬 Just asking for info (Don't send order)
-                </button>
-            </div>`;
-        }
 
         botBubble.innerHTML = reply;
         messagesDiv.appendChild(botBubble);
+
     } catch (err) {
         typing.remove();
         const errBubble = document.createElement('div');
@@ -1594,32 +1581,8 @@ async function sendChat() {
     input.focus();
 }
 
-async function confirmOrderPrescription(btn) {
-    const container = btn.parentElement;
-    const b64Data = decodeURIComponent(btn.getAttribute('data-b64'));
-    
-    container.innerHTML = `<div style="font-size:11px; color:#ef6c00; font-weight:bold;">⌛ Sending prescription to Pharmacist...</div>`;
-
-    try {
-        const res = await fetch('/customer/api/chat/submit-prescription', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image_data: b64Data })
-        });
-        const data = await res.json();
-        
-        let reply = (data.reply || 'Prescription processed.').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-        container.innerHTML = `<div style="font-size:11px; color:#2e7d32; font-weight:bold;">${reply}</div>`;
-    } catch(e) {
-        container.innerHTML = `<div style="font-size:11px; color:#c62828;">Failed to send prescription. Please try main upload page.</div>`;
-    }
-}
-
-function confirmInfoOnly(btn) {
-    const container = btn.parentElement;
-    container.innerHTML = `<div style="font-size:11px; color:#555; font-style:italic;">👍 OK! No order was created. Let me know if you need any other guidance about these medicines.</div>`;
-}
 </script>
+
 
 </body>
 </html>
