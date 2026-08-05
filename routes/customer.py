@@ -1813,3 +1813,66 @@ def api_chat_submit_prescription():
 
     finally:
         connection.close()
+
+
+# ============================================================
+# AI PRESCRIPTION SCANNER ROUTES
+# ============================================================
+import os
+import time
+from werkzeug.utils import secure_filename
+from utils.ai_prescription import analyze_prescription_image
+
+@customer_bp.route('/scan-prescription')
+def scan_prescription_page():
+    """Renders the AI Prescription Scanner & Analyzer page."""
+    return render_template('customer/ai_prescription.html')
+
+
+@customer_bp.route('/api/ai/scan-prescription', methods=['POST'])
+def api_scan_prescription():
+    """
+    API Endpoint for uploading and analyzing prescription images with Groq Vision AI.
+    Handles invalid image detection and automatic file deletion.
+    """
+    if 'prescription' not in request.files:
+        return jsonify({'success': False, 'error': 'No file uploaded. Please select a prescription image.'}), 400
+
+    file = request.files['prescription']
+    if not file or file.filename == '':
+        return jsonify({'success': False, 'error': 'No image file selected.'}), 400
+
+    # 1. Allowed Extension Check
+    filename = secure_filename(file.filename)
+    ext = os.path.splitext(filename)[1].lower()
+    allowed_exts = {'.jpg', '.jpeg', '.png', '.webp'}
+    
+    if ext not in allowed_exts:
+        return jsonify({'success': False, 'error': 'Unsupported file format! Please upload JPG, PNG, or WEBP images.'}), 400
+
+    # 2. File Size Check (Max 5MB)
+    file.seek(0, os.SEEK_END)
+    file_length = file.tell()
+    file.seek(0)
+    
+    if file_length > 5 * 1024 * 1024:
+        return jsonify({'success': False, 'error': 'File size too large! Maximum image size allowed is 5MB.'}), 400
+
+    # 3. Save temp file for AI analysis
+    upload_dir = os.path.join('static', 'uploads', 'prescriptions')
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    unique_filename = f"scan_rx_{int(time.time())}_{secure_filename(filename)}"
+    saved_path = os.path.join(upload_dir, unique_filename)
+    
+    try:
+        file.save(saved_path)
+    except Exception as e:
+        print(f"[Upload Error] {e}")
+        return jsonify({'success': False, 'error': 'Failed to save file on server.'}), 500
+
+    # 4. Invoke Groq Vision AI Scanner
+    result = analyze_prescription_image(saved_path)
+
+    # Note: If is_prescription was False, analyze_prescription_image has already deleted saved_path!
+    return jsonify(result)

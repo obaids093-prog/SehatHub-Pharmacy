@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}AI Prescription Scanner & Analyzer | SehatHub{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-900 text-white pt-24 pb-16 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <!-- Animated background gradient blobs -->
+    <div class="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/20 rounded-full blob-animation pointer-events-none"></div>
+    <div class="absolute top-1/2 -right-40 w-96 h-96 bg-blue-500/20 rounded-full blob-animation pointer-events-none" style="animation-delay: -10s;"></div>
+
+    <div class="max-w-4xl mx-auto relative z-10">
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-semibold mb-4">
+                <span class="material-symbols-outlined text-base">auto_awesome</span>
+                Powered by Groq Cloud AI
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-3">
+                AI Prescription <span class="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">Scanner & Analyzer</span>
+            </h1>
+            <p class="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto">
+                Upload your doctor's prescription or medicine packet. Our AI will extract medicine names, dosage, and instructions for you!
+            </p>
+        </div>
+
+        <!-- Main Upload & Result Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Upload Box (Left / Full) -->
+            <div class="lg:col-span-6 glass-dark rounded-2xl p-6 sm:p-8 border border-white/10 shadow-2xl">
+                <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-emerald-400">upload_file</span>
+                    Upload Prescription Image
+                </h2>
+
+                <form id="aiScanForm" enctype="multipart/form-data" class="space-y-6">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+                    <!-- Drag & Drop Zone -->
+                    <div id="dropZone" class="border-2 border-dashed border-slate-700 hover:border-emerald-500/80 rounded-xl p-8 text-center transition-all duration-300 bg-slate-800/50 cursor-pointer relative group">
+                        <input type="file" id="prescriptionInput" name="prescription" accept="image/jpeg,image/png,image/webp" class="hidden">
+                        
+                        <div id="uploadPrompt" class="space-y-3">
+                            <div class="w-16 h-16 bg-emerald-500/10 text-emerald-400 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                                <span class="material-symbols-outlined text-3xl">add_photo_alternate</span>
+                            </div>
+                            <div>
+                                <p class="text-white font-medium text-base">Click or drag & drop your image here</p>
+                                <p class="text-slate-400 text-xs mt-1">Supports JPG, PNG, WEBP (Max size: 5MB)</p>
+                            </div>
+                        </div>
+
+                        <!-- Image Preview Container -->
+                        <div id="previewContainer" class="hidden relative">
+                            <img id="imagePreview" src="" alt="Prescription Preview" class="max-h-64 mx-auto rounded-lg object-contain shadow-md border border-slate-700">
+                            <button type="button" id="removeImageBtn" class="absolute -top-3 -right-3 bg-red-500 text-white rounded-full p-1 shadow-lg hover:bg-red-600 transition-colors">
+                                <span class="material-symbols-outlined text-sm">close</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Submit Scan Button -->
+                    <button type="submit" id="scanBtn" disabled class="w-full py-3.5 px-6 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all">
+                        <span class="material-symbols-outlined">document_scanner</span>
+                        <span>Scan & Analyze Prescription</span>
+                    </button>
+                </form>
+
+                <!-- Loading State -->
+                <div id="loadingState" class="hidden mt-6 text-center p-6 bg-slate-800/80 rounded-xl border border-slate-700">
+                    <div class="inline-block animate-spin text-emerald-400 mb-3">
+                        <span class="material-symbols-outlined text-4xl">progress_activity</span>
+                    </div>
+                    <p class="text-white font-semibold">AI Prescription Analysis in Progress...</p>
+                    <p class="text-slate-400 text-xs mt-1">Image validation & text extraction may take 2-3 seconds.</p>
+                </div>
+
+                <!-- Error Toast / Alert -->
+                <div id="errorBox" class="hidden mt-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm flex items-start gap-3">
+                    <span class="material-symbols-outlined text-xl shrink-0 mt-0.5">error</span>
+                    <div>
+                        <p class="font-bold" id="errorTitle">Upload Failed</p>
+                        <p id="errorMessage" class="text-xs text-red-300 mt-1"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Output Results (Right Column) -->
+            <div class="lg:col-span-6">
+                <div id="emptyResultBox" class="glass-dark rounded-2xl p-8 border border-white/10 text-center text-slate-400">
+                    <span class="material-symbols-outlined text-5xl text-slate-600 mb-3">clinical_notes</span>
+                    <h3 class="text-lg font-semibold text-slate-200 mb-1">Your AI Result Will Appear Here</h3>
+                    <p class="text-sm text-slate-400">Select a prescription image from the left and click the Scan button.</p>
+                </div>
+
+                <div id="resultBox" class="hidden glass-dark rounded-2xl p-6 border border-emerald-500/30 shadow-2xl space-y-6">
+                    <!-- Status Header -->
+                    <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></span>
+                            <span class="text-emerald-400 font-bold text-sm tracking-wide">VERIFIED PRESCRIPTION</span>
+                        </div>
+                        <span class="text-xs text-slate-400 bg-slate-800 px-2.5 py-1 rounded-full border border-slate-700">Groq AI</span>
+                    </div>
+
+                    <!-- Extracted Medicines Section -->
+                    <div>
+                        <h3 class="text-base font-bold text-white mb-3 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-emerald-400">medication</span>
+                            Prescribed Medicines:
+                        </h3>
+                        <div id="medicinesContainer" class="space-y-3">
+                            <!-- Injected dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- AI Summary -->
+                    <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
+                        <h4 class="text-xs uppercase font-bold text-emerald-400 tracking-wider mb-2 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-sm">summarize</span>
+                            AI Summary:
+                        </h4>
+                        <p id="summaryText" class="text-slate-200 text-sm leading-relaxed"></p>
+                    </div>
+
+                    <!-- English Summary -->
+                    <div class="bg-slate-800/40 rounded-xl p-4 border border-slate-700/40">
+                        <h4 class="text-xs uppercase font-bold text-cyan-400 tracking-wider mb-2 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-sm">article</span>
+                            Clinical Notes:
+                        </h4>
+                        <p id="clinicalNotes" class="text-slate-300 text-xs leading-relaxed"></p>
+                    </div>
+
+                    <!-- Medical Disclaimer -->
+                    <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 text-amber-300 text-xs flex items-start gap-2.5">
+                        <span class="material-symbols-outlined text-lg shrink-0 mt-0.5">warning</span>
+                        <p id="disclaimerText">
+                            ⚠️ Disclaimer: This is an AI-generated analysis. Always verify with a SehatHub certified pharmacist or your doctor before taking any medication.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('prescriptionInput');
+    const uploadPrompt = document.getElementById('uploadPrompt');
+    const previewContainer = document.getElementById('previewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const removeBtn = document.getElementById('removeImageBtn');
+    const scanBtn = document.getElementById('scanBtn');
+    const form = document.getElementById('aiScanForm');
+    const loadingState = document.getElementById('loadingState');
+    const errorBox = document.getElementById('errorBox');
+    const errorMessage = document.getElementById('errorMessage');
+    const emptyResultBox = document.getElementById('emptyResultBox');
+    const resultBox = document.getElementById('resultBox');
+    const medicinesContainer = document.getElementById('medicinesContainer');
+
+    // Trigger file input click
+    dropZone.addEventListener('click', (e) => {
+        if (e.target !== removeBtn && !removeBtn.contains(e.target)) {
+            fileInput.click();
+        }
+    });
+
+    // Handle File Selection
+    fileInput.addEventListener('change', handleFileSelect);
+
+    function handleFileSelect() {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        // Display image preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            imagePreview.src = e.target.result;
+            uploadPrompt.classList.add('hidden');
+            previewContainer.classList.remove('hidden');
+            scanBtn.disabled = false;
+            hideError();
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Remove Image
+    removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.value = '';
+        imagePreview.src = '';
+        previewContainer.classList.add('hidden');
+        uploadPrompt.classList.remove('hidden');
+        scanBtn.disabled = true;
+        hideError();
+        showEmptyResult();
+    });
+
+    // Drag and Drop Effects
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-emerald-400', 'bg-slate-800');
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-emerald-400', 'bg-slate-800');
+        });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            handleFileSelect();
+        }
+    });
+
+    // Form Submit (AJAX Scan Request)
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (!fileInput.files[0]) return;
+
+        const formData = new FormData(form);
+
+        // UI Loading State
+        scanBtn.disabled = true;
+        loadingState.classList.remove('hidden');
+        hideError();
+        showEmptyResult();
+
+        try {
+            const response = await fetch('/customer/api/ai/scan-prescription', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: formData
+            });
+
+            const result = await response.json();
+
+            loadingState.classList.add('hidden');
+            scanBtn.disabled = false;
+
+            if (result.success && result.is_prescription) {
+                renderResults(result.data);
+            } else {
+                // Invalid Image or Processing Error
+                showError(result.error || result.message || 'Prescription processing failed.');
+                showEmptyResult();
+            }
+        } catch (err) {
+            console.error('Scan Error:', err);
+            loadingState.classList.add('hidden');
+            scanBtn.disabled = false;
+            showError('Network error! Please check your connection and try again.');
+        }
+    });
+
+    function renderResults(data) {
+        medicinesContainer.innerHTML = '';
+
+        if (data.medicines && data.medicines.length > 0) {
+            data.medicines.forEach(med => {
+                const card = document.createElement('div');
+                card.className = 'bg-slate-800/80 p-3.5 rounded-xl border border-slate-700 flex items-start justify-between gap-3';
+                card.innerHTML = `
+                    <div>
+                        <div class="font-bold text-emerald-300 text-sm">${escapeHtml(med.name || 'Medicine')}</div>
+                        <div class="text-xs text-slate-300 mt-0.5"><strong>Dosage:</strong> ${escapeHtml(med.dosage || 'N/A')}</div>
+                        <div class="text-xs text-slate-400"><strong>Instructions:</strong> ${escapeHtml(med.frequency || 'As advised')}</div>
+                    </div>
+                    ${med.purpose ? `<span class="text-[11px] bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded-md border border-emerald-500/20 whitespace-nowrap">${escapeHtml(med.purpose)}</span>` : ''}
+                `;
+                medicinesContainer.appendChild(card);
+            });
+        } else {
+            medicinesContainer.innerHTML = '<p class="text-xs text-slate-400">No specific medicine list could be extracted. Please refer to the AI summary below.</p>';
+        }
+
+        document.getElementById('summaryText').textContent = data.summary || data.summary_english || 'Please follow your doctor\'s recommendations.';
+        document.getElementById('clinicalNotes').textContent = data.clinical_notes || data.summary_english || 'No additional clinical notes available.';
+        if (data.disclaimer) {
+            document.getElementById('disclaimerText').textContent = data.disclaimer;
+        }
+
+        emptyResultBox.classList.add('hidden');
+        resultBox.classList.remove('hidden');
+    }
+
+    function showError(msg) {
+        errorMessage.textContent = msg;
+        errorBox.classList.remove('hidden');
+    }
+
+    function hideError() {
+        errorBox.classList.add('hidden');
+    }
+
+    function showEmptyResult() {
+        resultBox.classList.add('hidden');
+        emptyResultBox.classList.remove('hidden');
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text.replace(/[&<>"']/g, function(m) {
+            return {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            }[m];
+        });
+    }
+});
+</script>
+{% endblock %}
