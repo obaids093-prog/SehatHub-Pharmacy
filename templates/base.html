@@ -32,8 +32,8 @@
         100% { transform: translate(-5%, -10%) scale(0.9); }
     }
 
-    .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.3); }
-    .glass-dark { background: rgba(11, 20, 38, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-card { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 12px 30px -6px rgba(0, 61, 155, 0.1), 0 4px 10px rgba(0,0,0,0.03), inset 0 1px 0 rgba(255,255,255,0.8); }
+    .glass-dark { background: rgba(11, 20, 38, 0.75); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.12); box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15); }
     .pulse-soft { animation: pulse-soft 2s infinite; }
     @keyframes pulse-soft { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
 
@@ -253,8 +253,25 @@
     .gradient-border::before { content: ''; position: absolute; inset: -2px; border-radius: inherit; background: linear-gradient(135deg, #003d9b, #F5A623, #003d9b); z-index: -1; opacity: 0.5; transition: opacity 0.3s; }
     .gradient-border:hover::before { opacity: 1; }
 
-    .hover-lift-premium { transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s ease; }
-    .hover-lift-premium:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -12px rgba(0, 61, 155,0.25); }
+    .hover-lift-premium {
+        transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s ease, border-color 0.35s ease;
+        box-shadow: 0 10px 25px -5px rgba(0, 61, 155, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.04);
+        transform-style: preserve-3d;
+    }
+    .hover-lift-premium:hover {
+        transform: translateY(-10px) rotateX(3deg) scale(1.02);
+        box-shadow: 0 25px 45px -10px rgba(0, 61, 155, 0.22), 0 12px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: rgba(0, 61, 155, 0.3) !important;
+    }
+    /* Make product images inside cards pop out in 3D */
+    .hover-lift-premium img {
+        transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease;
+        filter: drop-shadow(0 8px 16px rgba(0,0,0,0.12));
+    }
+    .hover-lift-premium:hover img {
+        transform: scale(1.14) translateY(-6px) rotate(2deg);
+        filter: drop-shadow(0 15px 25px rgba(0, 61, 155, 0.25));
+    }
 
     /* ============================================================
        SCROLL-REVEAL — sections fade + slide up as they enter the
@@ -362,6 +379,205 @@
         from { opacity: 1; transform: translateX(0); }
         to { opacity: 0; transform: translateX(40px); }
     }
+
+    /* ============================================================
+       3D DESIGN SYSTEM — Global Premium Effects
+       Added: 3D tilt cards, capsule loader, depth animations,
+       floating buttons, holographic reflections
+       ============================================================ */
+
+    /* --- 1. 3D TILT PRODUCT CARDS (Holographic Effect) --- */
+    .tilt-3d {
+        perspective: 800px;
+        transform-style: preserve-3d;
+    }
+    .tilt-3d-inner {
+        transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+        transform-style: preserve-3d;
+        position: relative;
+        overflow: hidden;
+    }
+    /* Holographic light reflection overlay */
+    .tilt-3d-inner::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: linear-gradient(
+            105deg,
+            transparent 40%,
+            rgba(255,255,255,0.12) 45%,
+            rgba(255,255,255,0.06) 50%,
+            transparent 55%
+        );
+        pointer-events: none;
+        z-index: 30;
+        border-radius: inherit;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        transform: translateZ(1px);
+    }
+    .tilt-3d:hover .tilt-3d-inner::before {
+        opacity: 1;
+    }
+    /* Reflective edge glow */
+    .tilt-3d-inner::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        pointer-events: none;
+        z-index: 29;
+        opacity: 0;
+        transition: opacity 0.3s;
+        box-shadow: inset 0 0 30px rgba(0, 61, 155, 0.08), inset 0 0 60px rgba(245, 166, 35, 0.04);
+    }
+    .tilt-3d:hover .tilt-3d-inner::after {
+        opacity: 1;
+    }
+
+    /* --- 2. 3D CAPSULE LOADING SPINNER --- */
+    .capsule-loader {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        perspective: 200px;
+    }
+    .capsule-3d {
+        width: 48px;
+        height: 22px;
+        border-radius: 11px;
+        position: relative;
+        transform-style: preserve-3d;
+        animation: capsuleSpin 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+    }
+    .capsule-3d-half {
+        position: absolute;
+        top: 0;
+        width: 50%;
+        height: 100%;
+    }
+    .capsule-3d-half:first-child {
+        left: 0;
+        background: linear-gradient(135deg, #003d9b, #0b4fc4);
+        border-radius: 11px 0 0 11px;
+    }
+    .capsule-3d-half:last-child {
+        right: 0;
+        background: linear-gradient(135deg, #F5A623, #ef6c00);
+        border-radius: 0 11px 11px 0;
+    }
+    .capsule-3d::after {
+        content: '';
+        position: absolute;
+        top: 2px; left: 50%;
+        transform: translateX(-50%);
+        width: 6px; height: 18px;
+        background: rgba(255,255,255,0.25);
+        border-radius: 3px;
+        z-index: 2;
+    }
+    @keyframes capsuleSpin {
+        0%   { transform: rotateX(0deg) rotateY(0deg); }
+        25%  { transform: rotateX(180deg) rotateY(90deg); }
+        50%  { transform: rotateX(360deg) rotateY(180deg); }
+        75%  { transform: rotateX(180deg) rotateY(270deg); }
+        100% { transform: rotateX(0deg) rotateY(360deg); }
+    }
+
+    /* --- 3. 3D DEPTH BUTTON PRESS --- */
+    .btn-3d {
+        position: relative;
+        transform-style: preserve-3d;
+        transform: translateZ(0);
+        transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s ease;
+    }
+    .btn-3d:hover {
+        transform: translateY(-3px) translateZ(8px);
+        box-shadow: 0 12px 28px -4px rgba(0,61,155,0.35), 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .btn-3d:active {
+        transform: translateY(1px) translateZ(-2px) scale(0.98);
+        box-shadow: 0 2px 8px rgba(0,61,155,0.2);
+        transition-duration: 0.08s;
+    }
+
+    /* --- 4. ENHANCED 3D SCROLL REVEAL ANIMATIONS --- */
+    .reveal-3d {
+        opacity: 0;
+        transform: perspective(800px) translateY(60px) rotateX(8deg) scale(0.95);
+        transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        transform-origin: bottom center;
+    }
+    .reveal-3d.revealed {
+        opacity: 1;
+        transform: perspective(800px) translateY(0) rotateX(0deg) scale(1);
+    }
+    /* Staggered children entrance from depth */
+    .reveal-3d-stagger > * {
+        opacity: 0;
+        transform: perspective(600px) translateZ(-80px) translateY(30px);
+        transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal-3d-stagger.revealed > *:nth-child(1) { transition-delay: 0.05s; opacity: 1; transform: none; }
+    .reveal-3d-stagger.revealed > *:nth-child(2) { transition-delay: 0.12s; opacity: 1; transform: none; }
+    .reveal-3d-stagger.revealed > *:nth-child(3) { transition-delay: 0.19s; opacity: 1; transform: none; }
+    .reveal-3d-stagger.revealed > *:nth-child(4) { transition-delay: 0.26s; opacity: 1; transform: none; }
+    .reveal-3d-stagger.revealed > *:nth-child(5) { transition-delay: 0.33s; opacity: 1; transform: none; }
+    .reveal-3d-stagger.revealed > *:nth-child(6) { transition-delay: 0.40s; opacity: 1; transform: none; }
+    .reveal-3d-stagger.revealed > *:nth-child(7) { transition-delay: 0.47s; opacity: 1; transform: none; }
+    .reveal-3d-stagger.revealed > *:nth-child(8) { transition-delay: 0.54s; opacity: 1; transform: none; }
+    .reveal-3d-stagger.revealed > *:nth-child(n+9) { transition-delay: 0.60s; opacity: 1; transform: none; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .reveal-3d, .reveal-3d-stagger > * { opacity: 1; transform: none; transition: none; }
+    }
+
+    /* --- 5. 3D FLOATING CARD LIFT (enhanced hover) --- */
+    .hover-3d-lift {
+        transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s ease;
+    }
+    .hover-3d-lift:hover {
+        transform: perspective(600px) translateY(-10px) translateZ(15px) rotateX(2deg);
+        box-shadow:
+            0 25px 50px -10px rgba(0, 61, 155, 0.18),
+            0 10px 20px -5px rgba(0, 0, 0, 0.08);
+    }
+
+    /* --- 6. 3D PRODUCT IMAGE SHOWCASE (reflection) --- */
+    .img-3d-showcase {
+        position: relative;
+        perspective: 500px;
+    }
+    .img-3d-showcase img {
+        transition: transform 0.5s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .img-3d-showcase:hover img {
+        transform: scale(1.08) rotateY(5deg);
+    }
+    /* Mirror reflection below image */
+    .img-3d-reflect::after {
+        content: '';
+        position: absolute;
+        bottom: -40%;
+        left: 10%; right: 10%;
+        height: 40%;
+        background: inherit;
+        transform: scaleY(-1);
+        opacity: 0.08;
+        filter: blur(4px);
+        mask-image: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent);
+        -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.3), transparent);
+        pointer-events: none;
+        border-radius: inherit;
+    }
+
+    /* --- 7. PARALLAX DEPTH LAYERS --- */
+    .parallax-section { position: relative; overflow: hidden; }
+    .parallax-bg    { transition: transform 0.1s linear; will-change: transform; }
+    .parallax-mid   { transition: transform 0.1s linear; will-change: transform; }
+    .parallax-front  { transition: transform 0.1s linear; will-change: transform; }
 </style>
 
 <!--
@@ -1587,6 +1803,192 @@ async function sendChat() {
 
 </script>
 
+
+<!-- ============================================================
+     3D DESIGN SYSTEM — Global JavaScript
+     Handles: 3D tilt cards, scroll reveal, parallax, capsule loader
+     ============================================================ -->
+<script>
+(function() {
+    'use strict';
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    /* ---------- 1. 3D TILT CARD SYSTEM ---------- */
+    /* Auto-wraps product cards with 3D tilt on hover.
+       Works on any element with class 'hover-lift-premium' or specific selectors. */
+    function initTilt3D() {
+        // Select all product cards across the site
+        const cards = document.querySelectorAll(
+            '.hover-lift-premium, .hover-3d-lift, [class*="rounded-2xl"][class*="border"][class*="hover:"]'
+        );
+
+        cards.forEach(card => {
+            // Skip if already initialized or is inside hero carousel
+            if (card.dataset.tilt3d || card.closest('.hero3d-carousel') || card.closest('#hero3dScene')) return;
+            card.dataset.tilt3d = 'true';
+
+            // Add perspective wrapper class
+            card.style.perspective = '800px';
+            card.style.transformStyle = 'preserve-3d';
+
+            card.addEventListener('mousemove', function(e) {
+                const rect = card.getBoundingClientRect();
+                const x = (e.clientX - rect.left) / rect.width;  // 0 to 1
+                const y = (e.clientY - rect.top) / rect.height;  // 0 to 1
+
+                // Tilt angles (subtle: max ±6 degrees)
+                const tiltX = (0.5 - y) * 12;  // vertical mouse -> X rotation
+                const tiltY = (x - 0.5) * 12;  // horizontal mouse -> Y rotation
+
+                card.style.transform = `perspective(800px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(-6px) scale(1.02)`;
+                card.style.boxShadow = `${-tiltY * 2}px ${tiltX * 2 + 15}px 35px -8px rgba(0, 61, 155, 0.18)`;
+                card.style.transition = 'transform 0.1s ease-out, box-shadow 0.1s ease-out';
+
+                // Move the holographic light reflection
+                const shine = card.querySelector('.tilt-3d-inner::before');
+                if (card.style.setProperty) {
+                    card.style.setProperty('--mouse-x', (x * 100) + '%');
+                    card.style.setProperty('--mouse-y', (y * 100) + '%');
+                }
+            });
+
+            card.addEventListener('mouseleave', function() {
+                card.style.transform = '';
+                card.style.boxShadow = '';
+                card.style.transition = 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s ease';
+            });
+        });
+    }
+
+    /* ---------- 2. 3D SCROLL REVEAL ---------- */
+    function initScrollReveal3D() {
+        const sections = document.querySelectorAll('.reveal-on-scroll, .reveal-3d');
+        if (sections.length === 0) return;
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed', 'visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+        sections.forEach(s => observer.observe(s));
+
+        // Also handle staggered grids
+        const grids = document.querySelectorAll('.reveal-3d-stagger');
+        const gridObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    gridObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.08 });
+        grids.forEach(g => gridObserver.observe(g));
+    }
+
+    /* ---------- 3. PARALLAX DEPTH EFFECT ---------- */
+    function initParallax() {
+        const parallaxSections = document.querySelectorAll('.parallax-section');
+        if (parallaxSections.length === 0) return;
+
+        let ticking = false;
+        window.addEventListener('scroll', function() {
+            if (!ticking) {
+                requestAnimationFrame(function() {
+                    const scrollY = window.scrollY;
+                    parallaxSections.forEach(section => {
+                        const rect = section.getBoundingClientRect();
+                        if (rect.top < window.innerHeight && rect.bottom > 0) {
+                            const progress = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
+                            const offset = (progress - 0.5) * 60;
+
+                            const bgLayers = section.querySelectorAll('.parallax-bg');
+                            const frontLayers = section.querySelectorAll('.parallax-front');
+                            bgLayers.forEach(l => l.style.transform = `translateY(${offset * 0.3}px)`);
+                            frontLayers.forEach(l => l.style.transform = `translateY(${offset * -0.15}px)`);
+                        }
+                    });
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        });
+    }
+
+    /* ---------- 4. CAPSULE LOADER REPLACER ---------- */
+    /* Replaces boring spinners with 3D capsule animation */
+    function createCapsuleLoader() {
+        const loader = document.createElement('div');
+        loader.className = 'capsule-loader';
+        loader.innerHTML = '<div class="capsule-3d"><div class="capsule-3d-half"></div><div class="capsule-3d-half"></div></div>';
+        return loader;
+    }
+    // Replace existing spinner icons in loading states
+    function replaceSpinners() {
+        document.querySelectorAll('.animate-spin').forEach(spinner => {
+            // Don't replace if it's a very small inline spinner
+            if (spinner.closest('.toast') || spinner.closest('button')) return;
+            const parent = spinner.parentElement;
+            if (parent && !parent.querySelector('.capsule-loader')) {
+                const capsule = createCapsuleLoader();
+                parent.insertBefore(capsule, spinner);
+                spinner.style.display = 'none';
+            }
+        });
+    }
+
+    /* ---------- 5. 3D BUTTON EFFECTS ---------- */
+    function init3DButtons() {
+        // Add 3D press effect to primary CTA buttons
+        const buttons = document.querySelectorAll(
+            'a[class*="bg-primary"][class*="rounded-full"], ' +
+            'button[class*="bg-primary"][class*="rounded"], ' +
+            'a[class*="glow-pulse"], ' +
+            'a[class*="glow-gold"], ' +
+            'button[type="submit"][class*="bg-"]'
+        );
+        buttons.forEach(btn => {
+            if (btn.dataset.btn3d) return;
+            btn.dataset.btn3d = 'true';
+            btn.classList.add('btn-3d');
+        });
+    }
+
+    /* ---------- INIT ALL ---------- */
+    function initAll3D() {
+        initTilt3D();
+        initScrollReveal3D();
+        initParallax();
+        init3DButtons();
+        // Slight delay for spinners that appear dynamically
+        setTimeout(replaceSpinners, 500);
+    }
+
+    // Run on DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAll3D);
+    } else {
+        initAll3D();
+    }
+
+    // Re-init after AJAX content loads (e.g. category switch, cart update)
+    const originalFetch = window.fetch;
+    let fetchTimer;
+    window.fetch = function() {
+        return originalFetch.apply(this, arguments).then(response => {
+            clearTimeout(fetchTimer);
+            fetchTimer = setTimeout(initAll3D, 300);
+            return response;
+        });
+    };
+
+    // Expose capsule loader creator globally
+    window.createCapsuleLoader = createCapsuleLoader;
+})();
+</script>
 
 </body>
 </html>

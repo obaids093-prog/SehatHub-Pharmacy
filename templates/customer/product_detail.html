@@ -33,21 +33,23 @@
              LEFT: IMAGE GALLERY (Premium)
              ============================================================ -->
         <div class="lg:col-span-1">
-            <div class="bg-surface-container-lowest rounded-3xl border border-outline-variant/15 aspect-square flex items-center justify-center relative overflow-hidden group hover:shadow-2xl transition-all duration-500">
-                <!-- Ambient glow effect -->
-                <div class="absolute inset-0 rounded-full blur-[80px] opacity-20 scale-75 group-hover:scale-110 transition-transform duration-700 bg-primary z-0"></div>
-                
-                {% if medicine.type == 'Prescription' %}
-                    <span class="absolute top-4 left-4 bg-tertiary-fixed text-on-tertiary-fixed text-xs font-bold px-4 py-1.5 rounded-full uppercase z-20 flex items-center gap-1 shadow-sm">
-                        <span class="material-symbols-outlined text-[14px]">prescriptions</span> Rx Required
-                    </span>
-                {% endif %}
-                
-                {% if medicine.image_url %}
-                    <img src="{{ url_for('static', filename=medicine.image_url) }}?v=2" alt="{{ medicine.name }}" class="w-full h-full object-contain p-8 relative z-10 group-hover:scale-110 transition-transform duration-500 drop-shadow-xl cursor-zoom-in">
-                {% else %}
-                    <span class="material-symbols-outlined text-9xl text-primary/20 relative z-10">medication</span>
-                {% endif %}
+            <div class="bg-surface-container-lowest rounded-3xl border border-outline-variant/15 aspect-square flex items-center justify-center relative overflow-hidden group hover:shadow-2xl transition-all duration-500 img-3d-showcase img-3d-reflect tilt-3d">
+                <div class="tilt-3d-inner w-full h-full flex items-center justify-center relative">
+                    <!-- Ambient glow effect -->
+                    <div class="absolute inset-0 rounded-full blur-[80px] opacity-20 scale-75 group-hover:scale-110 transition-transform duration-700 bg-primary z-0"></div>
+                    
+                    {% if medicine.type == 'Prescription' %}
+                        <span class="absolute top-4 left-4 bg-tertiary-fixed text-on-tertiary-fixed text-xs font-bold px-4 py-1.5 rounded-full uppercase z-20 flex items-center gap-1 shadow-sm">
+                            <span class="material-symbols-outlined text-[14px]">prescriptions</span> Rx Required
+                        </span>
+                    {% endif %}
+                    
+                    {% if medicine.image_url %}
+                        <img src="{{ url_for('static', filename=medicine.image_url) }}?v=2" alt="{{ medicine.name }}" class="w-full h-full object-contain p-8 relative z-10 group-hover:scale-110 transition-transform duration-500 drop-shadow-xl cursor-zoom-in">
+                    {% else %}
+                        <span class="material-symbols-outlined text-9xl text-primary/20 relative z-10">medication</span>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
