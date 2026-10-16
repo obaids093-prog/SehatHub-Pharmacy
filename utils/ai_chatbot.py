@@ -9,6 +9,9 @@ import os
 import json
 import urllib.request
 import urllib.error
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # System Prompt defining AI behavior, safety boundaries, and persona
 SYSTEM_PROMPT = """
@@ -62,8 +65,8 @@ def _call_groq_api(user_msg_clean, session_history=None):
 
     messages.append({"role": "user", "content": user_msg_clean})
 
-    # 70B first (smarter, accurate), 8B fallback (faster but lower quality)
-    models = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+    # Active models on Groq
+    models = ["qwen/qwen3.8-27b", "openai/gpt-oss-120b", "openai/gpt-oss-20b"]
 
     for model in models:
         try:

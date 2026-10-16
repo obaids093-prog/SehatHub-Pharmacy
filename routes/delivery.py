@@ -62,7 +62,7 @@ def dashboard():
             LEFT JOIN order_items oi ON o.order_id = oi.order_id
             WHERE o.status = 'packed'
             GROUP BY o.order_id, o.status, o.total_amount, o.delivery_address, o.created_at, customer_name, customer_phone
-            ORDER BY o.created_at ASC
+            ORDER BY o.created_at DESC
         """)
         ready_to_ship = cursor.fetchall()
 
@@ -78,7 +78,7 @@ def dashboard():
             LEFT JOIN order_items oi ON o.order_id = oi.order_id
             WHERE o.status = 'shipped'
             GROUP BY o.order_id, o.status, o.total_amount, o.delivery_address, o.created_at, customer_name, customer_phone
-            ORDER BY o.created_at ASC
+            ORDER BY o.created_at DESC
         """)
         out_for_delivery = cursor.fetchall()
 

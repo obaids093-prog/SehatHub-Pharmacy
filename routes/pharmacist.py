@@ -104,8 +104,8 @@ def dashboard():
             LEFT JOIN medicines m ON mv.medicine_id = m.medicine_id
             WHERE p.status = 'pending'
             GROUP BY p.prescription_id, p.image_path, p.status, p.uploaded_at, u.full_name
-            ORDER BY p.uploaded_at ASC
-            LIMIT 5
+            ORDER BY p.uploaded_at DESC
+            LIMIT 10
         """)
         prescriptions = cursor.fetchall()
 
@@ -148,8 +148,8 @@ def dashboard():
             LEFT JOIN medicines m ON mv.medicine_id = m.medicine_id
             WHERE o.status IN ('placed', 'confirmed')
             GROUP BY o.order_id, o.status, o.total_amount, o.created_at, customer_name
-            ORDER BY o.created_at ASC
-            LIMIT 6
+            ORDER BY o.created_at DESC
+            LIMIT 12
         """)
         orders_to_fulfill = cursor.fetchall()
 
@@ -214,7 +214,7 @@ def prescription_list():
             GROUP BY p.prescription_id, p.image_path, p.status, p.uploaded_at, p.rejection_reason, u.full_name, u.phone
             ORDER BY
                 CASE p.status WHEN 'pending' THEN 0 ELSE 1 END,
-                p.uploaded_at ASC
+                p.uploaded_at DESC
             LIMIT %s OFFSET %s
         """, tuple(filter_params) + (per_page, start_idx))
         prescriptions = cursor.fetchall()

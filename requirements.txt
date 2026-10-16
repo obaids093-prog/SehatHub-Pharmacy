@@ -3,3 +3,41 @@ mysql-connector-python
 python-dotenv
 bcrypt
 pillow
+
+
+...............................
+To download any youtube video with the help of python:
+
+Step 1: Install this library first
+
+pip install yt-dlp 
+
+Step 2: Install ffmpeg (Fast forward moving picture experts group) 
+
+winget install Gyan.FFmpeg.Shared
+
+At the end, after install just press Y to done it. 
+
+Step 3: Run this code 
+
+import yt_dlp
+
+url = input("Youtube URL: ")
+
+yt_dlp.YoutubeDL(
+    {"format" : "bestvideo + bestaudio"}
+).download([url])
+
+Step 4: Put your URL below of specefic youtube video. 
+
+There you go.......................
+............................................................
+pip install gTTS
+
+from gtts import gTTS
+text = "Syed Obaid Shah, a BS Computer Science student at Abasyn University Islamabad, is an independent, dedicated student and working professional who shines in studies and stands out with his passion for history, politics, and horror movies, bringing versatility and great vibes as a true friend."
+tts = gTTS(text=text, lang="en")
+
+tts.save("voice.mp3")
+
+print("Audio saved successfully")

@@ -16,7 +16,7 @@ app.secret_key = os.getenv('SECRET_KEY', 'dev-secret-key-change-this')
 # Deployment Hygiene & Hardening
 from datetime import timedelta
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB max file upload size
-app.config['SESSION_COOKIE_SECURE'] = True          # Ensure cookies are sent over HTTPS
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False').lower() in ('true', '1', 't')
 app.config['SESSION_COOKIE_HTTPONLY'] = True        # Prevent JS access to session cookie
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'       # CSRF mitigation
 app.config['TEMPLATES_AUTO_RELOAD'] = True          # Auto-reload templates for development
@@ -168,7 +168,9 @@ def add_no_cache_headers(response):
 # ============================================================
 # BASIC TEST ROUTE - Home Page
 # ============================================================
-@app.route('/page/<page_slug>')
+# BASIC TEST ROUTE - Home Page
+# ============================================================
+@app.route('/page/<page_slug>', methods=['GET'])
 def coming_soon(page_slug):
     """
     Generic placeholder route for footer links that don't have real
@@ -180,7 +182,7 @@ def coming_soon(page_slug):
     return render_template('coming_soon.html', page_title=page_title)
 
 
-@app.route('/refund-policy')
+@app.route('/refund-policy', methods=['GET'])
 def refund_policy():
     """
     Dedicated Refund Policy page. Replaces the old homepage popup
@@ -190,10 +192,13 @@ def refund_policy():
     return render_template('refund_policy.html')
 
 
-@app.route('/about-us')
+@app.route('/about-us', methods=['GET'])
 def about_us():
     """Dedicated About Us page (replaces the old coming_soon placeholder)."""
     return render_template('about_us.html')
+
+
+CONTACT_US_TEMPLATE = 'contact_us.html'
 
 
 @app.route('/contact-us', methods=['GET', 'POST'])
@@ -210,7 +215,7 @@ def contact_us():
     if request.method == 'POST':
         if not validate_csrf_token(request.form.get('csrf_token')):
             flash('Your session expired or this request looked suspicious. Please try again.', 'error')
-            return render_template('contact_us.html')
+            return render_template(CONTACT_US_TEMPLATE)
 
         name = request.form.get('name', '').strip()
         email = request.form.get('email', '').strip()
@@ -218,21 +223,21 @@ def contact_us():
 
         if not name or not email or not message:
             flash('Please fill in all fields.', 'error')
-            return render_template('contact_us.html')
+            return render_template(CONTACT_US_TEMPLATE)
 
         flash("Thanks for reaching out! We'll get back to you soon.", 'success')
         return redirect(url_for('contact_us'))
 
-    return render_template('contact_us.html')
+    return render_template(CONTACT_US_TEMPLATE)
 
 
-@app.route('/privacy-policy')
+@app.route('/privacy-policy', methods=['GET'])
 def privacy_policy():
     """Dedicated Privacy Policy page (replaces the old coming_soon placeholder)."""
     return render_template('privacy_policy.html')
 
 
-@app.route('/terms-of-service')
+@app.route('/terms-of-service', methods=['GET'])
 def terms_of_service():
     """Dedicated Terms of Service page (replaces the old coming_soon placeholder)."""
     return render_template('terms_of_service.html')
@@ -272,7 +277,7 @@ def newsletter_subscribe():
     flash(msg, 'success')
     return redirect(url_for('home'))
 
-@app.route('/api/public-stats')
+@app.route('/api/public-stats', methods=['GET'])
 def api_public_stats():
     from config.database import get_db_connection
     connection = get_db_connection()
@@ -293,7 +298,22 @@ def api_public_stats():
     finally:
         connection.close()
 
-@app.route('/')
+
+def _get_staff_dashboard_redirect(user_session):
+    """Redirects logged-in staff members to their respective role dashboard."""
+    if 'user_id' not in user_session:
+        return None
+    role = user_session.get('role')
+    if role == 'admin':
+        return redirect(url_for('admin.dashboard'))
+    if role == 'pharmacist':
+        return redirect(url_for('pharmacist.dashboard'))
+    if role == 'delivery':
+        return redirect(url_for('delivery.dashboard'))
+    return None
+
+
+@app.route('/', methods=['GET'])
 def home():
     """
     Home page. Pulls a handful of real, active medicines from the
@@ -302,16 +322,10 @@ def home():
     prices that could never actually be added to cart.
     """
     from flask import session
-    
-    # If a staff member visits the root URL, redirect them directly to their dashboard.
-    # They have no need to browse the customer-facing storefront.
-    if 'user_id' in session and session.get('role') in ['admin', 'pharmacist', 'delivery']:
-        if session['role'] == 'admin':
-            return redirect(url_for('admin.dashboard'))
-        elif session['role'] == 'pharmacist':
-            return redirect(url_for('pharmacist.dashboard'))
-        elif session['role'] == 'delivery':
-            return redirect(url_for('delivery.dashboard'))
+
+    staff_redirect = _get_staff_dashboard_redirect(session)
+    if staff_redirect:
+        return staff_redirect
 
     from config.database import get_db_connection
 
@@ -425,4 +439,7 @@ def internal_server_error(e):
 # ============================================================
 if __name__ == '__main__':
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')
-    app.run(host='0.0.0.0', debug=debug_mode, port=5000)
+    host = os.environ.get('FLASK_HOST', '127.0.0.1')
+    port = int(os.environ.get('PORT', 5001))
+    print(f" * Starting SehatHub on http://{host}:{port}")
+    app.run(host=host, debug=debug_mode, port=port)
