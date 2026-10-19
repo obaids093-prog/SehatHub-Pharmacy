@@ -114,7 +114,6 @@ The schema is normalized across 16+ tables covering users & roles, medicine cata
 | Name | Roll No. |
 |---|---|
 | Syed Obaid Ali | 9321 |
-| Sikander | 9315 |
 
 ---
 
