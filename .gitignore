@@ -15,3 +15,10 @@ uploads/prescriptions/*
 # Virtual environment (if you create one later)
 venv/
 env/
+
+# Large media files (exceeds GitHub 100MB limit)
+*.mp4
+*.mov
+*.avi
+*.zip
+
